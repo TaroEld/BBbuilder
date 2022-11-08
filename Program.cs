@@ -12,20 +12,6 @@ namespace BBbuilder
 {
     class Program
     {
-        static void LoadConfig()
-        {
-            while (!Directory.Exists(Properties.Settings.Default.GamePath))
-            {
-                Console.WriteLine("Please pass game path:");
-                Properties.Settings.Default.GamePath = Console.ReadLine();
-            }
-            while (!Directory.Exists(Properties.Settings.Default.ModPath))
-            {
-                Console.WriteLine("Please pass mods path:");
-                Properties.Settings.Default.ModPath = Console.ReadLine();
-            }
-        }
-
         static void Help(Dictionary<string, Command> _commands)
         {
             foreach (KeyValuePair<string, Command> entry in _commands)
@@ -37,11 +23,15 @@ namespace BBbuilder
 
         static int Main(string[] args)
         {
-            LoadConfig();
+            var watch = new System.Diagnostics.Stopwatch();
+
+            watch.Start();
+
             Dictionary<string, Command> Commands = new Dictionary<string, Command>();
             Commands["config"] = new ConfigCommand();
             Commands["build"] = new BuildCommand();
             Commands["init"] = new InitCommand();
+            ConfigCommand.SetupConfig();
             if (!(args.Length == 0 || Commands.ContainsKey(args[0])))
             {
                 Console.WriteLine("Command " + args[0] + " not recognized!");
@@ -55,6 +45,9 @@ namespace BBbuilder
             {
                 if (Commands[args[0]].HandleCommand(args))
                 {
+                    watch.Stop();
+
+                    Console.WriteLine($"Execution Time: {watch.ElapsedMilliseconds} ms");
                     return 1;
                 }
             }

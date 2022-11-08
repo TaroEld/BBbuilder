@@ -10,6 +10,39 @@ namespace BBbuilder
 {
     class ConfigCommand : Command
     {
+        public static void SetupConfig()
+        {
+            while (!Directory.Exists(Properties.Settings.Default.GamePath))
+            {
+                Console.WriteLine("Please pass game path:");
+                Properties.Settings.Default.GamePath = Console.ReadLine();
+            }
+            while (!Directory.Exists(Properties.Settings.Default.ModPath))
+            {
+                Console.WriteLine("Please pass mods path:");
+                Properties.Settings.Default.ModPath = Console.ReadLine();
+            }
+            Properties.Settings.Default.Save();
+        }
+
+        public static void PrintConfig()
+        {
+            Console.WriteLine($"GamePath: {Properties.Settings.Default.GamePath}");
+            Console.WriteLine($"Mods Path: {Properties.Settings.Default.ModPath}");
+            if (Properties.Settings.Default.Folders == null)
+            {
+                Console.WriteLine("No Project Folders defined");
+            }
+            else
+            {
+                Console.WriteLine("Project Folders:");
+                foreach (string line in Properties.Settings.Default.Folders)
+                {
+                    Console.WriteLine(line);
+                }
+            }
+        }
+
         public ConfigCommand()
         {
             this.Name = "config";
@@ -65,23 +98,12 @@ namespace BBbuilder
                 }
             }
             Properties.Settings.Default.Save();
-            //Console.WriteLine(Properties.Settings.Default.GamePath);
-            //Console.WriteLine(Properties.Settings.Default.ModPath);
             foreach (string line in Properties.Settings.Default.Folders)
             {
                 Console.WriteLine(line);
             }
             return true;
         }
-        private void PrintConfig()
-        {
-            Console.WriteLine($"GamePath: {Properties.Settings.Default.GamePath}");
-            Console.WriteLine($"Mods Path: {Properties.Settings.Default.ModPath}");
-            Console.WriteLine("Project Folders:");
-            foreach (string line in Properties.Settings.Default.Folders)
-            {
-                Console.WriteLine(line);
-            }
-        }
+
     }
 }

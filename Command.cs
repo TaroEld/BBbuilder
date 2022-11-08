@@ -11,7 +11,6 @@ namespace BBbuilder
         public string Name { get; set; }
         public string Description { get; set; }
         public Dictionary<string, string> Commands { get; set; }
-
         virtual public bool HandleCommand(string[] _args)
         {
             return true;

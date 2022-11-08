@@ -68,10 +68,7 @@ namespace BBbuilder
             Console.WriteLine("Successfully copied zip file!");
             if (bootAfterDone)
             {
-                string bbFolder = Directory.GetParent(Properties.Settings.Default.GamePath).ToString();
-                string bbExe = Path.Combine(bbFolder, "win32/BattleBrothers.exe");
-                Console.WriteLine($"Starting Battle Brothers ({bbExe})");
-                Process.Start(bbExe);
+                KillAndStartBB();
             }
             return true;
         }
@@ -221,6 +218,19 @@ namespace BBbuilder
 
 
             return noCompileErrors;
+        }
+
+        private void KillAndStartBB()
+        {
+            Process[] activeBBInstances = Process.GetProcessesByName("BattleBrothers");
+            foreach (Process instance in activeBBInstances)
+            {
+                instance.Kill();
+            }
+            string bbFolder = Directory.GetParent(Properties.Settings.Default.GamePath).ToString();
+            string bbExe = Path.Combine(bbFolder, "win32/BattleBrothers.exe");
+            Console.WriteLine($"Starting Battle Brothers ({bbExe})");
+            Process.Start(bbExe);
         }
 
         private void RemoveOldFiles()

@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Diagnostics;
 
 namespace BBbuilder
 {
@@ -32,19 +33,20 @@ namespace BBbuilder
             }
             string modName = _args[1];
 
-            if(!ValidateModname())
+            if (!ValidateModname())
             {
                 return false;
             }
             this.ModName = modName;
-            this.ModPath = $"{Properties.Settings.Default.ModPath}/{modName}";
-            Console.WriteLine("ModPath: " + this.ModPath);
+            this.ModPath = Path.Combine(Properties.Settings.Default.ModPath, modName);
+            Console.WriteLine("Path of new mod: " + this.ModPath);
             if (!CreateDirectories())
             {
                 return false;
             }
             CreateTemplateFile();
             WriteProjectFiles();
+            Process.Start("explorer.exe", this.ModPath);
             return true;
         }
 
@@ -56,10 +58,9 @@ namespace BBbuilder
                 return false;
             }
             Directory.CreateDirectory(this.ModPath);
-            Console.WriteLine($"Created folder {this.ModPath}");
-            Directory.CreateDirectory($"{this.ModPath}/.vscode");
-            Directory.CreateDirectory($"{this.ModPath}/assets");
-            Directory.CreateDirectory($"{this.ModPath}/scripts/mods_preload/");
+            Directory.CreateDirectory(Path.Combine(this.ModPath, ".vscode"));
+            Directory.CreateDirectory(Path.Combine(this.ModPath, "assets"));
+            Directory.CreateDirectory(Path.Combine(this.ModPath, "scripts", "!mods_preload"));
             return true;
         }
 
@@ -67,7 +68,8 @@ namespace BBbuilder
         {
             string nutTemplate = ReadFile("BBbuilder.template_preload.nut");
             nutTemplate = nutTemplate.Replace("$name", this.ModName);
-            File.WriteAllText($"{this.ModPath}/scripts/mods_preload/{this.ModName}.nut", nutTemplate);
+            string[] pathArray = new string[] { this.ModPath, "scripts", "!mods_preload", this.ModName };
+            File.WriteAllText(Path.Combine(pathArray), nutTemplate);
             return true;
         }
 
@@ -83,22 +85,23 @@ namespace BBbuilder
                 settings = Array.Empty<string>(),
                 folders = new List<Folder>()
             };
-            foreach (string line in Properties.Settings.Default.Folders)
+            if (Properties.Settings.Default.Folders != null)
             {
-                Console.WriteLine("Line?" + line);
-                Folder folder = new Folder
+                foreach (string line in Properties.Settings.Default.Folders)
                 {
-                    path = line
-                };
-                sublimeProjectObject.folders.Add(folder);
-                vsCodeProjectObject.folders.Add(folder);
+                    sublimeProjectObject.folders.Add(new Folder { path = line });
+                    vsCodeProjectObject.folders.Add(new Folder { path = line });
+                }
             }
+            // Add mod folder too
+            sublimeProjectObject.folders.Add(new Folder { path = this.ModPath });
+            vsCodeProjectObject.folders.Add(new Folder { path = this.ModPath });
+
             var options = new JsonSerializerOptions { WriteIndented = true };
             string sublimeJsonString = JsonSerializer.Serialize(sublimeProjectObject, options);
             string vscodeJsonString = JsonSerializer.Serialize(vsCodeProjectObject, options);
-            Console.WriteLine(vscodeJsonString);
-            File.WriteAllText($"{this.ModPath}/{this.ModName}.sublime-project", sublimeJsonString);
-            File.WriteAllText($"{this.ModPath}/.vscode/{this.ModName}.code-workspace", vscodeJsonString);
+            File.WriteAllText(Path.Combine(this.ModPath, this.ModName + ".sublime-project"), sublimeJsonString);
+            File.WriteAllText(Path.Combine(this.ModPath, ".vscode", this.ModName + ".code-workspace"), vscodeJsonString);
             return true;
         }
 

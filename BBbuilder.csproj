@@ -3,6 +3,9 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
+    <Authors>TaroEld</Authors>
+    <Company />
+    <Description>Build tools for Battle Brothers</Description>
   </PropertyGroup>
 
   <ItemGroup>
