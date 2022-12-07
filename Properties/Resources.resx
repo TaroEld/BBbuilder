@@ -117,26 +117,4 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="AdamMil_IO" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\tools\AdamMil.IO.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="AdamMil_Mathematics" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\tools\AdamMil.Mathematics.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="AdamMil_Utilities" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\tools\AdamMil.Utilities.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="bbrusher" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\tools\bbrusher.exe;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="bbsq" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\tools\bbsq.exe;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="nutcracker" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\tools\nutcracker.exe;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="squirrel" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\tools\sq.exe;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
 </root>

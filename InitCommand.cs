@@ -18,58 +18,70 @@ namespace BBbuilder
         public InitCommand()
         {
             this.Name = "init";
-            this.Description = "init";
-            this.Commands = new Dictionary<string, string>
+            this.Description = "Initialises a new mod. Pass the name of the mod to be initialised.";
+            this.Arguments = new string[]
             {
-                {"path", "Specify alternative path to put mod" }
+                "Mandatory: Specify name of the new mod. The new mod will be created in your specified 'mods' directory. (Example: bbuilder init mod_test)",
+                "Optional: Specify alternative path where the new mod will be created. (Example: bbuilder init mod_test C:/Users/user/Desktop/test/)",
             };
         }
         public override bool HandleCommand(string[] _args) 
         {
-            if (_args.Length < 2)
+            if (!base.HandleCommand(_args))
             {
-                Console.WriteLine("Missing name of new mod!");
                 return false;
             }
             string modName = _args[1];
 
-            if (!ValidateModname())
-            {
-                return false;
-            }
             this.ModName = modName;
-            this.ModPath = Path.Combine(Properties.Settings.Default.ModPath, modName);
-            Console.WriteLine("Path of new mod: " + this.ModPath);
-            if (!CreateDirectories())
+            if (this.ModName.IndexOf(" ") != -1)
             {
+                Console.WriteLine($"Found Space character in mod name {this.ModName}! Please don't do that. Exiting...");
                 return false;
             }
+
+            if (_args.Length > 2)
+            {
+                string alternativePath = _args[2];
+                if (!Directory.Exists(alternativePath))
+                {
+                    Console.WriteLine($"Passed alternative path {alternativePath} but this folder does not exist!");
+                    return false;
+                }
+                this.ModPath = Path.Combine(alternativePath, modName);
+            }
+            else this.ModPath = Path.Combine(Properties.Settings.Default.ModPath, modName);
+
+            if (Directory.Exists(this.ModPath))
+            {
+                Console.WriteLine($"Directory '{this.ModPath}' already exists! Exiting to avoid mistakes...");
+                return false;
+            }
+            CreateDirectories();
             CreateTemplateFile();
             WriteProjectFiles();
             Process.Start("explorer.exe", this.ModPath);
             return true;
         }
 
-        private bool CreateDirectories()
+        private void CreateDirectories()
         {
-            if (Directory.Exists(this.ModPath))
-            {
-                Console.WriteLine($"Directory '{this.ModPath}' already exists!");
-                return false;
-            }
+            Console.WriteLine("Path of new mod: " + this.ModPath);
             Directory.CreateDirectory(this.ModPath);
             Directory.CreateDirectory(Path.Combine(this.ModPath, ".vscode"));
             Directory.CreateDirectory(Path.Combine(this.ModPath, "assets"));
+            Directory.CreateDirectory(Path.Combine(this.ModPath, "unpacked_brushes"));
             Directory.CreateDirectory(Path.Combine(this.ModPath, "scripts", "!mods_preload"));
-            return true;
         }
 
         private bool CreateTemplateFile()
         {
-            string nutTemplate = ReadFile("BBbuilder.template_preload.nut");
+            string nutTemplate = Utils.ReadFile("BBbuilder.template_preload.nut");
             nutTemplate = nutTemplate.Replace("$name", this.ModName);
             string[] pathArray = new string[] { this.ModPath, "scripts", "!mods_preload", this.ModName };
             File.WriteAllText(Path.Combine(pathArray), nutTemplate);
+            string gitignore = Utils.ReadFile("BBbuilder.gitignore_template");
+            File.WriteAllText(Path.Combine(this.ModPath, ".gitignore"), gitignore);
             return true;
         }
 
@@ -103,23 +115,6 @@ namespace BBbuilder
             File.WriteAllText(Path.Combine(this.ModPath, this.ModName + ".sublime-project"), sublimeJsonString);
             File.WriteAllText(Path.Combine(this.ModPath, ".vscode", this.ModName + ".code-workspace"), vscodeJsonString);
             return true;
-        }
-
-        private bool ValidateModname()
-        {
-            return true;
-        }
-
-        private string ReadFile(string _path)
-        {
-            string fileAsString;
-            var assembly = Assembly.GetExecutingAssembly();
-            using (Stream stream = assembly.GetManifestResourceStream(_path))
-            using (StreamReader reader = new StreamReader(stream))
-            {
-                fileAsString = reader.ReadToEnd();
-            }
-            return fileAsString;
         }
     }
     public class SublimeProject

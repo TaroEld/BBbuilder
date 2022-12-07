@@ -6,24 +6,26 @@ using System.Linq;
 using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
+using Ionic;
+using Ionic.Zip;
 
 namespace BBbuilder
 {
     class BuildCommand : Command
     {
-        String[] ExcludedZipFolders = new String[] { ".git", ".github", "unpacked_brushes", ".vscode", ".utils", "assets" };
+        String[] ExcludedZipFolders = new String[] { ".git", ".github", "unpacked_brushes", ".vscode", ".utils", "assets", "modtools" };
         String[] ExcludedScriptFolders = new String[] { ".git", ".github", "gfx", "ui", "preload", "brushes", "music", "sounds", "unpacked_brushes", "tempfolder", ".vscode", "nexus", ".utils", "assets" };
         string ModPath;
         string ModName;
         string ZipPath;
-        string TempPath;
         public BuildCommand()
         {
             this.Name = "build";
             this.Description = "test";
-            this.Commands = new Dictionary<string, string>
+            this.Arguments = new string[]
             {
-                {"path", "Specify Path of mod to be built!" },
+                "Mandatory: Specify the path of the mod to be built. (Example: bbuilder build G:/Games/BB/Mods/WIP/mod_msu)",
+                "Optional: Pass 'true' to close BattleBrothers.exe and start it again after building the mod. (Example: bbuilder build G:/Games/BB/Mods/WIP/mod_msu true)",
             };
         }
 
@@ -34,40 +36,43 @@ namespace BBbuilder
                 return false;
             }
             this.ModPath = _args[1];
-            bool bootAfterDone = false;
-            if (_args.Length > 2 && _args[2] == "true")
+            if (!Directory.Exists(this.ModPath))
             {
-                bootAfterDone = true;
+                Console.WriteLine($"Passed mod path {this.ModPath} does not exist!");
+                return false;
             }
             this.ModName = new DirectoryInfo(this.ModPath).Name;
             this.ZipPath = Path.Combine(this.ModPath, this.ModName) + ".zip";
-            this.TempPath = Path.Combine(this.ModPath, "_zipTemp");
 
             Console.WriteLine($"Attempting to create {this.ZipPath}");
 
             RemoveOldFiles();
-            if(!CompileFiles())
+            if (!CompileFiles())
             {
                 Console.WriteLine("Failed while compiling files");
+                RemoveOldFiles();
                 return false;
             }
-            else Console.WriteLine("Successfully compiled files!");
-            if(!PackBrushFiles())
+            if (!PackBrushFiles())
             {
                 Console.WriteLine("Failed while packing brush files");
+                RemoveOldFiles();
                 return false;
             }
-            else Console.WriteLine("Successfully packed brush files!");
             if (!ZipFolders())
             {
                 Console.WriteLine("Failed while zipping files");
+                RemoveOldFiles();
                 return false;
             }
-            else Console.WriteLine($"Successfully zipped {this.ZipPath}!");
-            CopyZipToData();
-            Console.WriteLine("Successfully copied zip file!");
-            if (bootAfterDone)
+            if (!CopyZipToData())
             {
+                Console.WriteLine("Failed while copying new zip to data!");
+                RemoveOldFiles();
+                return false;
+            }
+            if (_args.Length > 2 && _args[2] == "true")
+            { 
                 KillAndStartBB();
             }
             return true;
@@ -75,35 +80,42 @@ namespace BBbuilder
 
         private bool CompileFiles()
         {
+            Console.WriteLine("Starting to compile files...");
             string[] allNutFilesAsPath = GetAllowedScriptFiles();
-/*            byte[] sqBytes = Properties.Resources.squirrel;
-            string sqExe = Path.Combine(Path.GetTempPath(), "sq.exe");
-
-            using (FileStream exeFile = new FileStream(sqExe, FileMode.CreateNew))
-                exeFile.Write(sqBytes, 0, sqBytes.Length);*/
+            if (allNutFilesAsPath.Length == 0)
+            {
+                Console.WriteLine("No files to compile!");
+                return true;
+            }
 
             bool noCompileErrors = true;
 
             foreach (string nutFilePath in allNutFilesAsPath)
             {
                 string cnutFilePath = Path.ChangeExtension(nutFilePath, ".cnut");
-                string sqCommand = String.Format("-o {0} -c {1}", cnutFilePath, nutFilePath);
+                string sqCommand = String.Format("-o \"{0}\" -c \"{1}\"", cnutFilePath, nutFilePath);
+
                 using (Process compiling = new Process())
                 {
                     compiling.StartInfo.UseShellExecute = false;
                     compiling.StartInfo.RedirectStandardOutput = true;
-                    compiling.StartInfo.FileName = @"./tools/sq.exe";
+                    compiling.StartInfo.FileName = Utils.SQPATH;
                     compiling.StartInfo.Arguments = sqCommand;
                     compiling.Start();
                     compiling.WaitForExit();
                     if (compiling.ExitCode == -2)
                     {
                         Console.WriteLine(String.Format("Error compiling file {0}!", nutFilePath));
+                        StreamReader myStreamReader = compiling.StandardOutput;
+                        Console.WriteLine(myStreamReader.ReadLine());
+
                         noCompileErrors = false;
                     }
                     File.Delete(cnutFilePath);
                 }
             }
+            if (noCompileErrors)
+                Console.WriteLine("Successfully compiled files!");
             return noCompileErrors;
         }
 
@@ -136,42 +148,14 @@ namespace BBbuilder
             return retArray;
         }
 
-        private bool ZipFolders()
-        {
-            // It appears to be easier, albeit slower, to just copy all the folders to be zipped to a new folder, then create a new zip from that
-            // Might need to change this to proper zip append
-            // Alternatively bundle with 7zip?
-            string[] allowedFolders = GetAllowedFolders(this.ExcludedZipFolders);
-            Directory.CreateDirectory(this.TempPath);
-            foreach (string folderPath in allowedFolders)
-            {
-                DirectoryInfo target = new DirectoryInfo(folderPath);
-                Copy(folderPath, Path.Combine(this.TempPath, target.Name));
-            }
-            ZipFile.CreateFromDirectory(this.TempPath, this.ZipPath);
-            Directory.Delete(this.TempPath, true);
-            return true;
-        }
-
-        private bool CopyZipToData()
-        {
-            string gamePath = Properties.Settings.Default.GamePath;
-            string dataZipPath = Path.Combine(gamePath, $"{this.ModName}.zip");
-            if (File.Exists(dataZipPath))
-            {
-                File.Delete(dataZipPath);
-            }
-            File.Copy(this.ZipPath, dataZipPath);
-            return true;
-        }
-
         private bool PackBrushFiles()
         {
             string brushesPath = Path.Combine(this.ModPath, "brushes");
             string folderPath = Path.Combine(this.ModPath, "unpacked_brushes");
             bool noCompileErrors = true;
-            if (!Directory.Exists(folderPath))
+            if (!Directory.Exists(folderPath) || Directory.GetDirectories(folderPath).Length == 0)
             {
+                Console.WriteLine("No brush files to pack!");
                 return true;
             }
             if (!Directory.Exists(brushesPath))
@@ -192,7 +176,7 @@ namespace BBbuilder
                 {
                     packBrush.StartInfo.UseShellExecute = false;
                     packBrush.StartInfo.RedirectStandardOutput = true;
-                    packBrush.StartInfo.FileName = @"./tools/bbrusher.exe";
+                    packBrush.StartInfo.FileName = Utils.BBRUSHERPATH;
                     packBrush.StartInfo.Arguments = command;
                     packBrush.StartInfo.WorkingDirectory = this.ModPath;
                     packBrush.Start();
@@ -215,9 +199,41 @@ namespace BBbuilder
                 Copy(Path.Combine(wipFolder.ToString(), "gfx"), Path.Combine(this.ModPath, "gfx"));
                 Directory.Delete(Path.Combine(wipFolder.ToString(), "gfx"), true);
             }
-
-
+            if (noCompileErrors)
+                Console.WriteLine("Successfully packed brush files!");
             return noCompileErrors;
+        }
+
+        private bool ZipFolders()
+        {
+            // Using the Ionic DotNetZip library as this makes it significantly easier to recursively zip folders
+            string[] allowedFolders = GetAllowedFolders(this.ExcludedZipFolders);
+            using (var zip = new Ionic.Zip.ZipFile(this.ZipPath))
+            {
+                foreach (string folderPath in allowedFolders)
+                {
+                    if (Directory.GetFiles(folderPath).Length == 0 && Directory.GetDirectories(folderPath).Length == 0)
+                        continue;
+                    DirectoryInfo target = new DirectoryInfo(folderPath);
+                    Console.WriteLine($"Added folder {target.Name} to zip.");
+                    zip.AddDirectory(folderPath, target.Name);
+                }
+                zip.Save();
+            }
+            Console.WriteLine($"Successfully zipped {this.ZipPath}!");
+            return true;
+        }
+
+        private bool CopyZipToData()
+        {
+            string gamePath = Properties.Settings.Default.GamePath;
+            string dataZipPath = Path.Combine(gamePath, $"{this.ModName}.zip");
+            if (File.Exists(dataZipPath))
+            {
+                File.Delete(dataZipPath);
+            }
+            File.Copy(this.ZipPath, dataZipPath);
+            return true;
         }
 
         private void KillAndStartBB()
@@ -225,24 +241,35 @@ namespace BBbuilder
             Process[] activeBBInstances = Process.GetProcessesByName("BattleBrothers");
             foreach (Process instance in activeBBInstances)
             {
+                Console.WriteLine("Stopping BattleBrothers.exe...");
                 instance.Kill();
             }
             string bbFolder = Directory.GetParent(Properties.Settings.Default.GamePath).ToString();
-            string bbExe = Path.Combine(bbFolder, "win32/BattleBrothers.exe");
+            string bbExe = Path.Combine(bbFolder, "win32", "BattleBrothers.exe");
             Console.WriteLine($"Starting Battle Brothers ({bbExe})");
             Process.Start(bbExe);
         }
 
         private void RemoveOldFiles()
         {
+            Console.WriteLine("Removing old files...");
             if (File.Exists(this.ZipPath))
             {
-                Console.WriteLine($"Removing zip {this.ZipPath}");
                 File.Delete(this.ZipPath);
+                Console.WriteLine($"Removed file {this.ZipPath}");
             }
-            if (Directory.Exists(this.TempPath))
+            string brushesPath = Path.Combine(this.ModPath, "brushes");
+            if (Directory.Exists(brushesPath))
             {
-                Directory.Delete(this.TempPath, true);
+                Directory.Delete(brushesPath, true);
+                Console.WriteLine($"Removed folder {brushesPath}");
+            }
+            DirectoryInfo wipFolder = Directory.GetParent(this.ModPath);
+            string wipGfxPath = Path.Combine(wipFolder.ToString(), "gfx");
+            if (Directory.Exists(wipGfxPath))
+            {
+                Directory.Delete(wipGfxPath, true);
+                Console.WriteLine($"Removed folder {wipGfxPath}");
             }
         }
 

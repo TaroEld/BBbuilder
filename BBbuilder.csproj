@@ -9,14 +9,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="build_template_sublime" />
+    <None Remove="build_template_vs" />
+    <None Remove="gitignore_template" />
     <None Remove="template_preload.nut" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="build_template_sublime" />
+    <EmbeddedResource Include="build_template_vs" />
+    <EmbeddedResource Include="gitignore_template" />
     <EmbeddedResource Include="template_preload.nut" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="DotNetZip" Version="1.16.0" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="6.0.0" />
   </ItemGroup>
 
@@ -45,6 +52,9 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
+    <None Update="sq_bindings\sqnetlib.cpp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="tools\AdamMil.IO.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -58,6 +68,12 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="tools\bbsq.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="tools\masscompile.bat">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="tools\massdecompile.bat">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="tools\nutcracker.exe">

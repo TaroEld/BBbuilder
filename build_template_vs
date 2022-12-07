@@ -1,0 +1,36 @@
+﻿{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Update mod",
+            "type": "shell",
+            "command": "\"$bbbuild_path\" build \"${fileWorkspaceFolder}\" ",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Update mod and launch",
+            "type": "shell",
+            "command": "\"$bbbuild_path\" build \"${fileWorkspaceFolder}\" true",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Run locally",
+            "type": "shell",
+            "command": "\"$sq_path\" \"${file}\" ",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        }
+    ]
+}
+

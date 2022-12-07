@@ -1,0 +1,20 @@
+﻿{
+	"working_dir":  "$project_path",
+	"selector": "source.squirrel",
+	"variants": [
+		{
+		    "name" : "Update Mod and Launch",
+		    "working_dir" : "$project_path",
+		    "shell_cmd" : "\"$bbbuild_path\" build \"$project_path\" true"
+		},
+	    {
+	        "name" : "Update Mod",
+	        "working_dir" : "",
+	        "shell_cmd" : "\"$bbbuild_path\" build \"$project_path\" "
+	    },
+	    {
+	        "name" : "Run Locally",
+	        "shell_cmd":  "\"$sq_path\" $file"
+	    }
+	]
+}
