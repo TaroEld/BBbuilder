@@ -251,12 +251,17 @@ namespace BBbuilder
         private bool CopyZipToData()
         {
             string gamePath = Properties.Settings.Default.GamePath;
-            string dataZipPath = Path.Combine(gamePath, $"{this.ModName}.zip");
+            string zipName = $"{this.ModName}.zip";
+            
+            string dataZipPath = Path.Combine(gamePath, zipName);
             if (File.Exists(dataZipPath))
             {
                 File.Delete(dataZipPath);
             }
-            File.Copy(this.ZipPath, dataZipPath);
+            if (Properties.Settings.Default.MoveZip)
+                File.Move(this.ZipPath, dataZipPath);
+            else
+                File.Copy(this.ZipPath, dataZipPath);
             return true;
         }
 

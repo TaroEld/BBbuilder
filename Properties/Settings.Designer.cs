@@ -57,5 +57,17 @@ namespace BBbuilder.Properties {
                 this["Folders"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool MoveZip {
+            get {
+                return ((bool)(this["MoveZip"]));
+            }
+            set {
+                this["MoveZip"] = value;
+            }
+        }
     }
 }

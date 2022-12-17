@@ -21,7 +21,8 @@ namespace BBbuilder
                 {"datapath", "Set path to the data directory. (For example: bbuilder config datapath G:/Games/SteamLibrary/steamapps/common/Battle Brothers/data)"},
                 {"modpath", "Set path to the mods directory. (For example: bbuilder config modpath G:/Games/BB/Mods/WIP)" },
                 {"folders", "Add folders to be included in projects. Must be space. New mods added by the init command are automatically added." +
-                " (For example: bbuilder config folders G:/Games/BB/Mods/WIP/mod_msu F:/MODDING/basegame/scripts)"}
+                " (For example: bbuilder config folders G:/Games/BB/Mods/WIP/mod_msu F:/MODDING/basegame/scripts)"},
+                {"movezip", "Whether you want the final .zip file to be copied or moved to data. Default is copy." }
             };
         }
 
@@ -129,8 +130,13 @@ namespace BBbuilder
                     Console.WriteLine($"Added path {line} to folders to be added to build file.");
                 }
             }
+            if (command == "movezip")
+            {
+                Properties.Settings.Default.MoveZip = Convert.ToBoolean(_args[2]);
+            }
             Properties.Settings.Default.Save();
             PrintConfig();
+            UpdateBuildFiles();
             return true;
         }
 
