@@ -25,12 +25,15 @@ namespace BBbuilder
             this.Arguments = new string[]
             {
                 "Mandatory: Specify the path of the mod to be built. (Example: bbuilder build G:/Games/BB/Mods/WIP/mod_msu)",
-                "Optional: Pass 'true' to close BattleBrothers.exe and start it again after building the mod. (Example: bbuilder build G:/Games/BB/Mods/WIP/mod_msu true)",
+                "Optional: Pass 'true' as second argument to close BattleBrothers.exe and start it again after building the mod. (Example: bbuilder build G:/Games/BB/Mods/WIP/mod_msu true)",
+                "Optional: Pass 'true' as third argument to compile the files only. (Example: bbuilder build G:/Games/BB/Mods/WIP/mod_msu false true)",
+                "Optional: Pass 'true' as fourth argument to pack script files only. (Example: bbuilder build G:/Games/BB/Mods/WIP/mod_msu true false true)",
             };
         }
 
         public override bool HandleCommand(string[] _args)
         {
+            bool compileOnly = _args.Length > 3 && _args[3] == "true";
             if (!base.HandleCommand(_args))
             {
                 return false;
@@ -44,9 +47,13 @@ namespace BBbuilder
             this.ModName = new DirectoryInfo(this.ModPath).Name;
             this.ZipPath = Path.Combine(this.ModPath, this.ModName) + ".zip";
 
-            Console.WriteLine($"Attempting to create {this.ZipPath}");
 
             RemoveOldFiles();
+            if (!compileOnly)
+            {
+                Console.WriteLine($"Attempting to create {this.ZipPath}");
+                RemoveOldFiles();
+            }
             if (!CompileFiles())
             {
                 Console.WriteLine("Failed while compiling files");
@@ -54,6 +61,11 @@ namespace BBbuilder
                 return false;
             }
             if (!PackBrushFiles())
+            // Leave early if compile only is specified
+            if (compileOnly)
+            {
+                return true;
+            }
             {
                 Console.WriteLine("Failed while packing brush files");
                 RemoveOldFiles();
