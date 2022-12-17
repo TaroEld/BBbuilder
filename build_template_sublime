@@ -3,18 +3,28 @@
 	"selector": "source.nut",
 	"variants": [
 		{
-		    "name" : "Update Mod and Launch",
-		    "working_dir" : "$project_path",
-		    "shell_cmd" : "\"$bbbuild_path\" build \"$project_path\" true"
+			"name": "Update Mod",
+			"working_dir": "",
+			"shell_cmd": "\"$bbbuild_path\" build \"$project_path\" "
 		},
-	    {
-	        "name" : "Update Mod",
-	        "working_dir" : "",
-	        "shell_cmd" : "\"$bbbuild_path\" build \"$project_path\" "
-	    },
-	    {
-	        "name" : "Run Locally",
-	        "shell_cmd":  "\"$sq_path\" $file"
-	    }
+		{
+			"name": "Update Mod and Launch",
+			"working_dir": "$project_path",
+			"shell_cmd": "\"$bbbuild_path\" build \"$project_path\" true"
+		},
+		{
+			"name": "Update Without Assets",
+			"working_dir": "",
+			"shell_cmd": "\"$bbbuild_path\" buildscripts \"$project_path\" "
+		},
+		{
+			"name": "Compile files",
+			"working_dir": "",
+			"shell_cmd": "\"$bbbuild_path\" compile \"$project_path\""
+		},
+		{
+			"name": "Run File",
+			"shell_cmd": "\"$sq_path\" $file"
+		}
 	]
 }

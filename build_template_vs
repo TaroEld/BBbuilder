@@ -1,36 +1,56 @@
 ﻿{
     "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "Update mod",
-            "type": "shell",
-            "command": "\"$bbbuild_path\" build \"${fileWorkspaceFolder}\" ",
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
-        },
-        {
-            "label": "Update mod and launch",
-            "type": "shell",
-            "command": "\"$bbbuild_path\" build \"${fileWorkspaceFolder}\" true",
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
-        },
-        {
-            "label": "Run locally",
-            "type": "shell",
-            "command": "\"$sq_path\" \"${file}\" ",
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": false
-            }
-        }
-    ]
+  "tasks": [
+    {
+      "label": "Update mod",
+      "type": "shell",
+      "command": "\"$bbbuild_path\" build \"${fileWorkspaceFolder}\" ",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Update mod and launch",
+      "type": "shell",
+      "command": "\"$bbbuild_path\" build \"${fileWorkspaceFolder}\" true",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Update without assets",
+      "type": "shell",
+      "command": "\"$bbbuild_path\" buildscripts \"${fileWorkspaceFolder}\"",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Compile Files",
+      "type": "shell",
+      "command": "\"$bbbuild_path\" compile \"${fileWorkspaceFolder}\"",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Run File",
+      "type": "shell",
+      "command": "\"$sq_path\" \"${file}\" ",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
+    }
+  ]
 }
 
