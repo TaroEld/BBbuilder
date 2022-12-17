@@ -13,8 +13,9 @@ namespace BBbuilder
 {
     class BuildCommand : Command
     {
+        String[] ExcludedAssetFolders = new String[] { ".git", ".github", "unpacked_brushes", ".vscode", ".utils", "assets", "modtools", "music", "sounds", "gfx", "brushes" };
         String[] ExcludedZipFolders = new String[] { ".git", ".github", "unpacked_brushes", ".vscode", ".utils", "assets", "modtools" };
-        String[] ExcludedScriptFolders = new String[] { ".git", ".github", "gfx", "ui", "preload", "brushes", "music", "sounds", "unpacked_brushes", "tempfolder", ".vscode", "nexus", ".utils", "assets" };
+        String[] ExcludedScriptFolders = new String[] { "ui", ".git", ".github", "gfx", "preload", "brushes", "music", "sounds", "unpacked_brushes", "tempfolder", ".vscode", "nexus", ".utils", "assets" };
         string ModPath;
         string ModName;
         string ZipPath;
