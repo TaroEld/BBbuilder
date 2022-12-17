@@ -89,9 +89,9 @@ namespace BBbuilder
             }
 
             bool noCompileErrors = true;
-
-            foreach (string nutFilePath in allNutFilesAsPath)
+            Parallel.For(0, allNutFilesAsPath.Length, (i, state) =>
             {
+                string nutFilePath = allNutFilesAsPath[i];
                 string cnutFilePath = Path.ChangeExtension(nutFilePath, ".cnut");
                 string sqCommand = String.Format("-o \"{0}\" -c \"{1}\"", cnutFilePath, nutFilePath);
 
@@ -113,7 +113,7 @@ namespace BBbuilder
                     }
                     File.Delete(cnutFilePath);
                 }
-            }
+            });
             if (noCompileErrors)
                 Console.WriteLine("Successfully compiled files!");
             return noCompileErrors;
@@ -163,12 +163,13 @@ namespace BBbuilder
                 Directory.CreateDirectory(brushesPath);
             }
             string[] subFolders = Directory.GetDirectories(folderPath);
-            foreach (string subFolder in subFolders)
+            Parallel.For(0, subFolders.Length, (i, state) =>
             {
+                string subFolder = subFolders[i];
                 string folderName = new DirectoryInfo(subFolder).Name;
                 string brushName = $"{folderName}.brush";
                 string command = $"pack {brushName} {subFolder}";
-                if(File.Exists(Path.Combine(brushesPath, brushName)))
+                if (File.Exists(Path.Combine(brushesPath, brushName)))
                 {
                     File.Delete(Path.Combine(brushesPath, brushName));
                 }
@@ -186,13 +187,13 @@ namespace BBbuilder
                     {
                         Console.WriteLine($"Error building brush {brushName}!");
                         Console.WriteLine(output);
-                        continue;
+                        return;
                     }
                     Console.WriteLine($"Packed Brush {brushName}");
                     File.Copy(Path.Combine(this.ModPath, brushName), Path.Combine(brushesPath, brushName));
                     File.Delete(Path.Combine(this.ModPath, brushName));
                 }
-            }
+            });
             DirectoryInfo wipFolder = Directory.GetParent(this.ModPath);
             if (Directory.Exists(Path.Combine(wipFolder.ToString(), "gfx")))
             {
