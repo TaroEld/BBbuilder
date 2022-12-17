@@ -36,6 +36,7 @@ namespace BBbuilder
                     continue;
                 Properties.Settings.Default.GamePath = passedPath;
                 Console.WriteLine($"datapath set to {passedPath}.");
+                Properties.Settings.Default.Save();
             }
             while (!Directory.Exists(Properties.Settings.Default.ModPath))
             {
@@ -44,12 +45,12 @@ namespace BBbuilder
                 if (!Directory.Exists(passedPath))
                 {
                     Console.WriteLine($"Directory {passedPath} does not exist!");
-                    continue;
+                     continue;
                 }
                 Properties.Settings.Default.ModPath = passedPath;
                 Console.WriteLine($"datapath set to {passedPath}.");
+                Properties.Settings.Default.Save();
             }
-            Properties.Settings.Default.Save();
             UpdateBuildFiles();
         }
 
