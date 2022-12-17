@@ -276,12 +276,16 @@ namespace BBbuilder
             string bbFolder = Directory.GetParent(Properties.Settings.Default.GamePath).ToString();
             string bbExe = Path.Combine(bbFolder, "win32", "BattleBrothers.exe");
             Console.WriteLine($"Starting Battle Brothers ({bbExe})");
-            Process.Start(bbExe);
+            using (Process startGame = new Process())
+            {
+                startGame.StartInfo.UseShellExecute = true;
+                startGame.StartInfo.FileName = bbExe;
+                startGame.Start();
+            }
         }
 
         private void RemoveOldFiles()
         {
-            Console.WriteLine("Removing old files...");
             if (File.Exists(this.ZipPath))
             {
                 File.Delete(this.ZipPath);
