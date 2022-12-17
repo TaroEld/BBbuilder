@@ -18,6 +18,7 @@ namespace BBbuilder
         string ModPath;
         string ModName;
         string ZipPath;
+        bool ScriptOnly;
         public BuildCommand()
         {
             this.Name = "build";
@@ -34,6 +35,7 @@ namespace BBbuilder
         public override bool HandleCommand(string[] _args)
         {
             bool compileOnly = _args.Length > 3 && _args[3] == "true";
+            this.ScriptOnly = _args.Length > 4 && _args[4] == "true";
             if (!base.HandleCommand(_args))
             {
                 return false;
@@ -45,10 +47,11 @@ namespace BBbuilder
                 return false;
             }
             this.ModName = new DirectoryInfo(this.ModPath).Name;
+            if (this.ScriptOnly)
+                this.ModName += "_scripts";
             this.ZipPath = Path.Combine(this.ModPath, this.ModName) + ".zip";
 
 
-            RemoveOldFiles();
             if (!compileOnly)
             {
                 Console.WriteLine($"Attempting to create {this.ZipPath}");
@@ -60,12 +63,12 @@ namespace BBbuilder
                 RemoveOldFiles();
                 return false;
             }
-            if (!PackBrushFiles())
             // Leave early if compile only is specified
             if (compileOnly)
             {
                 return true;
             }
+            if (!this.ScriptOnly && !PackBrushFiles())
             {
                 Console.WriteLine("Failed while packing brush files");
                 RemoveOldFiles();
@@ -220,7 +223,15 @@ namespace BBbuilder
         private bool ZipFolders()
         {
             // Using the Ionic DotNetZip library as this makes it significantly easier to recursively zip folders
-            string[] allowedFolders = GetAllowedFolders(this.ExcludedZipFolders);
+            
+            string[] allowedFolders; 
+            if (this.ScriptOnly)
+            {
+                string[] excludedFolders = this.ExcludedScriptFolders.Where(val => val != "ui").ToArray();
+                allowedFolders = GetAllowedFolders(excludedFolders);
+            }
+            else
+                allowedFolders = GetAllowedFolders(this.ExcludedZipFolders);
             using (var zip = new Ionic.Zip.ZipFile(this.ZipPath))
             {
                 foreach (string folderPath in allowedFolders)
