@@ -57,7 +57,6 @@ namespace BBbuilder
         {
             string exeFile = Utils.EXEPATH.Replace("\\", "\\\\");
             string sqFile = Utils.SQPATH.Replace("\\", "\\\\");
-            Console.WriteLine(Utils.EXECUTINGFOLDER);
             void setupFile(string _localPath, string _fileName)
             {
                 string template = Utils.ReadFile("BBbuilder." + _localPath);
@@ -65,8 +64,8 @@ namespace BBbuilder
                 template = template.Replace("$sq_path", sqFile);
                 File.WriteAllText(Path.Combine(Utils.EXECUTINGFOLDER, "tools", _fileName), template);
             }
-            setupFile("build_template_vs", "bb_build.sublime-build");
-            setupFile("build_template_sublime", "tasks.json");
+            setupFile("build_template_sublime", "bb_build.sublime-build");
+            setupFile("build_template_vs", "tasks.json");
         }
 
         public static void PrintConfig()
