@@ -16,7 +16,6 @@ namespace BBbuilder
         {
             // Properties.Settings.Default.Reset();
             var watch = new System.Diagnostics.Stopwatch();
-
             watch.Start();
 
             Dictionary<string, Command> Commands = new();
@@ -27,8 +26,9 @@ namespace BBbuilder
             Commands.Add("compile", new CompileCommand());
             Commands.Add("buildscripts", new BuildScriptsCommand());
             var config = new ConfigCommand();
-            Commands.Add("config", config);
             config.SetupConfig();
+            Commands.Add("config", config);
+            
             if (args == null || args.Length == 0)
             {
                 Console.WriteLine($"Printing possible commands.\n");
@@ -40,7 +40,7 @@ namespace BBbuilder
                 Utils.PrintHelp(Commands);
             }
             else
-            {
+            {                   
                 if (Commands[args[0]].HandleCommand(args))
                 {
                     watch.Stop();
