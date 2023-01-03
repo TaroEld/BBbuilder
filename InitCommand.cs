@@ -110,8 +110,8 @@ namespace BBbuilder
                 }
             }
             // Add mod folder too
-            sublimeProjectObject.folders.Add(new Folder { path = this.ModPath });
-            vsCodeProjectObject.folders.Add(new Folder { path = this.ModPath });
+            sublimeProjectObject.folders.Add(new Folder { path = "." });
+            vsCodeProjectObject.folders.Add(new Folder { path = ".." });
 
             var options = new JsonSerializerOptions { WriteIndented = true };
             string sublimeJsonString = JsonSerializer.Serialize(sublimeProjectObject, options);
