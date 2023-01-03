@@ -58,15 +58,19 @@ namespace BBbuilder
         {
             string exeFile = Utils.EXEPATH.Replace("\\", "\\\\");
             string sqFile = Utils.SQPATH.Replace("\\", "\\\\");
-            void setupFile(string _localPath, string _fileName)
+            void setupFile(string _localPath, string _fileName, string _destinationPath)
             {
                 string template = Utils.ReadFile("BBbuilder." + _localPath);
                 template = template.Replace("$bbbuild_path", exeFile);
                 template = template.Replace("$sq_path", sqFile);
                 File.WriteAllText(Path.Combine(Utils.EXECUTINGFOLDER, "tools", _fileName), template);
+                if (_destinationPath != "" && Directory.Exists(Path.Combine(_destinationPath, _fileName)))
+                {
+                    File.Copy(Path.Combine(Utils.EXECUTINGFOLDER, "tools", _fileName), Path.Combine(_destinationPath, _fileName), true);
+                }
             }
-            setupFile("build_template_sublime", "bb_build.sublime-build");
-            setupFile("build_template_vs", "tasks.json");
+            setupFile("build_template_sublime", "bb_build.sublime-build", Path.Combine(new string[] { Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Sublime Text", "Packages", "User" }));
+            setupFile("build_template_vs", "tasks.json", "");
         }
 
         public static void PrintConfig()

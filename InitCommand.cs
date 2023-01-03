@@ -31,27 +31,10 @@ namespace BBbuilder
             {
                 return false;
             }
-            string modName = _args[1];
-
-            this.ModName = modName;
-            if (this.ModName.IndexOf(" ") != -1)
+            if (!ParseCommand(_args))
             {
-                Console.WriteLine($"Found Space character in mod name {this.ModName}! Please don't do that. Exiting...");
                 return false;
             }
-
-            if (_args.Length > 2)
-            {
-                string alternativePath = _args[2];
-                if (!Directory.Exists(alternativePath))
-                {
-                    Console.WriteLine($"Passed alternative path {alternativePath} but this folder does not exist!");
-                    return false;
-                }
-                this.ModPath = Path.Combine(alternativePath, modName);
-            }
-            else this.ModPath = Path.Combine(Properties.Settings.Default.ModPath, modName);
-
             if (Directory.Exists(this.ModPath))
             {
                 Console.WriteLine($"Directory '{this.ModPath}' already exists! Exiting to avoid mistakes...");
@@ -61,6 +44,27 @@ namespace BBbuilder
             CreateTemplateFile();
             WriteProjectFiles();
             Process.Start("explorer.exe", this.ModPath);
+            return true;
+        }
+
+        private bool ParseCommand(string[] _args)
+        {
+            if (_args[1].IndexOf(" ") != -1)
+            {
+                Console.WriteLine($"Found Space character in mod name {_args[1]}! Please don't do that. Exiting...");
+                return false;
+            }
+            this.ModName = _args[1];
+            if (_args.Length > 2)
+            {
+                if (!Directory.Exists(_args[2]))
+                {
+                    Console.WriteLine($"Passed alternative path {_args[2]} but this folder does not exist!");
+                    return false;
+                }
+                this.ModPath = Path.Combine(_args[2], this.ModName);
+            }
+            else this.ModPath = Path.Combine(Properties.Settings.Default.ModPath, this.ModName);
             return true;
         }
 

@@ -14,6 +14,8 @@ namespace BBbuilder
         string ModPath;
         string ModName;
         string ZipPath;
+        string AlternativePath;
+        List<string> InitCommandArray;
         public ExtractCommand()
         {
             this.Name = "extract";
@@ -23,6 +25,7 @@ namespace BBbuilder
                 "Mandatory: Specify path of mod to extract. The file will be put in your specified 'mods' directory. (Example: bbuilder extract C:/Users/user/Desktop/mod_test.zip)",
                 "Optional: Specify alternative path to extract the mod to. (Example: bbuilder extract C:/Users/user/Desktop/mod_test.zip C:/Users/user/Desktop/test/)",
             };
+            this.InitCommandArray = new List<string>();
         }
 
         public override bool HandleCommand(string[] _args)
@@ -31,35 +34,14 @@ namespace BBbuilder
             {
                 return false;
             }
-            this.ZipPath = _args[1];
-            if (!File.Exists(this.ZipPath))
+            if (!ParseCommand(_args))
             {
-                Console.WriteLine($"Passed path to extract: {this.ZipPath} but this file does not exist!");
                 return false;
             }
-            Console.WriteLine($"Extracting zip {this.ZipPath}");
-
-            this.ModName = Path.GetFileNameWithoutExtension(this.ZipPath);
-            this.ModPath = Path.Combine(Properties.Settings.Default.ModPath, this.ModName);
-            // Console.WriteLine($"Modname: {this.ModName}");
-            List<string> initCommandArray = new List<string> { "init", this.ModName };
-            if (_args.Length > 2)
-            {
-                string alternativePath = _args[2];
-                // Console.WriteLine($"Alternative path: {alternativePath}");
-                if (!Directory.Exists(alternativePath))
-                {
-                    Console.WriteLine($"Passed alternative path {alternativePath} but this folder does not exist!");
-                    return false;
-                }
-                this.ModPath = Path.Combine(alternativePath, this.ModName);
-                initCommandArray.Add(alternativePath);
-            }
-            // Console.WriteLine($"ModPath: {this.ModPath}");
 
             // Create new folder with the initcommand, where the files will be extracted to
             InitCommand initCommand = new();
-            if (!initCommand.HandleCommand(initCommandArray.ToArray()))
+            if (!initCommand.HandleCommand(this.InitCommandArray.ToArray()))
             {
                 Console.WriteLine("Error while creating new folder! Exiting...");
                 return false;
@@ -75,6 +57,36 @@ namespace BBbuilder
             DecompileFiles();
             ExtractBrushes();
 
+            return true;
+        }
+
+        private bool ParseCommand(string[] _args)
+        {
+            if (!File.Exists(_args[1]))
+            {
+                Console.WriteLine($"Passed path to extract: {_args[1]} but this file does not exist!");
+                return false;
+            }
+            this.ZipPath = _args[1];
+            Console.WriteLine($"Extracting zip {this.ZipPath}");
+            this.InitCommandArray.Add("init");
+
+            this.ModName = Path.GetFileNameWithoutExtension(this.ZipPath);
+            this.ModPath = Path.Combine(Properties.Settings.Default.ModPath, this.ModName);
+            this.InitCommandArray.Add(this.ModName);
+            List<string> initCommandArray = new List<string> { "init", this.ModName };
+            if (_args.Length > 2)
+            {
+                string alternativePath = _args[2];
+                if (!Directory.Exists(_args[2]))
+                {
+                    Console.WriteLine($"Passed alternative path {_args[2]} but this folder does not exist!");
+                    return false;
+                }
+                this.AlternativePath = _args[2];
+                this.ModPath = Path.Combine(this.AlternativePath, this.ModName);
+                this.InitCommandArray.Add(this.AlternativePath);
+            }
             return true;
         }
 

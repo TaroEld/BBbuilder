@@ -20,6 +20,8 @@ namespace BBbuilder
         string ModName;
         string ZipPath;
         bool ScriptOnly;
+        bool CompileOnly;
+        bool StartGame;
         public BuildCommand()
         {
             this.Name = "build";
@@ -35,25 +37,15 @@ namespace BBbuilder
 
         public override bool HandleCommand(string[] _args)
         {
-            bool compileOnly = _args.Length > 3 && _args[3] == "true";
-            this.ScriptOnly = _args.Length > 4 && _args[4] == "true";
             if (!base.HandleCommand(_args))
             {
                 return false;
             }
-            this.ModPath = _args[1];
-            if (!Directory.Exists(this.ModPath))
+            if (!ParseCommand(_args))
             {
-                Console.WriteLine($"Passed mod path {this.ModPath} does not exist!");
                 return false;
             }
-            this.ModName = new DirectoryInfo(this.ModPath).Name;
-            if (this.ScriptOnly)
-                this.ModName += "_scripts";
-            this.ZipPath = Path.Combine(this.ModPath, this.ModName) + ".zip";
-
-
-            if (!compileOnly)
+            if (!this.CompileOnly)
             {
                 Console.WriteLine($"Attempting to create {this.ZipPath}");
                 RemoveOldFiles();
@@ -65,7 +57,7 @@ namespace BBbuilder
                 return false;
             }
             // Leave early if compile only is specified
-            if (compileOnly)
+            if (this.CompileOnly)
             {
                 return true;
             }
@@ -87,10 +79,27 @@ namespace BBbuilder
                 RemoveOldFiles();
                 return false;
             }
-            if (_args.Length > 2 && _args[2] == "true")
+            if (this.StartGame)
             { 
                 KillAndStartBB();
             }
+            return true;
+        }
+        private bool ParseCommand(string[] _args)
+        {
+            if (!Directory.Exists(_args[1]))
+            {
+                Console.WriteLine($"Passed mod path {_args[1]} does not exist!");
+                return false;
+            }
+            this.ModPath = _args[1];
+            this.ModName = new DirectoryInfo(this.ModPath).Name;
+            this.ZipPath = Path.Combine(this.ModPath, this.ModName) + ".zip";
+            this.StartGame = _args.Length > 2 && _args[2] == "true";
+            this.CompileOnly = _args.Length > 3 && _args[3] == "true";
+            this.ScriptOnly = _args.Length > 4 && _args[4] == "true";
+            if (this.ScriptOnly)
+                this.ModName += "_scripts";
             return true;
         }
 
