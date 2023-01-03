@@ -3,7 +3,7 @@
 	Name = "RENAME",
 	Version = "1.0.0"
 }
-::mods_registerMod(::RENAME.ID, ::RENAME.Version)
+::mods_registerMod(::RENAME.ID, ::RENAME.Version, ::RENAME.Name);
 
 ::mods_queue(::RENAME.ID, null, function()
 {
