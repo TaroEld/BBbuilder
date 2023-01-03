@@ -82,7 +82,7 @@ namespace BBbuilder
         {
             string nutTemplate = Utils.ReadFile("BBbuilder.template_preload.nut");
             nutTemplate = nutTemplate.Replace("$name", this.ModName);
-            string[] pathArray = new string[] { this.ModPath, "scripts", "!mods_preload", this.ModName, ".nut" };
+            string[] pathArray = new string[] { this.ModPath, "scripts", "!mods_preload", this.ModName + ".nut" };
             File.WriteAllText(Path.Combine(pathArray), nutTemplate);
             string gitignore = Utils.ReadFile("BBbuilder.gitignore_template");
             File.WriteAllText(Path.Combine(this.ModPath, ".gitignore"), gitignore);
