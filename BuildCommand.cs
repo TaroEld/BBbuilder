@@ -208,15 +208,18 @@ namespace BBbuilder
                     packBrush.Start();
                     string output = packBrush.StandardOutput.ReadToEnd();
                     packBrush.WaitForExit();
-                    if (packBrush.ExitCode == -2)
+                    if (packBrush.ExitCode == 2)
                     {
                         Console.WriteLine($"Error building brush {brushName}!");
                         Console.WriteLine(output);
-                        return;
+                        noCompileErrors = false;
                     }
-                    Console.WriteLine($"Packed Brush {brushName}");
-                    File.Copy(Path.Combine(this.ModPath, brushName), Path.Combine(brushesPath, brushName));
-                    File.Delete(Path.Combine(this.ModPath, brushName));
+                    else
+                    {
+                        Console.WriteLine($"Packed Brush {brushName}");
+                        File.Copy(Path.Combine(this.ModPath, brushName), Path.Combine(brushesPath, brushName));
+                        File.Delete(Path.Combine(this.ModPath, brushName));
+                    }
                 }
             });
             DirectoryInfo wipFolder = Directory.GetParent(this.ModPath);
