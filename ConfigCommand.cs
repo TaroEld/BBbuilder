@@ -64,7 +64,7 @@ namespace BBbuilder
                 template = template.Replace("$bbbuild_path", exeFile);
                 template = template.Replace("$sq_path", sqFile);
                 File.WriteAllText(Path.Combine(Utils.EXECUTINGFOLDER, "tools", _fileName), template);
-                if (_destinationPath != "" && Directory.Exists(Path.Combine(_destinationPath, _fileName)))
+                if (_destinationPath != "" && Directory.Exists(_destinationPath))
                 {
                     File.Copy(Path.Combine(Utils.EXECUTINGFOLDER, "tools", _fileName), Path.Combine(_destinationPath, _fileName), true);
                 }
