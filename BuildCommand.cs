@@ -118,7 +118,7 @@ namespace BBbuilder
             {
                 string nutFilePath = allNutFilesAsPath[i];
                 string cnutFilePath = Path.ChangeExtension(nutFilePath, ".cnut");
-                string sqCommand = String.Format("-o \"{0}\" -c \"{1}\"", cnutFilePath, nutFilePath);
+                string sqCommand = String.Format("-o NUL -c \"{1}\"", cnutFilePath, nutFilePath);
 
                 using (Process compiling = new Process())
                 {
@@ -136,7 +136,6 @@ namespace BBbuilder
 
                         noCompileErrors = false;
                     }
-                    File.Delete(cnutFilePath);
                 }
             });
             if (noCompileErrors)
