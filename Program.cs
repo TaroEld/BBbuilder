@@ -28,20 +28,24 @@ namespace BBbuilder
             var config = new ConfigCommand();
             config.SetupConfig();
             Commands.Add("config", config);
-            
-            if (args == null || args.Length == 0)
+
+            string[] arguments = args;
+            // Debug arguments
+            // string[] arguments = { "build", "G:/Games/BB/Mods/WIP/mod_reforged" };
+
+            if (arguments == null || arguments.Length == 0)
             {
                 Console.WriteLine($"Printing possible commands.\n");
                 Utils.PrintHelp(Commands);
             }
-            else if (!(Commands.ContainsKey(args[0])))
+            else if (!(Commands.ContainsKey(arguments[0])))
             {
-                Console.WriteLine($"Command {args[0]} not recognized! Printing possible commands.\n");
+                Console.WriteLine($"Command {arguments[0]} not recognized! Printing possible commands.\n");
                 Utils.PrintHelp(Commands);
             }
             else
             {                   
-                if (Commands[args[0]].HandleCommand(args))
+                if (Commands[arguments[0]].HandleCommand(arguments))
                 {
                     watch.Stop();
 
