@@ -13,6 +13,11 @@
 			"shell_cmd": "\"$bbbuild_path\" build \"$project_path\" -restart"
 		},
 		{
+			"name": "Update Mod without compiling and Launch",
+			"working_dir": "$project_path",
+			"shell_cmd": "\"$bbbuild_path\" build \"$project_path\" -restart -nocompile"
+		},
+		{
 			"name": "Update Without Assets",
 			"working_dir": "",
 			"shell_cmd": "\"$bbbuild_path\" build \"$project_path\" -scriptsonly"

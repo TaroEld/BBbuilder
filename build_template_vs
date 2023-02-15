@@ -22,6 +22,16 @@
       }
     },
     {
+      "label": "bbbuilder: Update mod without compiling and launch",
+      "type": "shell",
+      "command": "\"$bbbuild_path\" build \"${fileWorkspaceFolder}\" -restart -nocompile",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
       "label": "bbbuilder: Update without assets",
       "type": "shell",
       "command": "\"$bbbuild_path\" build \"${fileWorkspaceFolder}\" -scriptsonly",
