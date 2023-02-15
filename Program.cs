@@ -23,8 +23,6 @@ namespace BBbuilder
             Commands.Add("build", new BuildCommand());
             Commands.Add("init", new InitCommand());
             Commands.Add("extract", new ExtractCommand());
-            Commands.Add("compile", new CompileCommand());
-            Commands.Add("buildscripts", new BuildScriptsCommand());
             var config = new ConfigCommand();
             config.SetupConfig();
             Commands.Add("config", config);

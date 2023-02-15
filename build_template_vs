@@ -1,8 +1,8 @@
 ﻿{
-    "version": "2.0.0",
+  "version": "2.0.0",
   "tasks": [
     {
-      "label": "Update mod",
+      "label": "bbbuilder: Update mod",
       "type": "shell",
       "command": "\"$bbbuild_path\" build \"${fileWorkspaceFolder}\" ",
       "problemMatcher": [],
@@ -12,9 +12,9 @@
       }
     },
     {
-      "label": "Update mod and launch",
+      "label": "bbbuilder: Update mod and launch",
       "type": "shell",
-      "command": "\"$bbbuild_path\" build \"${fileWorkspaceFolder}\" true",
+      "command": "\"$bbbuild_path\" build \"${fileWorkspaceFolder}\" -restart",
       "problemMatcher": [],
       "group": {
         "kind": "build",
@@ -22,9 +22,9 @@
       }
     },
     {
-      "label": "Update without assets",
+      "label": "bbbuilder: Update without assets",
       "type": "shell",
-      "command": "\"$bbbuild_path\" buildscripts \"${fileWorkspaceFolder}\"",
+      "command": "\"$bbbuild_path\" build \"${fileWorkspaceFolder}\" -scriptsonly",
       "problemMatcher": [],
       "group": {
         "kind": "build",
@@ -32,9 +32,9 @@
       }
     },
     {
-      "label": "Compile Files",
+      "label": "bbbuilder: Update without assets and restart",
       "type": "shell",
-      "command": "\"$bbbuild_path\" compile \"${fileWorkspaceFolder}\"",
+      "command": "\"$bbbuild_path\" build \"${fileWorkspaceFolder}\" -scriptsonly -restart",
       "problemMatcher": [],
       "group": {
         "kind": "build",
@@ -42,7 +42,38 @@
       }
     },
     {
-      "label": "Run File",
+      "label": "bbbuilder: Update UI only",
+      "type": "shell",
+      "command": "\"$bbbuild_path\" build \"${fileWorkspaceFolder}\" -uionly",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "bbbuilder: Update UI only and restart",
+      "type": "shell",
+      "command": "\"$bbbuild_path\" build \"${fileWorkspaceFolder}\" -uionly -restart",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "bbbuilder: Compile",
+      "files\",": null,
+      "type": "shell",
+      "command": "\"$bbbuild_path\" build \"${fileWorkspaceFolder}\" -compileonly",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "bbbuilder: Run File",
       "type": "shell",
       "command": "\"$sq_path\" \"${file}\" ",
       "problemMatcher": [],

@@ -22,17 +22,59 @@ namespace BBbuilder
         bool ScriptOnly;
         bool CompileOnly;
         bool StartGame;
+        bool UIOnly;
+        bool NoCompile;
+        bool NoPack;
         public BuildCommand()
         {
             this.Name = "build";
-            this.Description = "test";
+            this.Description = "Builds your mod and creates a zip file that is copied to the data directory. Optionally can also simply compile the files.";
             this.Arguments = new string[]
             {
                 "Mandatory: Specify the path of the mod to be built. (Example: bbuilder build G:/Games/BB/Mods/WIP/mod_msu)",
-                "Optional: Pass 'true' as second argument to close BattleBrothers.exe and start it again after building the mod. (Example: bbuilder build G:/Games/BB/Mods/WIP/mod_msu true)",
-                "Optional: Pass 'true' as third argument to compile the files only. (Example: bbuilder build G:/Games/BB/Mods/WIP/mod_msu false true)",
-                "Optional: Pass 'true' as fourth argument to pack script files only. (Example: bbuilder build G:/Games/BB/Mods/WIP/mod_msu true false true)",
+                "Optional: Pass '-compileonly' to compile the files only without creating a zip.",
+                "Optional: Pass '-restart' to close BattleBrothers.exe and start it again after building the mod.",
+                "Optional: Pass '-scriptonly' to only pack script files. The mod will have a '_scripts' suffix.",
+                "Optional: Pass '-uionly' to only zip the gfx and ui folders. The mod will have a '_ui' suffix.",
+                "Optional: Pass '-nocompile' to speed up the build by not compiling files",
+                "Optional: Pass '-nopack' to speed up the build by not repacking brushes",
             };
+        }
+        private bool ParseCommand(string[] _args)
+        {
+            if (!Directory.Exists(_args[1]))
+            {
+                Console.WriteLine($"Passed mod path {_args[1]} does not exist!");
+                return false;
+            }
+            this.ModPath = _args[1];
+            this.ModName = new DirectoryInfo(this.ModPath).Name;
+            this.StartGame = Array.IndexOf(_args, "-restart") >= 0;
+
+            this.UIOnly = Array.IndexOf(_args, "-uionly") >= 0;
+            this.ScriptOnly = Array.IndexOf(_args, "-scriptonly") >= 0;
+
+            this.NoCompile = Array.IndexOf(_args, "-nocompile") >= 0;
+            this.CompileOnly = Array.IndexOf(_args, "-compileonly") >= 0;
+
+            this.NoPack = Array.IndexOf(_args, "-nopack") >= 0 || this.UIOnly || this.ScriptOnly;
+
+            if (this.ScriptOnly && this.UIOnly)
+            {
+                Console.WriteLine("-scriptonly and -uionly are mutually exclusive!");
+                throw new Exception();
+            }
+            if (this.NoCompile && this.CompileOnly)
+            {
+                Console.WriteLine("-nocompile and -compileonly are mutually exclusive");
+                throw new Exception();
+            }
+            if (this.ScriptOnly)
+                this.ModName += "_scripts";
+            if (this.UIOnly)
+                this.ModName += "_ui";
+            this.ZipPath = Path.Combine(this.ModPath, this.ModName) + ".zip";
+            return true;
         }
 
         public override bool HandleCommand(string[] _args)
@@ -46,11 +88,11 @@ namespace BBbuilder
                 return false;
             }
             if (!this.CompileOnly)
-            {
                 Console.WriteLine($"Attempting to create {this.ZipPath}");
-                RemoveOldFiles();
-            }
-            if (!CompileFiles())
+            else
+                Console.WriteLine($"Compiling files of mod {this.ZipPath}");
+
+            if (!this.UIOnly && !this.NoCompile && !CompileFiles())
             {
                 Console.WriteLine("Failed while compiling files");
                 RemoveOldFiles();
@@ -61,7 +103,7 @@ namespace BBbuilder
             {
                 return true;
             }
-            if (!this.ScriptOnly && !PackBrushFiles())
+            if (!this.NoPack && !PackBrushFiles())
             {
                 Console.WriteLine("Failed while packing brush files");
                 RemoveOldFiles();
@@ -80,26 +122,9 @@ namespace BBbuilder
                 return false;
             }
             if (this.StartGame)
-            { 
+            {
                 KillAndStartBB();
             }
-            return true;
-        }
-        private bool ParseCommand(string[] _args)
-        {
-            if (!Directory.Exists(_args[1]))
-            {
-                Console.WriteLine($"Passed mod path {_args[1]} does not exist!");
-                return false;
-            }
-            this.ModPath = _args[1];
-            this.ModName = new DirectoryInfo(this.ModPath).Name;
-            this.ZipPath = Path.Combine(this.ModPath, this.ModName) + ".zip";
-            this.StartGame = _args.Length > 2 && _args[2] == "true";
-            this.CompileOnly = _args.Length > 3 && _args[3] == "true";
-            this.ScriptOnly = _args.Length > 4 && _args[4] == "true";
-            if (this.ScriptOnly)
-                this.ModName += "_scripts";
             return true;
         }
 
@@ -143,7 +168,22 @@ namespace BBbuilder
             return noCompileErrors;
         }
 
-        private string[] GetAllowedFolders(string[] _forbiddenFolders)
+        private string[] getAllowedFolders(string[] _allowedFolders)
+        {
+            List<string> ret = new();
+            string[] allFolders = Directory.GetDirectories(this.ModPath);
+            foreach (string folderPath in allFolders)
+            {
+                string folderName = new DirectoryInfo(folderPath).Name;
+                if (_allowedFolders.Contains(folderName))
+                {
+                    ret.Add(folderPath);
+                }
+            }
+            return ret.ToArray();
+        }
+
+        private string[] getAllFoldersExcept(string[] _forbiddenFolders)
         {
             List<string> ret = new();
             string[] allFolders = Directory.GetDirectories(this.ModPath);
@@ -155,7 +195,6 @@ namespace BBbuilder
                     ret.Add(folderPath);
                 }
             }
-            String[] retArray = ret.ToArray();
             return ret.ToArray();
         }
 
@@ -163,7 +202,7 @@ namespace BBbuilder
         {
             List<string> ret = new();
 
-            string[] allowedFolders = GetAllowedFolders(this.ExcludedScriptFolders);
+            string[] allowedFolders = getAllFoldersExcept(this.ExcludedScriptFolders);
             foreach (string folderPath in allowedFolders)
             {
                 ret.AddRange(Directory.GetFiles(folderPath, "*.nut", SearchOption.AllDirectories));
@@ -175,6 +214,11 @@ namespace BBbuilder
         private bool PackBrushFiles()
         {
             string brushesPath = Path.Combine(this.ModPath, "brushes");
+            if (Directory.Exists(brushesPath))
+            {
+                Directory.Delete(brushesPath, true);
+                Console.WriteLine($"Removed folder {brushesPath}");
+            }
             string folderPath = Path.Combine(this.ModPath, "unpacked_brushes");
             bool noCompileErrors = true;
             if (!Directory.Exists(folderPath) || Directory.GetDirectories(folderPath).Length == 0)
@@ -240,10 +284,14 @@ namespace BBbuilder
             if (this.ScriptOnly)
             {
                 string[] excludedFolders = this.ExcludedScriptFolders.Where(val => val != "ui").ToArray();
-                allowedFolders = GetAllowedFolders(excludedFolders);
+                allowedFolders = getAllFoldersExcept(excludedFolders);
+            }
+            else if (this.UIOnly)
+            {
+                allowedFolders = getAllowedFolders(new string[] { "ui", "gfx" });
             }
             else
-                allowedFolders = GetAllowedFolders(this.ExcludedZipFolders);
+                allowedFolders = getAllFoldersExcept(this.ExcludedZipFolders);
             using (var zip = new Ionic.Zip.ZipFile(this.ZipPath))
             {
                 foreach (string folderPath in allowedFolders)
