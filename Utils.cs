@@ -14,7 +14,7 @@ namespace BBbuilder
         public static string EXEPATH = Path.Combine(EXECUTINGFOLDER, "BBbuilder.exe");
         public static string SQPATH = Path.Combine(EXECUTINGFOLDER, "tools", "sq.exe");
         public static string BBRUSHERPATH = Path.Combine(EXECUTINGFOLDER, "tools", "bbrusher.exe");
-        public static string BBSQPATH = Path.Combine(EXECUTINGFOLDER, "tools", "bbrusher.exe");
+        public static string BBSQPATH = Path.Combine(EXECUTINGFOLDER, "tools", "bbsq.exe");
         public static string NUTCRACKERPATH = Path.Combine(EXECUTINGFOLDER, "tools", "nutcracker.exe");
         public static string ReadFile(string _path)
         {
