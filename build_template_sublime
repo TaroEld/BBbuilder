@@ -40,7 +40,7 @@
 		{
 			"name": "Compile files",
 			"working_dir": "",
-			"shell_cmd": "\"$bbbuild_path\" compile \"$project_path\" -compileonly"
+			"shell_cmd": "\"$bbbuild_path\" build \"$project_path\" -compileonly"
 		},
 		{
 			"name": "Run File",
