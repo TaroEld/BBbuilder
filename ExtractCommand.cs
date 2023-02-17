@@ -74,7 +74,6 @@ namespace BBbuilder
             this.ModName = Path.GetFileNameWithoutExtension(this.ZipPath);
             this.ModPath = Path.Combine(Properties.Settings.Default.ModPath, this.ModName);
             this.InitCommandArray.Add(this.ModName);
-            List<string> initCommandArray = new List<string> { "init", this.ModName };
             if (_args.Length > 2)
             {
                 string alternativePath = _args[2];
