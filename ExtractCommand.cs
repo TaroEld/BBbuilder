@@ -15,6 +15,7 @@ namespace BBbuilder
         string ModName;
         string ZipPath;
         string AlternativePath;
+        readonly OptionFlag Replace = new("-replace", "Replace the files in an existing folder.");
         List<string> InitCommandArray;
         public ExtractCommand()
         {
@@ -26,6 +27,7 @@ namespace BBbuilder
                 "Optional: Specify alternative path to extract the mod to. (Example: bbuilder extract C:/Users/user/Desktop/mod_test.zip C:/Users/user/Desktop/test/)",
             };
             this.InitCommandArray = new List<string>();
+            this.Flags = new OptionFlag[] { this.Replace }; 
         }
 
         public override bool HandleCommand(string[] _args)
@@ -34,7 +36,7 @@ namespace BBbuilder
             {
                 return false;
             }
-            if (!ParseCommand(_args))
+            if (!ParseCommand(_args.ToList()))
             {
                 return false;
             }
@@ -60,8 +62,9 @@ namespace BBbuilder
             return true;
         }
 
-        private bool ParseCommand(string[] _args)
+        private bool ParseCommand(List<string> _args)
         {
+            this.ParseFlags(_args);
             if (!File.Exists(_args[1]))
             {
                 Console.WriteLine($"Passed path to extract: {_args[1]} but this file does not exist!");
@@ -74,7 +77,7 @@ namespace BBbuilder
             this.ModName = Path.GetFileNameWithoutExtension(this.ZipPath);
             this.ModPath = Path.Combine(Properties.Settings.Default.ModPath, this.ModName);
             this.InitCommandArray.Add(this.ModName);
-            if (_args.Length > 2)
+            if (_args.Count > 2)
             {
                 string alternativePath = _args[2];
                 if (!Directory.Exists(_args[2]))
@@ -86,6 +89,8 @@ namespace BBbuilder
                 this.ModPath = Path.Combine(this.AlternativePath, this.ModName);
                 this.InitCommandArray.Add(this.AlternativePath);
             }
+            if (this.Replace)
+                this.InitCommandArray.Add("-replace");
             return true;
         }
 
@@ -93,7 +98,7 @@ namespace BBbuilder
         {
             try
             {
-                ZipFile.ExtractToDirectory(this.ZipPath, this.ModPath);
+                ZipFile.ExtractToDirectory(this.ZipPath, this.ModPath, this.Replace);
             }
             catch
             {

@@ -15,6 +15,7 @@ namespace BBbuilder
     {
         string ModName;
         string ModPath;
+        readonly OptionFlag Replace = new("-replace", "Replace the files in an existing folder.");
         public InitCommand()
         {
             this.Name = "init";
@@ -24,6 +25,7 @@ namespace BBbuilder
                 "Mandatory: Specify name of the new mod. The new mod will be created in your specified 'mods' directory. (Example: bbuilder init mod_test)",
                 "Optional: Specify alternative path where the new mod will be created. (Example: bbuilder init mod_test C:/Users/user/Desktop/test/)",
             };
+            this.Flags = new OptionFlag[] { this.Replace };
         }
         public override bool HandleCommand(string[] _args) 
         {
@@ -31,11 +33,11 @@ namespace BBbuilder
             {
                 return false;
             }
-            if (!ParseCommand(_args))
+            if (!ParseCommand(_args.ToList()))
             {
                 return false;
             }
-            if (Directory.Exists(this.ModPath))
+            if (!this.Replace && Directory.Exists(this.ModPath))
             {
                 Console.WriteLine($"Directory '{this.ModPath}' already exists! Exiting to avoid mistakes...");
                 return false;
@@ -47,15 +49,16 @@ namespace BBbuilder
             return true;
         }
 
-        private bool ParseCommand(string[] _args)
+        private bool ParseCommand(List<string>_args)
         {
+            this.ParseFlags(_args);
             if (_args[1].IndexOf(" ") != -1)
             {
                 Console.WriteLine($"Found Space character in mod name {_args[1]}! Please don't do that. Exiting...");
                 return false;
             }
             this.ModName = _args[1];
-            if (_args.Length > 2)
+            if (_args.Count > 2)
             {
                 if (!Directory.Exists(_args[2]))
                 {
