@@ -113,8 +113,9 @@ namespace BBbuilder
                 return true;
             }
             Console.WriteLine("Starting to decompile files.");
-            foreach (string cnutFilePath in allCnutFilesAsPath)
+            Parallel.For(0, allCnutFilesAsPath.Length, (i, state) =>
             {
+                string cnutFilePath = allCnutFilesAsPath[i];
                 string nutFilePath = Path.ChangeExtension(cnutFilePath, ".nut");
                 string bbsqCommand = String.Format("-d \"{0}\"", cnutFilePath);
                 string nutcrackerCommand = $"\"{cnutFilePath}\"";
@@ -132,7 +133,7 @@ namespace BBbuilder
                         Console.WriteLine($"Error decrypting file {cnutFilePath}!");
                         StreamReader myStreamReader = decrypting.StandardOutput;
                         Console.WriteLine(myStreamReader.ReadLine());
-                        continue;
+                        return;
                     }
                 }
 
@@ -165,13 +166,13 @@ namespace BBbuilder
                     if (decompiling.ExitCode == -2)
                     {
                         Console.WriteLine($"Error decompiling file {cnutFilePath}!");
-                        continue;
+                        return;
                     }
                 }
                 decompileOutput += $"Decompiled file {nutFilePath}\n";
 
                 File.Delete(cnutFilePath);
-            }
+            });
             Console.WriteLine(decompileOutput); 
             Console.WriteLine("Finished decompiling files.");
             return true;
