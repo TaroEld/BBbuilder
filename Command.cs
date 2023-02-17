@@ -12,6 +12,7 @@ namespace BBbuilder
         public string Description { get; set; }
         public Dictionary<string, string> Commands = new();
         public String[] Arguments;
+        public OptionFlag[] Flags;
         virtual public bool HandleCommand(string[] _args)
         {
             if (_args.Length == 1)
@@ -22,11 +23,23 @@ namespace BBbuilder
             }
             return true;
         }
+
+        public void ParseFlags(List<string> _args)
+        {
+            if (this.Flags != null && this.Flags.Length > 0)
+            {
+                foreach (OptionFlag flag in this.Flags)
+                {
+                    flag.Validate(_args);
+                }
+            }
+        }
+
         void PrintCommands()
         {
             if (this.Commands.Count > 0)
             {
-                Console.WriteLine("List of commands:");
+                Console.WriteLine("List of subcommands:");
                 foreach (KeyValuePair<string, string> entry in this.Commands)
                 {
                     Console.WriteLine($"{entry.Key} : {entry.Value}");
@@ -38,6 +51,14 @@ namespace BBbuilder
                 foreach (string entry in this.Arguments)
                 {
                     Console.WriteLine(entry);
+                }
+            }
+            if (this.Flags != null && this.Flags.Length > 0)
+            {
+                Console.WriteLine("List of flags:");
+                foreach (OptionFlag flag in this.Flags)
+                {
+                    flag.PrintDescription();
                 }
             }
         }

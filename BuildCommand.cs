@@ -19,12 +19,12 @@ namespace BBbuilder
         string ModPath;
         string ModName;
         string ZipPath;
-        bool ScriptOnly;
-        bool CompileOnly;
-        bool StartGame;
-        bool UIOnly;
-        bool NoCompile;
-        bool NoPack;
+        readonly OptionFlag ScriptOnly = new("-scriptonly", "Only pack script files. The mod will have a '_scripts' suffix.");
+        readonly OptionFlag CompileOnly = new("-compileonly", "Compile the .nut files without creating a .zip.");
+        readonly OptionFlag StartGame = new("-restart", "Exit and then start BattleBrothers.exe after building the mod.");
+        readonly OptionFlag UIOnly = new("-uionly", "Only zip the gfx and ui folders. The mod will have a '_ui' suffix.");
+        readonly OptionFlag NoCompile = new("-nocompile", "Speed up the build by not compiling files");
+        readonly OptionFlag NoPack = new("-nopack", "Speed up the build by not repacking brushes");
         public BuildCommand()
         {
             this.Name = "build";
@@ -32,16 +32,13 @@ namespace BBbuilder
             this.Arguments = new string[]
             {
                 "Mandatory: Specify the path of the mod to be built. (Example: bbuilder build G:/Games/BB/Mods/WIP/mod_msu)",
-                "Optional: Pass '-compileonly' to compile the files only without creating a zip.",
-                "Optional: Pass '-restart' to close BattleBrothers.exe and start it again after building the mod.",
-                "Optional: Pass '-scriptonly' to only pack script files. The mod will have a '_scripts' suffix.",
-                "Optional: Pass '-uionly' to only zip the gfx and ui folders. The mod will have a '_ui' suffix.",
-                "Optional: Pass '-nocompile' to speed up the build by not compiling files",
-                "Optional: Pass '-nopack' to speed up the build by not repacking brushes",
             };
+            this.Flags = new OptionFlag[] { this.ScriptOnly, this.CompileOnly, this.StartGame, this.UIOnly, this.NoCompile, this.NoPack };
         }
-        private bool ParseCommand(string[] _args)
+        private bool ParseCommand(List<string> _args)
         {
+            this.ParseFlags(_args);
+
             if (!Directory.Exists(_args[1]))
             {
                 Console.WriteLine($"Passed mod path {_args[1]} does not exist!");
@@ -49,15 +46,6 @@ namespace BBbuilder
             }
             this.ModPath = _args[1];
             this.ModName = new DirectoryInfo(this.ModPath).Name;
-            this.StartGame = Array.IndexOf(_args, "-restart") >= 0;
-
-            this.UIOnly = Array.IndexOf(_args, "-uionly") >= 0;
-            this.ScriptOnly = Array.IndexOf(_args, "-scriptonly") >= 0;
-
-            this.NoCompile = Array.IndexOf(_args, "-nocompile") >= 0;
-            this.CompileOnly = Array.IndexOf(_args, "-compileonly") >= 0;
-
-            this.NoPack = Array.IndexOf(_args, "-nopack") >= 0 || this.UIOnly || this.ScriptOnly;
 
             if (this.ScriptOnly && this.UIOnly)
             {
@@ -83,7 +71,7 @@ namespace BBbuilder
             {
                 return false;
             }
-            if (!ParseCommand(_args))
+            if (!ParseCommand(_args.ToList()))
             {
                 return false;
             }
