@@ -266,8 +266,12 @@ namespace BBbuilder
 
         private bool ZipFolders()
         {
+            if (File.Exists(this.ZipPath))
+            {
+                File.Delete(this.ZipPath);
+            }
             // Using the Ionic DotNetZip library as this makes it significantly easier to recursively zip folders
-            
+
             string[] allowedFolders; 
             if (this.ScriptOnly)
             {
