@@ -4,7 +4,7 @@
     {
       "label": "bbbuilder: Update mod",
       "type": "shell",
-      "command": "\"$bbbuild_path\" build \"${fileWorkspaceFolder}\" ",
+      "command": "\"$bbbuild_path\" build \"${workspaceFolder}\" ",
       "problemMatcher": [],
       "group": {
         "kind": "build",
@@ -14,7 +14,7 @@
     {
       "label": "bbbuilder: Update mod and launch",
       "type": "shell",
-      "command": "\"$bbbuild_path\" build \"${fileWorkspaceFolder}\" -restart",
+      "command": "\"$bbbuild_path\" build \"${workspaceFolder}\" -restart",
       "problemMatcher": [],
       "group": {
         "kind": "build",
@@ -24,7 +24,7 @@
     {
       "label": "bbbuilder: Update mod without compiling and launch",
       "type": "shell",
-      "command": "\"$bbbuild_path\" build \"${fileWorkspaceFolder}\" -restart -nocompile",
+      "command": "\"$bbbuild_path\" build \"${workspaceFolder}\" -restart -nocompile",
       "problemMatcher": [],
       "group": {
         "kind": "build",
@@ -34,7 +34,7 @@
     {
       "label": "bbbuilder: Update without assets",
       "type": "shell",
-      "command": "\"$bbbuild_path\" build \"${fileWorkspaceFolder}\" -scriptsonly",
+      "command": "\"$bbbuild_path\" build \"${workspaceFolder}\" -scriptsonly",
       "problemMatcher": [],
       "group": {
         "kind": "build",
@@ -44,7 +44,7 @@
     {
       "label": "bbbuilder: Update without assets and restart",
       "type": "shell",
-      "command": "\"$bbbuild_path\" build \"${fileWorkspaceFolder}\" -scriptsonly -restart",
+      "command": "\"$bbbuild_path\" build \"${workspaceFolder}\" -scriptsonly -restart",
       "problemMatcher": [],
       "group": {
         "kind": "build",
@@ -54,7 +54,7 @@
     {
       "label": "bbbuilder: Update UI only",
       "type": "shell",
-      "command": "\"$bbbuild_path\" build \"${fileWorkspaceFolder}\" -uionly",
+      "command": "\"$bbbuild_path\" build \"${workspaceFolder}\" -uionly",
       "problemMatcher": [],
       "group": {
         "kind": "build",
@@ -64,7 +64,7 @@
     {
       "label": "bbbuilder: Update UI only and restart",
       "type": "shell",
-      "command": "\"$bbbuild_path\" build \"${fileWorkspaceFolder}\" -uionly -restart",
+      "command": "\"$bbbuild_path\" build \"${workspaceFolder}\" -uionly -restart",
       "problemMatcher": [],
       "group": {
         "kind": "build",
@@ -75,7 +75,7 @@
       "label": "bbbuilder: Compile",
       "files\",": null,
       "type": "shell",
-      "command": "\"$bbbuild_path\" build \"${fileWorkspaceFolder}\" -compileonly",
+      "command": "\"$bbbuild_path\" build \"${workspaceFolder}\" -compileonly",
       "problemMatcher": [],
       "group": {
         "kind": "build",
