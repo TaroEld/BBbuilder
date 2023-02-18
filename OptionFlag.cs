@@ -9,13 +9,16 @@ namespace BBbuilder
     class OptionFlag
     {
         bool Value;
-        string Flag;
+        public string Flag;
         string Description;
-        public OptionFlag(string _flag, string _description)
+        bool Positional;
+        public string PositionalValue;
+        public OptionFlag(string _flag, string _description, bool _positional = false)
         {
             this.Flag = _flag;
             this.Description = _description;
             this.Value = false;
+            this.Positional = _positional;
         }
         public void Validate(List<string> _args)
         {
@@ -24,6 +27,16 @@ namespace BBbuilder
             {
                 _args.RemoveAt(idx);
                 this.Value = true;
+                if (this.Positional)
+                {
+                    if (_args.Count < idx)
+                    {
+                        Console.WriteLine($"Passed positional flag {this.Flag} but no fitting argument found!");
+                        throw new Exception();
+                    }
+                    this.PositionalValue = _args[idx];
+                    _args.RemoveAt(idx);
+                }
             }
             else
             {
@@ -32,7 +45,8 @@ namespace BBbuilder
         }
         public void PrintDescription()
         {
-            Console.WriteLine($"{this.Flag} : {this.Description}");
+            string positional = this.Positional ? "(positional)" : "";
+            Console.WriteLine($"{this.Flag} {positional}: {this.Description}");
         }
 
         // Allows instances to be used as simple bools.
