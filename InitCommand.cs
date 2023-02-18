@@ -16,16 +16,16 @@ namespace BBbuilder
         string ModName;
         string ModPath;
         readonly OptionFlag Replace = new("-replace", "Replace the files in an existing folder.");
+        readonly OptionFlag AltPath = new("-alt", "Specify alternative path to extract the mod to.", true);
         public InitCommand()
         {
             this.Name = "init";
             this.Description = "Initialises a new mod. Pass the name of the mod to be initialised.";
             this.Arguments = new string[]
             {
-                "Mandatory: Specify name of the new mod. The new mod will be created in your specified 'mods' directory. (Example: bbuilder init mod_test)",
-                "Optional: Specify alternative path where the new mod will be created. (Example: bbuilder init mod_test C:/Users/user/Desktop/test/)",
+                "Mandatory: Specify name of the new mod. The new mod will be created in your specified 'mods' directory. (Example: bbuilder init mod_test)"
             };
-            this.Flags = new OptionFlag[] { this.Replace };
+            this.Flags = new OptionFlag[] { this.Replace, this.AltPath };
         }
         public override bool HandleCommand(string[] _args) 
         {
@@ -39,7 +39,7 @@ namespace BBbuilder
             }
             if (!this.Replace && Directory.Exists(this.ModPath))
             {
-                Console.WriteLine($"Directory '{this.ModPath}' already exists! Exiting to avoid mistakes...");
+                Console.WriteLine($"Directory '{this.ModPath}' already exists! Use flag '-replace' to overwrite existing folder. Exiting to avoid mistakes...");
                 return false;
             }
             CreateDirectories();
@@ -58,14 +58,14 @@ namespace BBbuilder
                 return false;
             }
             this.ModName = _args[1];
-            if (_args.Count > 2)
+            if (this.AltPath)
             {
-                if (!Directory.Exists(_args[2]))
+                if (!Directory.Exists(this.AltPath.PositionalValue))
                 {
-                    Console.WriteLine($"Passed alternative path {_args[2]} but this folder does not exist!");
+                    Console.WriteLine($"Passed alternative path {this.AltPath.PositionalValue} but this folder does not exist!");
                     return false;
                 }
-                this.ModPath = Path.Combine(_args[2], this.ModName);
+                this.ModPath = Path.Combine(this.AltPath.PositionalValue, this.ModName);
             }
             else this.ModPath = Path.Combine(Properties.Settings.Default.ModPath, this.ModName);
             return true;

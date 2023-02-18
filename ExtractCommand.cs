@@ -14,8 +14,9 @@ namespace BBbuilder
         string ModPath;
         string ModName;
         string ZipPath;
-        string AlternativePath;
         readonly OptionFlag Replace = new("-replace", "Replace the files in an existing folder.");
+        readonly OptionFlag Rename = new("-rename", "Renames the extracted mod.", true);
+        readonly OptionFlag AltPath = new("-alt", "Specify alternative path to extract the mod to.", true);
         List<string> InitCommandArray;
         public ExtractCommand()
         {
@@ -23,11 +24,10 @@ namespace BBbuilder
             this.Description = "Extract an existing mod to a new or specified directory";
             this.Arguments = new String[]
             {
-                "Mandatory: Specify path of mod to extract. The file will be put in your specified 'mods' directory. (Example: bbuilder extract C:/Users/user/Desktop/mod_test.zip)",
-                "Optional: Specify alternative path to extract the mod to. (Example: bbuilder extract C:/Users/user/Desktop/mod_test.zip C:/Users/user/Desktop/test/)",
+                "Mandatory: Specify path of mod to extract. The file will be put in your specified 'mods' directory. (Example: bbuilder extract C:/Users/user/Desktop/mod_test.zip)"
             };
             this.InitCommandArray = new List<string>();
-            this.Flags = new OptionFlag[] { this.Replace }; 
+            this.Flags = new OptionFlag[] { this.Replace, this.Rename, this.AltPath }; 
         }
 
         public override bool HandleCommand(string[] _args)
@@ -74,20 +74,19 @@ namespace BBbuilder
             Console.WriteLine($"Extracting zip {this.ZipPath}");
             this.InitCommandArray.Add("init");
 
-            this.ModName = Path.GetFileNameWithoutExtension(this.ZipPath);
+            this.ModName = this.Rename ? this.Rename.PositionalValue : Path.GetFileNameWithoutExtension(this.ZipPath);
             this.ModPath = Path.Combine(Properties.Settings.Default.ModPath, this.ModName);
             this.InitCommandArray.Add(this.ModName);
-            if (_args.Count > 2)
+            if (this.AltPath)
             {
-                string alternativePath = _args[2];
-                if (!Directory.Exists(_args[2]))
+                if (!Directory.Exists(this.AltPath.PositionalValue))
                 {
-                    Console.WriteLine($"Passed alternative path {_args[2]} but this folder does not exist!");
+                    Console.WriteLine($"Passed alternative path {this.AltPath.PositionalValue} but this folder does not exist!");
                     return false;
                 }
-                this.AlternativePath = _args[2];
-                this.ModPath = Path.Combine(this.AlternativePath, this.ModName);
-                this.InitCommandArray.Add(this.AlternativePath);
+                this.ModPath = Path.Combine(this.AltPath.PositionalValue, this.ModName);
+                this.InitCommandArray.Add(this.AltPath.Flag);
+                this.InitCommandArray.Add(this.AltPath.PositionalValue);
             }
             if (this.Replace)
                 this.InitCommandArray.Add("-replace");
