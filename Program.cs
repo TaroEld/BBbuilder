@@ -48,13 +48,13 @@ namespace BBbuilder
                     watch.Stop();
 
                     Console.WriteLine($"Execution Time: {watch.ElapsedMilliseconds} ms");
-                    return 1;
+                    return 0;
                 }
             }
             watch.Stop();
 
             Console.WriteLine($"Execution Time: {watch.ElapsedMilliseconds} ms");
-            return 0;
+            return 1;
         }
 
     }
