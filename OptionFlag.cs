@@ -8,7 +8,7 @@ namespace BBbuilder
     // Checks for the presence of a flag, sets a bool and removes the flag from the List
     class OptionFlag
     {
-        bool Value;
+        public bool Value;
         public string Flag;
         string Description;
         bool Positional;

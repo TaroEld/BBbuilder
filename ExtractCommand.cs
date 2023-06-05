@@ -42,6 +42,7 @@ namespace BBbuilder
             }
 
             // Create new folder with the initcommand, where the files will be extracted to
+            bool directoryExisted = Directory.Exists(this.ModPath);
             InitCommand initCommand = new();
             if (!initCommand.HandleCommand(this.InitCommandArray.ToArray()))
             {
@@ -49,7 +50,12 @@ namespace BBbuilder
                 return false;
             }
 
-            Directory.Delete(Path.Combine(this.ModPath, "scripts"), true);
+            // Set replace value to true if this is a newly created directory, to overwrite things like scripts/ or .gitignore
+            if (!directoryExisted)
+            {
+                this.Replace.Value = true;
+            }
+
             if (!ExtractZip())
             {
                 Console.WriteLine("Error while extracting zip! Exiting...");
