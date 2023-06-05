@@ -105,8 +105,14 @@ namespace BBbuilder
             {
                 ZipFile.ExtractToDirectory(this.ZipPath, this.ModPath, this.Replace);
             }
-            catch
+            catch (Exception e)
             {
+                Console.WriteLine(e);
+                string ending = this.ZipPath.Substring(this.ZipPath.Length - 4);
+                if (ending != ".zip")
+                {
+                    Console.WriteLine($"This does not look like a zip file! Ending characters: '{ending}'. Make sure you pass a .zip!");
+                }
                 return false;
             }
             return true;
