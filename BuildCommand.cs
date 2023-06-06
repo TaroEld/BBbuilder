@@ -392,10 +392,10 @@ namespace BBbuilder
                 Console.WriteLine($"Removed folder {wipGfxPath}");
             }
 
-            if (File.Exists(this.TempPath))
+            if (Directory.Exists(this.TempPath))
             {
-                File.Delete(this.TempPath);
-                Console.WriteLine($"Removed file {this.TempPath}");
+                Directory.Delete(this.TempPath, true);
+                Console.WriteLine($"Removed folder {this.TempPath}");
             }
         }
 
