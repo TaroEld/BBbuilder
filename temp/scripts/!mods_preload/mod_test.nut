@@ -1,14 +1,12 @@
-::RENAME <- {
+::Test <- {
 	ID = "mod_test",
-	Name = "RENAME",
+	Name = "Test",
 	Version = "1.0.0"
 }
-::mods_registerMod(::RENAME.ID, ::RENAME.Version, ::RENAME.Name);
 
-::mods_queue(::RENAME.ID, null, function()
+::mods_registerMod(::Test.ID, ::Test.Version, ::Test.Name);
+::mods_queue(::Test.ID, ::MSU.ID, function()
 {
-	// ::mods_registerJS(::RENAME.ID + '.js'); // Delete if not needed
-	// ::mods_registerCSS(::RENAME.ID + '.css'); // Delete if not needed
-	// ::RENAME.Mod <- ::MSU.Class.Mod(::RENAME.ID, ::RENAME.Version, ::RENAME.Name); // Delete if not needed
-
+	::Test.Mod <- ::MSU.Class.Mod(::Test.ID, ::Test.Version, ::Test.Name);
+	::mods_registerJS(::Test.ID + "/index.js");
 })
