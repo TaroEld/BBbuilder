@@ -13,6 +13,7 @@
     <None Remove="build_template_vs" />
     <None Remove="gitignore_template" />
     <None Remove="template_preload.nut" />
+    <None Remove="template_index.js" />
   </ItemGroup>
 
   <ItemGroup>
@@ -20,6 +21,7 @@
     <EmbeddedResource Include="build_template_vs" />
     <EmbeddedResource Include="gitignore_template" />
     <EmbeddedResource Include="template_preload.nut" />
+    <EmbeddedResource Include="template_index.js" />
   </ItemGroup>
 
   <ItemGroup>

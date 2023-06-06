@@ -25,6 +25,7 @@ namespace BBbuilder
         readonly OptionFlag UIOnly = new("-uionly", "Only zip the gfx and ui folders. The mod will have a '_ui' suffix.");
         readonly OptionFlag NoCompile = new("-nocompile", "Speed up the build by not compiling files");
         readonly OptionFlag NoPack = new("-nopack", "Speed up the build by not repacking brushes");
+        readonly OptionFlag Es3Transpilation = new("-es3Transpilation", "Translate js file to es3. It allow you to use modern js syntax and features to create your mod.");
         public BuildCommand()
         {
             this.Name = "build";
@@ -33,7 +34,7 @@ namespace BBbuilder
             {
                 "Mandatory: Specify the path of the mod to be built. (Example: bbuilder build G:/Games/BB/Mods/WIP/mod_msu)",
             };
-            this.Flags = new OptionFlag[] { this.ScriptOnly, this.CompileOnly, this.StartGame, this.UIOnly, this.NoCompile, this.NoPack };
+            this.Flags = new OptionFlag[] { this.ScriptOnly, this.CompileOnly, this.StartGame, this.UIOnly, this.NoCompile, this.NoPack, this.Es3Transpilation };
         }
         private bool ParseCommand(List<string> _args)
         {
@@ -151,6 +152,32 @@ namespace BBbuilder
                     }
                 }
             });
+
+            if(this.Es3Transpilation){
+                Console.WriteLine("ES3 transpilation...");
+                string localWorkingDirectory = Directory.GetCurrentDirectory();
+
+                using (Process compiling = new Process())
+                {
+                    compiling.StartInfo.UseShellExecute = true;
+                    compiling.StartInfo.WorkingDirectory = this.ModPath;
+                    compiling.StartInfo.FileName = "npm";
+                    compiling.StartInfo.Arguments = "i -g @babel/core @babel/cli @babel/preset-env";
+                    compiling.Start();
+                    compiling.WaitForExit();
+                }
+
+                using (Process compiling = new Process())
+                {
+                    compiling.StartInfo.UseShellExecute = true;
+                    compiling.StartInfo.WorkingDirectory = this.ModPath;
+                    compiling.StartInfo.FileName = "babel";
+                    compiling.StartInfo.Arguments = String.Format("\"{0}\" --out-dir \"{1}\" --config-file \"{2}\"", this.ModPath, this.ModPath, Path.Combine(localWorkingDirectory, "babel.config.json"));
+                    compiling.Start();
+                    compiling.WaitForExit();
+                }
+            }
+
             if (noCompileErrors)
                 Console.WriteLine("Successfully compiled files!");
             return noCompileErrors;
