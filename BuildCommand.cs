@@ -19,6 +19,7 @@ namespace BBbuilder
         string ModPath;
         string ModName;
         string ZipPath;
+        string TempPath;
         readonly OptionFlag ScriptOnly = new("-scriptonly", "Only pack script files. The mod will have a '_scripts' suffix.");
         readonly OptionFlag CompileOnly = new("-compileonly", "Compile the .nut files without creating a .zip.");
         readonly OptionFlag StartGame = new("-restart", "Exit and then start BattleBrothers.exe after building the mod.");
@@ -62,7 +63,9 @@ namespace BBbuilder
                 this.ModName += "_scripts";
             if (this.UIOnly)
                 this.ModName += "_ui";
-            this.ZipPath = Path.Combine(this.ModPath, this.ModName) + ".zip";
+
+            this.TempPath = Path.Combine(Directory.GetCurrentDirectory(), "temp");
+            this.ZipPath = this.TempPath + ".zip";
             return true;
         }
 
@@ -119,7 +122,17 @@ namespace BBbuilder
 
         private bool CompileFiles()
         {
+            string localWorkingDirectory = Directory.GetCurrentDirectory();
             Console.WriteLine("Starting to compile files...");
+            string tempFolder = Path.Combine(localWorkingDirectory, "temp");
+
+            if (Directory.Exists(tempFolder))
+            {
+                Directory.Delete(tempFolder, true);
+            }
+            Directory.CreateDirectory(tempFolder);
+            Utils.CopyDirectory(this.ModPath, tempFolder, true);
+
             string[] allNutFilesAsPath = GetAllowedScriptFiles();
             if (allNutFilesAsPath.Length == 0)
             {
@@ -154,15 +167,11 @@ namespace BBbuilder
             });
 
             if(this.Es3Transpilation){
-                Console.WriteLine("ES3 transpilation...");
-                string localWorkingDirectory = Directory.GetCurrentDirectory();
-
                 using (Process compiling = new Process())
                 {
                     compiling.StartInfo.UseShellExecute = true;
-                    compiling.StartInfo.WorkingDirectory = this.ModPath;
-                    compiling.StartInfo.FileName = "npm";
-                    compiling.StartInfo.Arguments = "i -g @babel/core @babel/cli @babel/preset-env";
+                    compiling.StartInfo.FileName = "babel";
+                    compiling.StartInfo.Arguments = String.Format("\"{0}\" --out-dir \"{1}\" --config-file \"{2}\"", tempFolder, tempFolder, Path.Combine(localWorkingDirectory, "babel.config.json"));
                     compiling.Start();
                     compiling.WaitForExit();
                 }
@@ -170,9 +179,8 @@ namespace BBbuilder
                 using (Process compiling = new Process())
                 {
                     compiling.StartInfo.UseShellExecute = true;
-                    compiling.StartInfo.WorkingDirectory = this.ModPath;
-                    compiling.StartInfo.FileName = "babel";
-                    compiling.StartInfo.Arguments = String.Format("\"{0}\" --out-dir \"{1}\" --config-file \"{2}\"", this.ModPath, this.ModPath, Path.Combine(localWorkingDirectory, "babel.config.json"));
+                    compiling.StartInfo.FileName = "browserify";
+                    compiling.StartInfo.Arguments = String.Format("\"{0}\" -o \"{0}\"", Path.Combine(tempFolder, "ui/mods/", ModName, "index.js"));
                     compiling.Start();
                     compiling.WaitForExit();
                 }
@@ -186,7 +194,7 @@ namespace BBbuilder
         private string[] getAllowedFolders(string[] _allowedFolders)
         {
             List<string> ret = new();
-            string[] allFolders = Directory.GetDirectories(this.ModPath);
+            string[] allFolders = Directory.GetDirectories(this.TempPath);
             foreach (string folderPath in allFolders)
             {
                 string folderName = new DirectoryInfo(folderPath).Name;
@@ -201,7 +209,7 @@ namespace BBbuilder
         private string[] getAllFoldersExcept(string[] _forbiddenFolders)
         {
             List<string> ret = new();
-            string[] allFolders = Directory.GetDirectories(this.ModPath);
+            string[] allFolders = Directory.GetDirectories(this.TempPath);
             foreach (string folderPath in allFolders)
             {
                 string folderName = new DirectoryInfo(folderPath).Name;
@@ -382,6 +390,12 @@ namespace BBbuilder
             {
                 Directory.Delete(wipGfxPath, true);
                 Console.WriteLine($"Removed folder {wipGfxPath}");
+            }
+
+            if (File.Exists(this.TempPath))
+            {
+                File.Delete(this.TempPath);
+                Console.WriteLine($"Removed file {this.TempPath}");
             }
         }
 
