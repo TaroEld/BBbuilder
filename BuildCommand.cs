@@ -134,7 +134,7 @@ namespace BBbuilder
                 Directory.Delete(tempFolder, true);
             }
             Directory.CreateDirectory(tempFolder);
-            Utils.CopyDirectory(this.ModPath, tempFolder, true);
+            Copy(this.ModPath, tempFolder);
 
             string[] allNutFilesAsPath = GetAllowedScriptFiles();
             if (allNutFilesAsPath.Length == 0)
