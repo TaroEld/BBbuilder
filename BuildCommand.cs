@@ -225,6 +225,12 @@ namespace BBbuilder
                     compiling.WaitForExit();
                 }
                 Console.WriteLine($"-- Browserify the transpilation result took {resetableWatchSub.Elapsed.TotalSeconds} seconds");
+
+                Console.WriteLine("-- Delete node_modules...");
+                resetableWatchSub.Restart();
+                Directory.Delete(Path.Combine(tempFolder, "node_modules"), true);
+                Console.WriteLine($"-- Delete node_modules took {resetableWatchSub.Elapsed.TotalSeconds} seconds");
+
                 resetableWatchSub.Stop();
             }
             Console.WriteLine($"- Compiling JS files took {resetableWatch.Elapsed.TotalSeconds} seconds");
@@ -441,7 +447,7 @@ namespace BBbuilder
 
             if (Directory.Exists(this.TempPath))
             {
-                //Directory.Delete(this.TempPath, true);
+                Directory.Delete(this.TempPath, true);
                 Console.WriteLine($"Removed folder {this.TempPath}");
             }
         }
