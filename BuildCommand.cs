@@ -126,17 +126,22 @@ namespace BBbuilder
 
         private bool CompileFiles()
         {
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
             string localWorkingDirectory = Directory.GetCurrentDirectory();
             Console.WriteLine("Starting to compile files...");
-            string tempFolder = Path.Combine(localWorkingDirectory, "temp");
 
+            Console.WriteLine("- Creating temp folder...");
+            string tempFolder = Path.Combine(localWorkingDirectory, "temp");
             if (Directory.Exists(tempFolder))
             {
                 Directory.Delete(tempFolder, true);
             }
             Directory.CreateDirectory(tempFolder);
             Copy(this.ModPath, tempFolder);
+            Console.WriteLine($"- Creating temp folder took {stopwatch.Elapsed.TotalSeconds} seconds!");
 
+            Console.WriteLine("- Compiling Squirrel files...");
             string[] allNutFilesAsPath = GetAllowedScriptFiles();
             if (allNutFilesAsPath.Length == 0)
             {
@@ -169,7 +174,8 @@ namespace BBbuilder
                     }
                 }
             });
-
+            Console.WriteLine($"- Compiling Squirrel files took {stopwatch.Elapsed.TotalSeconds} seconds");
+            Console.WriteLine("- Compiling JS files...");
             if (this.Es3Transpilation)
             {
                 var npmPackageToInstall = new List<string> { };
@@ -198,6 +204,8 @@ namespace BBbuilder
                     compiling.WaitForExit();
                 }
             }
+            Console.WriteLine($"- Compiling JS files took {stopwatch.Elapsed.TotalSeconds} seconds");
+            stopwatch.Stop();
 
             if (noCompileErrors)
                 Console.WriteLine("Successfully compiled files!");
