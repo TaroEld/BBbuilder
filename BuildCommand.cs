@@ -182,6 +182,7 @@ namespace BBbuilder
                     compiling.StartInfo.UseShellExecute = true;
                     compiling.StartInfo.FileName = "babel";
                     compiling.StartInfo.Arguments = String.Format("\"{0}\" --out-dir \"{1}\" --config-file \"{2}\"", tempFolder, tempFolder, Path.Combine(localWorkingDirectory, "babel.config.json"));
+                    compiling.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
                     compiling.Start();
                     compiling.WaitForExit();
                 }
@@ -191,6 +192,7 @@ namespace BBbuilder
                     compiling.StartInfo.UseShellExecute = true;
                     compiling.StartInfo.FileName = "browserify";
                     compiling.StartInfo.Arguments = String.Format("\"{0}\" -o \"{0}\"", Path.Combine(tempFolder, "ui/mods/", ModName, "index.js"));
+                    compiling.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
                     compiling.Start();
                     compiling.WaitForExit();
                 }
