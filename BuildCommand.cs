@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Ionic;
 using Ionic.Zip;
+using System.Text.RegularExpressions;
 
 namespace BBbuilder
 {
@@ -174,8 +175,8 @@ namespace BBbuilder
                 var npmPackageToInstall = new List<string> { };
 
                 checkNpmPresence();
-                checkNpmDependency("babel", true);
-                checkNpmDependency("browserify", true);
+                checkNpmDependency("@babel/cli", "babel");
+                checkNpmDependency("browserify", "browserify");
 
                 using (Process compiling = new Process())
                 {
@@ -459,24 +460,24 @@ namespace BBbuilder
         /**
         * Checks if a npm dependency is installed and installs it if it is not.
         */
-        private static void checkNpmDependency(String dependency, bool installIfMissing = false)
+        private static void checkNpmDependency(String installName, String executableName, String versionFlag = "--version", bool installIfMissing = true)
         {
             using (Process compiling = new Process())
             {
                 compiling.StartInfo.UseShellExecute = false;
                 compiling.StartInfo.RedirectStandardOutput = true;
                 compiling.StartInfo.FileName = "cmd.exe";
-                compiling.StartInfo.Arguments = String.Format("/C npm list -g --depth=0");
+                compiling.StartInfo.Arguments = String.Format("/C {0} {1}", executableName, versionFlag);
                 compiling.Start();
                 compiling.WaitForExit();
 
                 string output = compiling.StandardOutput.ReadToEnd();
-                if (!output.Contains(dependency))
+                if (!Regex.IsMatch(output, @"(\d+\.)?(\d+\.)?(\*|\d+)"))
                 {
                     if (installIfMissing)
                     {
-                        Console.WriteLine($"Installing {dependency}...");
-                        installNpmDependency(dependency);
+                        Console.WriteLine($"Installing {installName}...");
+                        installNpmDependency(installName);
                     }
 
                 }
