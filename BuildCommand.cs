@@ -228,7 +228,9 @@ namespace BBbuilder
 
                 Console.WriteLine("-- Delete node_modules...");
                 resetableWatchSub.Restart();
-                Directory.Delete(Path.Combine(tempFolder, "node_modules"), true);
+                if(Directory.Exists(Path.Combine(tempFolder, "node_modules"))){
+                    Directory.Delete(Path.Combine(tempFolder, "node_modules"), true);
+                }
                 Console.WriteLine($"-- Delete node_modules took {resetableWatchSub.Elapsed.TotalSeconds} seconds");
 
                 resetableWatchSub.Stop();
