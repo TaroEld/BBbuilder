@@ -93,6 +93,7 @@ namespace BBbuilder
             // Leave early if compile only is specified
             if (this.CompileOnly)
             {
+                RemoveOldFiles();
                 return true;
             }
             if (!this.NoPack && !PackBrushFiles())
@@ -117,6 +118,8 @@ namespace BBbuilder
             {
                 KillAndStartBB();
             }
+
+            RemoveOldFiles();
             return true;
         }
 
@@ -166,7 +169,14 @@ namespace BBbuilder
                 }
             });
 
-            if(this.Es3Transpilation){
+            if (this.Es3Transpilation)
+            {
+                var npmPackageToInstall = new List<string> { };
+
+                checkNpmPresence();
+                checkNpmDependency("babel", true);
+                checkNpmDependency("browserify", true);
+
                 using (Process compiling = new Process())
                 {
                     compiling.StartInfo.UseShellExecute = true;
@@ -188,6 +198,7 @@ namespace BBbuilder
 
             if (noCompileErrors)
                 Console.WriteLine("Successfully compiled files!");
+
             return noCompileErrors;
         }
 
@@ -307,7 +318,7 @@ namespace BBbuilder
             }
             // Using the Ionic DotNetZip library as this makes it significantly easier to recursively zip folders
 
-            string[] allowedFolders; 
+            string[] allowedFolders;
             if (this.ScriptOnly)
             {
                 string[] excludedFolders = this.ExcludedScriptFolders.Where(val => val != "ui").ToArray();
@@ -339,7 +350,7 @@ namespace BBbuilder
         {
             string gamePath = Properties.Settings.Default.GamePath;
             string zipName = $"{this.ModName}.zip";
-            
+
             string dataZipPath = Path.Combine(gamePath, zipName);
             if (File.Exists(dataZipPath))
             {
@@ -425,6 +436,73 @@ namespace BBbuilder
                 DirectoryInfo nextTargetSubDir =
                     target.CreateSubdirectory(diSourceSubDir.Name);
                 CopyAll(diSourceSubDir, nextTargetSubDir);
+            }
+        }
+
+        /**
+        * install a npm dependency.
+        */
+        private static void installNpmDependency(String npmPackageToInstall)
+        {
+            using (Process compiling = new Process())
+            {
+                compiling.StartInfo.UseShellExecute = true;
+                compiling.StartInfo.FileName = "npm";
+                compiling.StartInfo.Arguments = String.Format("i -g {0}", npmPackageToInstall);
+                compiling.Start();
+                compiling.WaitForExit();
+            }
+        }
+
+        /**
+        * Checks if a npm dependency is installed and installs it if it is not.
+        */
+        private static void checkNpmDependency(String dependency, bool installIfMissing = false)
+        {
+            using (Process compiling = new Process())
+            {
+                compiling.StartInfo.UseShellExecute = false;
+                compiling.StartInfo.RedirectStandardOutput = true;
+                compiling.StartInfo.FileName = "cmd.exe";
+                compiling.StartInfo.Arguments = String.Format("/C npm list -g --depth=0");
+                compiling.Start();
+                compiling.WaitForExit();
+
+                string output = compiling.StandardOutput.ReadToEnd();
+                if (!output.Contains(dependency))
+                {
+                    if (installIfMissing)
+                    {
+                        Console.WriteLine($"Installing {dependency}...");
+                        installNpmDependency(dependency);
+                    }
+
+                }
+            }
+        }
+
+        /**
+        * Checks if npm is installed and exits the program if it is not.
+        */
+        private static void checkNpmPresence()
+        {
+            using (Process compiling = new Process())
+            {
+                compiling.StartInfo.UseShellExecute = false;
+                compiling.StartInfo.RedirectStandardOutput = true;
+                compiling.StartInfo.FileName = "cmd.exe";
+                compiling.StartInfo.Arguments = String.Format("/C npm -v");
+                compiling.Start();
+                compiling.WaitForExit();
+
+                string output = compiling.StandardOutput.ReadToEnd();
+                if (output == "")
+                {
+                    Console.WriteLine("npm not found. Please install Node.js and try again (https://nodejs.org/en/download).");
+                    Console.WriteLine("Press any key to exit...");
+                    Console.ReadKey();
+                    Environment.Exit(0);
+                }
             }
         }
     }
