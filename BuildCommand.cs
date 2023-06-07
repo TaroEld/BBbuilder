@@ -197,6 +197,7 @@ namespace BBbuilder
                 checkNpmDependency("@babel/cli", localWorkingDirectory);
                 checkNpmDependency("@babel/preset-env", localWorkingDirectory);
                 checkNpmDependency("browserify", localWorkingDirectory);
+                checkNpmDependency("core-js", localWorkingDirectory);
                 Console.WriteLine($"-- Check npm dependencies took {resetableWatchSub.Elapsed.TotalSeconds} seconds");
 
                 Console.WriteLine("-- Transpile from modern JS to old JS...");
