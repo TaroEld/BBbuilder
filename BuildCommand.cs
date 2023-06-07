@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Ionic;
 using Ionic.Zip;
 using System.Text.RegularExpressions;
+using System.Reflection;
 
 namespace BBbuilder
 {
@@ -65,7 +66,7 @@ namespace BBbuilder
             if (this.UIOnly)
                 this.ModName += "_ui";
 
-            this.TempPath = Path.Combine(Directory.GetCurrentDirectory(), "temp");
+            this.TempPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "temp");
             this.ZipPath = this.TempPath + ".zip";
             return true;
         }
@@ -126,12 +127,19 @@ namespace BBbuilder
 
         private bool CompileFiles()
         {
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.Start();
-            string localWorkingDirectory = Directory.GetCurrentDirectory();
+            Stopwatch totalStopWatch = new Stopwatch();
+            totalStopWatch.Start();
+            Stopwatch resetableWatch = new Stopwatch();
+            resetableWatch.Start();
+            Stopwatch resetableWatchSub = new Stopwatch();
+            resetableWatchSub.Start();
+
+            string localWorkingDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            //get this script directory
             Console.WriteLine("Starting to compile files...");
 
             Console.WriteLine("- Creating temp folder...");
+            resetableWatch.Restart();
             string tempFolder = Path.Combine(localWorkingDirectory, "temp");
             if (Directory.Exists(tempFolder))
             {
@@ -139,9 +147,10 @@ namespace BBbuilder
             }
             Directory.CreateDirectory(tempFolder);
             Copy(this.ModPath, tempFolder);
-            Console.WriteLine($"- Creating temp folder took {stopwatch.Elapsed.TotalSeconds} seconds!");
+            Console.WriteLine($"- Creating temp folder took {resetableWatch.Elapsed.TotalSeconds} seconds!");
 
             Console.WriteLine("- Compiling Squirrel files...");
+            resetableWatch.Restart();
             string[] allNutFilesAsPath = GetAllowedScriptFiles();
             if (allNutFilesAsPath.Length == 0)
             {
@@ -174,16 +183,24 @@ namespace BBbuilder
                     }
                 }
             });
-            Console.WriteLine($"- Compiling Squirrel files took {stopwatch.Elapsed.TotalSeconds} seconds");
+            Console.WriteLine($"- Compiling Squirrel files took {resetableWatch.Elapsed.TotalSeconds} seconds");
+
             Console.WriteLine("- Compiling JS files...");
+            resetableWatch.Restart();
             if (this.Es3Transpilation)
             {
                 var npmPackageToInstall = new List<string> { };
 
+                Console.WriteLine("-- Check npm dependencies...");
+                resetableWatchSub.Restart();
                 checkNpmPresence();
-                checkNpmDependency("@babel/cli", "babel");
-                checkNpmDependency("browserify", "browserify");
+                checkNpmDependency("@babel/cli", localWorkingDirectory);
+                checkNpmDependency("@babel/preset-env", localWorkingDirectory);
+                checkNpmDependency("browserify", localWorkingDirectory);
+                Console.WriteLine($"-- Check npm dependencies took {resetableWatchSub.Elapsed.TotalSeconds} seconds");
 
+                Console.WriteLine("-- Transpile from modern JS to old JS...");
+                resetableWatchSub.Restart();
                 using (Process compiling = new Process())
                 {
                     compiling.StartInfo.UseShellExecute = true;
@@ -193,7 +210,10 @@ namespace BBbuilder
                     compiling.Start();
                     compiling.WaitForExit();
                 }
+                Console.WriteLine($"-- Transpile from modern JS to old JS took {resetableWatchSub.Elapsed.TotalSeconds} seconds");
 
+                Console.WriteLine("-- Browserify the transpilation result...");
+                resetableWatchSub.Restart();
                 using (Process compiling = new Process())
                 {
                     compiling.StartInfo.UseShellExecute = true;
@@ -203,9 +223,13 @@ namespace BBbuilder
                     compiling.Start();
                     compiling.WaitForExit();
                 }
+                Console.WriteLine($"-- Browserify the transpilation result took {resetableWatchSub.Elapsed.TotalSeconds} seconds");
+                resetableWatchSub.Stop();
             }
-            Console.WriteLine($"- Compiling JS files took {stopwatch.Elapsed.TotalSeconds} seconds");
-            stopwatch.Stop();
+            Console.WriteLine($"- Compiling JS files took {resetableWatch.Elapsed.TotalSeconds} seconds");
+            resetableWatch.Stop();
+            Console.WriteLine($"Compiling files took {totalStopWatch.Elapsed.TotalSeconds} seconds");
+            totalStopWatch.Stop();
 
             if (noCompileErrors)
                 Console.WriteLine("Successfully compiled files!");
@@ -416,7 +440,7 @@ namespace BBbuilder
 
             if (Directory.Exists(this.TempPath))
             {
-                Directory.Delete(this.TempPath, true);
+                //Directory.Delete(this.TempPath, true);
                 Console.WriteLine($"Removed folder {this.TempPath}");
             }
         }
@@ -453,39 +477,52 @@ namespace BBbuilder
         /**
         * install a npm dependency.
         */
-        private static void installNpmDependency(String npmPackageToInstall)
+        private static void installNpmDependency(String npmPackageToInstall, string installationPath)
         {
+            
             using (Process compiling = new Process())
             {
+                //move process to the current directory
+                compiling.StartInfo.WorkingDirectory = installationPath;
+
                 compiling.StartInfo.UseShellExecute = true;
-                compiling.StartInfo.FileName = "npm";
-                compiling.StartInfo.Arguments = String.Format("i -g {0}", npmPackageToInstall);
+                compiling.StartInfo.FileName = "cmd.exe";
+                compiling.StartInfo.Arguments = String.Format("/C npm i {0}", npmPackageToInstall);
                 compiling.Start();
                 compiling.WaitForExit();
             }
         }
 
+
+        private static String lastListCommand = "";
         /**
         * Checks if a npm dependency is installed and installs it if it is not.
         */
-        private static void checkNpmDependency(String installName, String executableName, String versionFlag = "--version", bool installIfMissing = true)
+        private static void checkNpmDependency(String name, string installationPath, bool installIfMissing = true, bool refreshList = false)
         {
             using (Process compiling = new Process())
             {
-                compiling.StartInfo.UseShellExecute = false;
-                compiling.StartInfo.RedirectStandardOutput = true;
-                compiling.StartInfo.FileName = "cmd.exe";
-                compiling.StartInfo.Arguments = String.Format("/C {0} {1}", executableName, versionFlag);
-                compiling.Start();
-                compiling.WaitForExit();
+                //move process to the current directory
+                compiling.StartInfo.WorkingDirectory = installationPath;
 
-                string output = compiling.StandardOutput.ReadToEnd();
-                if (!Regex.IsMatch(output, @"(\d+\.)?(\d+\.)?(\*|\d+)"))
+                if(lastListCommand == "" || refreshList){
+                    compiling.StartInfo.UseShellExecute = false;
+                    compiling.StartInfo.RedirectStandardOutput = true;
+                    compiling.StartInfo.FileName = "cmd.exe";
+                    compiling.StartInfo.Arguments = String.Format("/C npm list");
+                    compiling.Start();
+                    compiling.WaitForExit();
+
+                    string output = compiling.StandardOutput.ReadToEnd();
+                    lastListCommand = output;
+                }
+
+                if (!Regex.IsMatch(lastListCommand, name))
                 {
                     if (installIfMissing)
                     {
-                        Console.WriteLine($"Installing {installName}...");
-                        installNpmDependency(installName);
+                        Console.WriteLine($"Installing {name}...");
+                        installNpmDependency(name, installationPath);
                     }
 
                 }
