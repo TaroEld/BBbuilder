@@ -59,6 +59,7 @@ namespace BBbuilder
             Utils.Copy("./Templates/" + this.Template.args[0], this.ModPath);
             replaceNamePlaceholder();
             replaceBBbuilderPlaceholder();
+            replaceSQPlaceholder();
             Process.Start("explorer.exe", this.ModPath);
             return true;
         }
@@ -117,7 +118,17 @@ namespace BBbuilder
             foreach (string file in files)
             {
                 string text = File.ReadAllText(file);
-                text = text.Replace("$bbbuild_path", Utils.EXECUTINGFOLDER.Replace("\\", "/") + "BBbuilder.exe");
+                text = text.Replace("$bbbuild_path", Utils.EXEPATH.Replace("\\", "/"));
+                File.WriteAllText(file, text);
+            }
+        }
+
+        private void replaceSQPlaceholder(){
+            string[] files = Directory.GetFiles(this.ModPath, "*.*", SearchOption.AllDirectories);
+            foreach (string file in files)
+            {
+                string text = File.ReadAllText(file);
+                text = text.Replace("$sq_path", Utils.SQPATH.Replace("\\", "/") + "BBbuilder.exe");
                 File.WriteAllText(file, text);
             }
         }
