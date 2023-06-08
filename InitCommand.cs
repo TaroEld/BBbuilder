@@ -48,6 +48,13 @@ namespace BBbuilder
                 Directory.Delete(this.ModPath, true);
             }
 
+            if(!this.Template || this.Template.args.Count == 0)
+            {
+                Console.WriteLine($"No template specified. Using default template.");
+                this.Template.Value = true;
+                this.Template.args = new List<string> { "default" };
+            }
+
             Console.WriteLine($"Use template : '{this.Template.args[0]}'");
             Utils.Copy("./Templates/" + this.Template.args[0], this.ModPath);
             replaceNamePlaceholder();
