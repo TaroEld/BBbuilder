@@ -9,20 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="build_template_sublime" />
-    <None Remove="build_template_vs" />
-    <None Remove="gitignore_template" />
-    <None Remove="template_preload.nut" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="build_template_sublime" />
-    <EmbeddedResource Include="build_template_vs" />
-    <EmbeddedResource Include="gitignore_template" />
-    <EmbeddedResource Include="template_preload.nut" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="DotNetZip" Version="1.16.0" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="6.0.0" />
   </ItemGroup>
@@ -42,7 +28,8 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="$(SolutionDir)tools\**" CopyToOutputDirectory="Always" LinkBase="config" />
+    <None Include="tools\**" CopyToOutputDirectory="Always" LinkBase="config" />
+    <None Include="Templates\**" CopyToOutputDirectory="Always" LinkBase="config" />
   </ItemGroup>
 
 </Project>

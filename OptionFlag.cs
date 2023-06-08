@@ -9,6 +9,7 @@ namespace BBbuilder
     class OptionFlag
     {
         public bool Value;
+        public List<String> args;
         public string Flag;
         string Description;
         bool Positional;
@@ -19,10 +20,22 @@ namespace BBbuilder
             this.Description = _description;
             this.Value = false;
             this.Positional = _positional;
+            this.args = new List<String>();
         }
         public void Validate(List<string> _args)
         {
             int idx = _args.IndexOf(this.Flag);
+
+            var potentialArgs = _args.GetRange(idx + 1, _args.Count - idx - 1);
+            foreach (string arg in potentialArgs)
+            {
+                if (arg[0].ToString() == "-")
+                {
+                    break;
+                }
+                this.args.Add(arg);
+            }
+ 
             if (idx > 0)
             {
                 _args.RemoveAt(idx);

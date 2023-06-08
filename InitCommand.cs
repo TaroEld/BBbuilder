@@ -17,6 +17,7 @@ namespace BBbuilder
         string ModPath;
         readonly OptionFlag Replace = new("-replace", "Replace the files in an existing folder.");
         readonly OptionFlag AltPath = new("-alt", "Specify alternative path to extract the mod to.", true);
+        readonly OptionFlag Template = new("-template", "Specify the tamplate you want to use depending of your mod objectives, or technologies");
         public InitCommand()
         {
             this.Name = "init";
@@ -25,7 +26,7 @@ namespace BBbuilder
             {
                 "Mandatory: Specify name of the new mod. The new mod will be created in your specified 'mods' directory. (Example: bbuilder init mod_test)"
             };
-            this.Flags = new OptionFlag[] { this.Replace, this.AltPath };
+            this.Flags = new OptionFlag[] { this.Replace, this.AltPath, this.Template };
         }
         public override bool HandleCommand(string[] _args) 
         {
@@ -42,9 +43,15 @@ namespace BBbuilder
                 Console.WriteLine($"Directory '{this.ModPath}' already exists! Use flag '-replace' to overwrite existing folder. Exiting to avoid mistakes...");
                 return false;
             }
-            CreateDirectories();
-            CreateTemplateFile();
-            WriteProjectFiles();
+            if(this.Replace && Directory.Exists(this.ModPath)){
+                Console.WriteLine($"Directory '{this.ModPath}' already exists! Deleting existing folder...");
+                Directory.Delete(this.ModPath, true);
+            }
+
+            Console.WriteLine($"Use template : '{this.Template.args[0]}'");
+            Utils.Copy("./Templates/" + this.Template.args[0], this.ModPath);
+            replaceNamePlaceholder();
+            replaceBBbuilderPlaceholder();
             Process.Start("explorer.exe", this.ModPath);
             return true;
         }
@@ -71,76 +78,41 @@ namespace BBbuilder
             return true;
         }
 
-        private void CreateDirectories()
-        {
-            Console.WriteLine("Path of new mod: " + this.ModPath);
-            Directory.CreateDirectory(this.ModPath);
-            Directory.CreateDirectory(Path.Combine(this.ModPath, ".vscode"));
-            Directory.CreateDirectory(Path.Combine(this.ModPath, "assets"));
-            Directory.CreateDirectory(Path.Combine(this.ModPath, "unpacked_brushes"));
-            Directory.CreateDirectory(Path.Combine(this.ModPath, "scripts", "!mods_preload"));
-        }
-
-        private bool CreateTemplateFile()
-        {
-            string nutTemplate = Utils.ReadFile("BBbuilder.template_preload.nut");
-            nutTemplate = nutTemplate.Replace("$name", this.ModName);
-            string[] pathArray = new string[] { this.ModPath, "scripts", "!mods_preload", this.ModName + ".nut" };
-            File.WriteAllText(Path.Combine(pathArray), nutTemplate);
-            string gitignore = Utils.ReadFile("BBbuilder.gitignore_template");
-            File.WriteAllText(Path.Combine(this.ModPath, ".gitignore"), gitignore);
-            return true;
-        }
-
-        private bool WriteProjectFiles()
-        {
-            var sublimeProjectObject = new SublimeProject
+        private void replaceNamePlaceholder(){
+            string[] files = Directory.GetFiles(this.ModPath, "*.*", SearchOption.AllDirectories);
+            foreach (string file in files)
             {
-                build_systems = Array.Empty<string>(),
-                folders = new List<Folder>()
-            };
-            var vsCodeProjectObject = new VSCodeProject
-            {
-                settings = Array.Empty<string>(),
-                folders = new List<Folder>()
-            };
-            // For vscode, the mod folder must come first
-            vsCodeProjectObject.folders.Add(new Folder { path = ".." });
-            if (Properties.Settings.Default.Folders != null)
-            {
-                foreach (string line in Properties.Settings.Default.Folders)
-                {
-                    sublimeProjectObject.folders.Add(new Folder { path = line });
-                    vsCodeProjectObject.folders.Add(new Folder { path = line });
-                }
+                string text = File.ReadAllText(file);
+                text = text.Replace("$Name", this.ModName[0].ToString().ToUpper() + this.ModName.Substring(1));
+                text = text.Replace("$name", this.ModName);
+                File.WriteAllText(file, text);
             }
-            // Add mod folder too
-            sublimeProjectObject.folders.Add(new Folder { path = "." });
 
-            var options = new JsonSerializerOptions { WriteIndented = true };
-            string sublimeJsonString = JsonSerializer.Serialize(sublimeProjectObject, options);
-            string vscodeJsonString = JsonSerializer.Serialize(vsCodeProjectObject, options);
-            File.WriteAllText(Path.Combine(this.ModPath, this.ModName + ".sublime-project"), sublimeJsonString);
-            File.WriteAllText(Path.Combine(this.ModPath, ".vscode", this.ModName + ".code-workspace"), vscodeJsonString);
-            return true;
+            string[] directories = Directory.GetDirectories(this.ModPath, "*.*", SearchOption.AllDirectories);
+            foreach (string directory in directories)
+            {
+                string newDirectory = directory.Replace("$Name", this.ModName[0].ToString().ToUpper() + this.ModName.Substring(1));
+                newDirectory = directory.Replace("$name", this.ModName);
+                if(directory != newDirectory) Directory.Move(directory, newDirectory);
+            }
+
+            string[] files2 = Directory.GetFiles(this.ModPath, "*.*", SearchOption.AllDirectories);
+            foreach (string file in files2)
+            {
+                string newFile = file.Replace("$Name", this.ModName[0].ToString().ToUpper() + this.ModName.Substring(1));
+                newFile = file.Replace("$name", this.ModName);
+                if(file != newFile) File.Move(file, newFile);
+            }
         }
-    }
-    public class SublimeProject
-    {
-        public String[] build_systems { get; set; }
 
-        public List<Folder> folders { get; set; }
-    }
-
-    public class VSCodeProject
-    {
-        public String[] settings { get; set; }
-
-        public List<Folder> folders { get; set; }
-    }
-
-    public class Folder
-    {
-        public String path { get; set; }
+        private void replaceBBbuilderPlaceholder(){
+            string[] files = Directory.GetFiles(this.ModPath, "*.*", SearchOption.AllDirectories);
+            foreach (string file in files)
+            {
+                string text = File.ReadAllText(file);
+                text = text.Replace("$bbbuild_path", Utils.EXECUTINGFOLDER.Replace("\\", "/") + "BBbuilder.exe");
+                File.WriteAllText(file, text);
+            }
+        }
     }
 }
