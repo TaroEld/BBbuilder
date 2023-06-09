@@ -128,7 +128,7 @@ namespace BBbuilder
             foreach (string file in files)
             {
                 string text = File.ReadAllText(file);
-                text = text.Replace("$sq_path", Utils.SQPATH.Replace("\\", "/") + "BBbuilder.exe");
+                text = text.Replace("$sq_path", Utils.SQPATH.Replace("\\", "/"));
                 File.WriteAllText(file, text);
             }
         }
