@@ -19,7 +19,8 @@ namespace BBbuilder
             watch.Start();
 
             Dictionary<string, Command> Commands = new();
-            
+
+            Commands.Add("test", new TestCommand());
             Commands.Add("build", new BuildCommand());
             Commands.Add("init", new InitCommand());
             Commands.Add("extract", new ExtractCommand());
