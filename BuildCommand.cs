@@ -140,13 +140,12 @@ namespace BBbuilder
 
             Console.WriteLine("- Creating temp folder...");
             resetableWatch.Restart();
-            string tempFolder = Path.Combine(localWorkingDirectory, "temp");
-            if (Directory.Exists(tempFolder))
+            if (Directory.Exists(TempPath))
             {
-                Directory.Delete(tempFolder, true);
+                Directory.Delete(TempPath, true);
             }
-            Directory.CreateDirectory(tempFolder);
-            Copy(this.ModPath, tempFolder);
+            Directory.CreateDirectory(TempPath);
+            Copy(this.ModPath, TempPath);
             Console.WriteLine($"- Creating temp folder took {resetableWatch.Elapsed.TotalSeconds} seconds!");
 
             Console.WriteLine("- Compiling Squirrel files...");
