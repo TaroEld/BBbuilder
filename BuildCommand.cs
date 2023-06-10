@@ -225,6 +225,13 @@ namespace BBbuilder
                 compiling.WaitForExit();
             }
             Console.WriteLine($"-- Browserify the transpilation result took {es3Watch.Elapsed.TotalSeconds} s");
+
+            if(Directory.Exists(Path.Combine(BuildPath, "node_modules"))){
+                es3Watch.Restart();
+                Console.WriteLine("-- Remove node_modules from buidPath...");
+                //Directory.Delete(Path.Combine(BuildPath, "node_modules"), true);
+                Console.WriteLine($"-- Remove node_modules took {es3Watch.Elapsed.TotalSeconds} s");
+            }
             es3Watch.Stop();
 
             return true;
