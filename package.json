@@ -1,0 +1,10 @@
+{
+  "name": "bbbuilder",
+  "version": "0.0.0",
+  "description": "This is a command-line application that helps in the development of mods for the game Battle Brothers.  \r It is built on .net 5.0, but the releases are built using the self-contained option.  \r Bundled with this application is the Battle Brothers mod kit by Adam Milazzo: http://www.adammil.net/blog/v133_Battle_Brothers_mod_kit.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

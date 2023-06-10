@@ -13,6 +13,7 @@
     <None Remove="build_template_vs" />
     <None Remove="gitignore_template" />
     <None Remove="template_preload.nut" />
+    <None Remove="template_index.js" />
   </ItemGroup>
 
   <ItemGroup>
@@ -20,6 +21,7 @@
     <EmbeddedResource Include="build_template_vs" />
     <EmbeddedResource Include="gitignore_template" />
     <EmbeddedResource Include="template_preload.nut" />
+    <EmbeddedResource Include="template_index.js" />
   </ItemGroup>
 
   <ItemGroup>
@@ -42,7 +44,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="$(SolutionDir)tools\**" CopyToOutputDirectory="Always" LinkBase="config" />
+    <None Include="tools\**" CopyToOutputDirectory="Always" LinkBase="config" />
+    <None Include="babel.config.json" CopyToOutputDirectory="Always" LinkBase="config" />
+    <None Include="package.json" CopyToOutputDirectory="Always" LinkBase="config" />
   </ItemGroup>
 
 </Project>
