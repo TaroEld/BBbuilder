@@ -29,7 +29,7 @@ namespace BBbuilder
             };
             this.Flags = new OptionFlag[] { this.Replace, this.AltPath, this.Template };
         }
-        public override bool HandleCommand(string[] _args) 
+        public override bool HandleCommand(string[] _args)
         {
             if (!base.HandleCommand(_args))
             {
@@ -74,7 +74,7 @@ namespace BBbuilder
             return true;
         }
 
-        private bool ParseCommand(List<string>_args)
+        private bool ParseCommand(List<string> _args)
         {
             this.ParseFlags(_args);
             if (_args[1].IndexOf(" ") != -1)
@@ -102,10 +102,16 @@ namespace BBbuilder
             Directory.CreateDirectory(Path.Combine(this.ModPath, ".vscode"));
             Directory.CreateDirectory(Path.Combine(this.ModPath, "assets"));
             Directory.CreateDirectory(Path.Combine(this.ModPath, "unpacked_brushes"));
+<<<<<<< HEAD
+=======
+            Directory.CreateDirectory(Path.Combine(this.ModPath, "scripts", "!mods_preload"));
+            Directory.CreateDirectory(Path.Combine(this.ModPath, "ui", "mods", this.ModName));
+>>>>>>> d6361fd (add babel)
         }
 
         private void CreateFromTemplate()
         {
+<<<<<<< HEAD
             Utils.Copy(this.TemplatePath, this.ModPath);
             string[] directories = Directory.GetDirectories(this.ModPath, "*.*", SearchOption.AllDirectories);
             string upperCaseName = this.ModName[0].ToString().ToUpper() + this.ModName[1..];
@@ -157,6 +163,23 @@ namespace BBbuilder
             }
             Utils.Copy(tempPath, this.ModPath);
             Directory.Delete(tempPath, true);
+=======
+            string nutTemplate = Utils.ReadFile("BBbuilder.template_preload.nut");
+            nutTemplate = nutTemplate.Replace("$name", this.ModName);
+            string[] pathArrayNut = new string[] { this.ModPath, "scripts", "!mods_preload", this.ModName + ".nut" };
+            File.WriteAllText(Path.Combine(pathArrayNut), nutTemplate);
+
+            string gitignore = Utils.ReadFile("BBbuilder.gitignore_template");
+            File.WriteAllText(Path.Combine(this.ModPath, ".gitignore"), gitignore);
+
+            string jsTemplate = Utils.ReadFile("BBbuilder.template_index.js");
+            jsTemplate = jsTemplate.Replace("$name", this.ModName);
+            jsTemplate = jsTemplate.Replace("$Name", this.ModName.First().ToString().ToUpper() + this.ModName.Substring(1));
+            string[] pathArrayJs = new string[] { this.ModPath, "ui", "mods", this.ModName, "index.js"};
+            File.WriteAllText(Path.Combine(pathArrayJs), jsTemplate);
+
+            return true;
+>>>>>>> d6361fd (add babel)
         }
 
         private bool WriteProjectFiles()
