@@ -21,14 +21,14 @@ namespace BBbuilder
         string ModPath;
         string ModName;
         string ZipPath;
-        string TempPath;
+        string BuildPath;
         readonly OptionFlag ScriptOnly = new("-scriptonly", "Only pack script files. The mod will have a '_scripts' suffix.");
         readonly OptionFlag CompileOnly = new("-compileonly", "Compile the .nut files without creating a .zip.");
         readonly OptionFlag StartGame = new("-restart", "Exit and then start BattleBrothers.exe after building the mod.");
         readonly OptionFlag UIOnly = new("-uionly", "Only zip the gfx and ui folders. The mod will have a '_ui' suffix.");
         readonly OptionFlag NoCompile = new("-nocompile", "Speed up the build by not compiling files");
         readonly OptionFlag NoPack = new("-nopack", "Speed up the build by not repacking brushes");
-        readonly OptionFlag Es3Transpilation = new("-es3Transpilation", "Translate js file to es3. It allow you to use modern js syntax and features to create your mod.");
+        readonly OptionFlag Transpile = new("-transpile", "Translate js file to es3. It allow you to use modern js syntax and features to create your mod.");
         public BuildCommand()
         {
             this.Name = "build";
@@ -37,7 +37,7 @@ namespace BBbuilder
             {
                 "Mandatory: Specify the path of the mod to be built. (Example: bbuilder build G:/Games/BB/Mods/WIP/mod_msu)",
             };
-            this.Flags = new OptionFlag[] { this.ScriptOnly, this.CompileOnly, this.StartGame, this.UIOnly, this.NoCompile, this.NoPack, this.Es3Transpilation };
+            this.Flags = new OptionFlag[] { this.ScriptOnly, this.CompileOnly, this.StartGame, this.UIOnly, this.NoCompile, this.NoPack, this.Transpile };
         }
         private bool ParseCommand(List<string> _args)
         {
@@ -49,6 +49,7 @@ namespace BBbuilder
                 return false;
             }
             this.ModPath = _args[1];
+            this.BuildPath = this.ModPath;
             this.ModName = new DirectoryInfo(this.ModPath).Name;
 
             if (this.ScriptOnly && this.UIOnly)
@@ -66,8 +67,18 @@ namespace BBbuilder
             if (this.UIOnly)
                 this.ModName += "_ui";
 
-            this.TempPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "temp");
-            this.ZipPath = this.TempPath + ".zip";
+            if (this.Transpile)
+            {
+                this.BuildPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "temp");
+                if (Directory.Exists(this.BuildPath))
+                {
+                    Directory.Delete(this.BuildPath, true);
+                }
+                Directory.CreateDirectory(this.BuildPath);
+                Copy(this.ModPath, this.BuildPath);
+            }
+
+            this.ZipPath = this.BuildPath + ".zip";
             return true;
         }
 
@@ -92,6 +103,13 @@ namespace BBbuilder
                 RemoveOldFiles();
                 return false;
             }
+            if (this.Transpile && !this.TranspileToES3())
+            {
+                Console.WriteLine("Failed while transpiling to ES3!");
+                RemoveOldFiles();
+                return false;
+            }
+
             // Leave early if compile only is specified
             if (this.CompileOnly)
             {
@@ -127,29 +145,9 @@ namespace BBbuilder
 
         private bool CompileFiles()
         {
-            Stopwatch totalStopWatch = new Stopwatch();
-            totalStopWatch.Start();
-            Stopwatch resetableWatch = new Stopwatch();
-            resetableWatch.Start();
-            Stopwatch resetableWatchSub = new Stopwatch();
-            resetableWatchSub.Start();
-
             string localWorkingDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             //get this script directory
             Console.WriteLine("Starting to compile files...");
-
-            Console.WriteLine("- Creating temp folder...");
-            resetableWatch.Restart();
-            if (Directory.Exists(TempPath))
-            {
-                Directory.Delete(TempPath, true);
-            }
-            Directory.CreateDirectory(TempPath);
-            Copy(this.ModPath, TempPath);
-            Console.WriteLine($"- Creating temp folder took {resetableWatch.Elapsed.TotalSeconds} seconds!");
-
-            Console.WriteLine("- Compiling Squirrel files...");
-            resetableWatch.Restart();
             string[] allNutFilesAsPath = GetAllowedScriptFiles();
             if (allNutFilesAsPath.Length == 0)
             {
@@ -182,73 +180,60 @@ namespace BBbuilder
                     }
                 }
             });
-            Console.WriteLine($"- Compiling Squirrel files took {resetableWatch.Elapsed.TotalSeconds} seconds");
-
-            Console.WriteLine("- Compiling JS files...");
-            resetableWatch.Restart();
-            if (this.Es3Transpilation)
-            {
-                var npmPackageToInstall = new List<string> { };
-
-                Console.WriteLine("-- Check npm dependencies...");
-                resetableWatchSub.Restart();
-                checkNpmPresence();
-                checkNpmDependency("@babel/cli", localWorkingDirectory);
-                checkNpmDependency("@babel/preset-env", localWorkingDirectory);
-                checkNpmDependency("browserify", localWorkingDirectory);
-                checkNpmDependency("core-js", localWorkingDirectory);
-                Console.WriteLine($"-- Check npm dependencies took {resetableWatchSub.Elapsed.TotalSeconds} seconds");
-
-                Console.WriteLine("-- Transpile from modern JS to old JS...");
-                resetableWatchSub.Restart();
-                using (Process compiling = new Process())
-                {
-                    compiling.StartInfo.UseShellExecute = true;
-                    compiling.StartInfo.FileName = "babel";
-                    compiling.StartInfo.Arguments = String.Format("\"{0}\" --out-dir \"{1}\" --config-file \"{2}\"", tempFolder, tempFolder, Path.Combine(localWorkingDirectory, "babel.config.json"));
-                    compiling.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                    compiling.Start();
-                    compiling.WaitForExit();
-                }
-                Console.WriteLine($"-- Transpile from modern JS to old JS took {resetableWatchSub.Elapsed.TotalSeconds} seconds");
-
-                Console.WriteLine("-- Browserify the transpilation result...");
-                resetableWatchSub.Restart();
-                using (Process compiling = new Process())
-                {
-                    compiling.StartInfo.UseShellExecute = true;
-                    compiling.StartInfo.FileName = "browserify";
-                    compiling.StartInfo.Arguments = String.Format("\"{0}\" -o \"{0}\"", Path.Combine(tempFolder, "ui/mods/", ModName, "index.js"));
-                    compiling.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                    compiling.Start();
-                    compiling.WaitForExit();
-                }
-                Console.WriteLine($"-- Browserify the transpilation result took {resetableWatchSub.Elapsed.TotalSeconds} seconds");
-
-                Console.WriteLine("-- Delete node_modules...");
-                resetableWatchSub.Restart();
-                if(Directory.Exists(Path.Combine(tempFolder, "node_modules"))){
-                    Directory.Delete(Path.Combine(tempFolder, "node_modules"), true);
-                }
-                Console.WriteLine($"-- Delete node_modules took {resetableWatchSub.Elapsed.TotalSeconds} seconds");
-
-                resetableWatchSub.Stop();
-            }
-            Console.WriteLine($"- Compiling JS files took {resetableWatch.Elapsed.TotalSeconds} seconds");
-            resetableWatch.Stop();
-            Console.WriteLine($"Compiling files took {totalStopWatch.Elapsed.TotalSeconds} seconds");
-            totalStopWatch.Stop();
-
             if (noCompileErrors)
                 Console.WriteLine("Successfully compiled files!");
 
             return noCompileErrors;
         }
 
+        private bool TranspileToES3()
+        {
+            Console.WriteLine("Starting to transpile to ES3...");
+            string localWorkingDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string[] dependencies = new string[] { "@babel/cli", "@babel/preset-env", "browserify", "core-js" };
+            Stopwatch es3Watch = new();
+            CheckNpmPresence();
+            es3Watch.Start();
+            Console.WriteLine("-- Check npm dependencies...");
+            CheckNpmDependencies(dependencies, localWorkingDirectory);
+            Console.WriteLine($"-- Check npm dependencies took {es3Watch.Elapsed.TotalSeconds} s");
+            string babelLoc = Path.Combine(localWorkingDirectory, "node_modules", ".bin", "babel");
+            string browserifyLoc = Path.Combine(localWorkingDirectory, "node_modules", ".bin", "browserify");
+
+            Console.WriteLine("-- Transpile from modern JS to old JS...");
+            es3Watch.Restart();
+            using (Process compiling = new())
+            {
+                compiling.StartInfo.UseShellExecute = true;
+                compiling.StartInfo.FileName = babelLoc;
+                compiling.StartInfo.Arguments = String.Format("\"{0}\" --out-dir \"{1}\" --config-file \"{2}\"", this.BuildPath, this.BuildPath, Path.Combine(localWorkingDirectory, "babel.config.json"));
+                compiling.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                compiling.Start();
+                compiling.WaitForExit();
+            }
+            Console.WriteLine($"-- Transpile from modern JS to old JS took {es3Watch.Elapsed.TotalSeconds} s");
+
+            Console.WriteLine("-- Browserify the transpilation result...");
+            es3Watch.Restart();
+            using (Process compiling = new())
+            {
+                compiling.StartInfo.UseShellExecute = true;
+                compiling.StartInfo.FileName = browserifyLoc;
+                compiling.StartInfo.Arguments = String.Format("\"{0}\" -o \"{0}\"", Path.Combine(this.BuildPath, "ui/mods/", ModName, "index.js"));
+                compiling.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                compiling.Start();
+                compiling.WaitForExit();
+            }
+            Console.WriteLine($"-- Browserify the transpilation result took {es3Watch.Elapsed.TotalSeconds} s");
+            es3Watch.Stop();
+
+            return true;
+        }
+
         private string[] getAllowedFolders(string[] _allowedFolders)
         {
             List<string> ret = new();
-            string[] allFolders = Directory.GetDirectories(this.TempPath);
+            string[] allFolders = Directory.GetDirectories(this.BuildPath);
             foreach (string folderPath in allFolders)
             {
                 string folderName = new DirectoryInfo(folderPath).Name;
@@ -263,7 +248,7 @@ namespace BBbuilder
         private string[] getAllFoldersExcept(string[] _forbiddenFolders)
         {
             List<string> ret = new();
-            string[] allFolders = Directory.GetDirectories(this.TempPath);
+            string[] allFolders = Directory.GetDirectories(this.BuildPath);
             foreach (string folderPath in allFolders)
             {
                 string folderName = new DirectoryInfo(folderPath).Name;
@@ -445,12 +430,6 @@ namespace BBbuilder
                 Directory.Delete(wipGfxPath, true);
                 Console.WriteLine($"Removed folder {wipGfxPath}");
             }
-
-            if (Directory.Exists(this.TempPath))
-            {
-                Directory.Delete(this.TempPath, true);
-                Console.WriteLine($"Removed folder {this.TempPath}");
-            }
         }
 
 
@@ -502,37 +481,21 @@ namespace BBbuilder
         }
 
 
-        private static String lastListCommand = "";
         /**
         * Checks if a npm dependency is installed and installs it if it is not.
         */
-        private static void checkNpmDependency(String name, string installationPath, bool installIfMissing = true, bool refreshList = false)
+        private static void CheckNpmDependencies(string[] names, string installationPath, bool installIfMissing = true)
         {
-            using (Process compiling = new Process())
+            foreach (string name in names)
             {
-                //move process to the current directory
-                compiling.StartInfo.WorkingDirectory = installationPath;
-
-                if(lastListCommand == "" || refreshList){
-                    compiling.StartInfo.UseShellExecute = false;
-                    compiling.StartInfo.RedirectStandardOutput = true;
-                    compiling.StartInfo.FileName = "cmd.exe";
-                    compiling.StartInfo.Arguments = String.Format("/C npm list");
-                    compiling.Start();
-                    compiling.WaitForExit();
-
-                    string output = compiling.StandardOutput.ReadToEnd();
-                    lastListCommand = output;
-                }
-
-                if (!Regex.IsMatch(lastListCommand, name))
+                string depPath = Path.Combine(installationPath, "node_modules", name);
+                if (!Directory.Exists(depPath))
                 {
                     if (installIfMissing)
                     {
                         Console.WriteLine($"Installing {name}...");
                         installNpmDependency(name, installationPath);
                     }
-
                 }
             }
         }
@@ -540,7 +503,7 @@ namespace BBbuilder
         /**
         * Checks if npm is installed and exits the program if it is not.
         */
-        private static void checkNpmPresence()
+        private static void CheckNpmPresence()
         {
             using (Process compiling = new Process())
             {

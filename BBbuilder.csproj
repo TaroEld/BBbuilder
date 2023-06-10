@@ -44,7 +44,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="$(SolutionDir)tools\**" CopyToOutputDirectory="Always" LinkBase="config" />
+    <None Include="tools\**" CopyToOutputDirectory="Always" LinkBase="config" />
+    <None Include="babel.config.json" CopyToOutputDirectory="Always" LinkBase="config" />
+    <None Include="package.json" CopyToOutputDirectory="Always" LinkBase="config" />
   </ItemGroup>
 
 </Project>
