@@ -39,7 +39,11 @@ namespace BBbuilder
             {
                 return false;
             }
-            if (!this.Replace && Directory.Exists(this.ModPath))
+            if (this.Replace)
+            {
+                Directory.Delete(this.ModPath, true);
+            }
+            else if (Directory.Exists(this.ModPath))
             {
                 Console.WriteLine($"Directory '{this.ModPath}' already exists! Use flag '-replace' to overwrite existing folder. Exiting to avoid mistakes...");
                 return false;
