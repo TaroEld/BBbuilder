@@ -12,14 +12,12 @@
     <None Remove="build_template_sublime" />
     <None Remove="build_template_vs" />
     <None Remove="gitignore_template" />
-    <None Remove="template_preload.nut" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="build_template_sublime" />
     <EmbeddedResource Include="build_template_vs" />
     <EmbeddedResource Include="gitignore_template" />
-    <EmbeddedResource Include="template_preload.nut" />
   </ItemGroup>
 
   <ItemGroup>
@@ -43,6 +41,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)tools\**" CopyToOutputDirectory="Always" LinkBase="config" />
+    <None Include="$(SolutionDir)Templates\**" CopyToOutputDirectory="Always" LinkBase="config" />
   </ItemGroup>
 
 </Project>

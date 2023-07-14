@@ -15,8 +15,10 @@ namespace BBbuilder
     {
         string ModName;
         string ModPath;
+        string TemplatePath;
         readonly OptionFlag Replace = new("-replace", "Replace the files in an existing folder.");
         readonly OptionFlag AltPath = new("-alt", "Specify alternative path to extract the mod to.", true);
+        readonly OptionFlag Template = new("-template", "Specify the template you want to use depending of your mod objectives, or technologies", true);
         public InitCommand()
         {
             this.Name = "init";
@@ -25,7 +27,7 @@ namespace BBbuilder
             {
                 "Mandatory: Specify name of the new mod. The new mod will be created in your specified 'mods' directory. (Example: bbuilder init mod_test)"
             };
-            this.Flags = new OptionFlag[] { this.Replace, this.AltPath };
+            this.Flags = new OptionFlag[] { this.Replace, this.AltPath, this.Template };
         }
         public override bool HandleCommand(string[] _args) 
         {
@@ -42,8 +44,25 @@ namespace BBbuilder
                 Console.WriteLine($"Directory '{this.ModPath}' already exists! Use flag '-replace' to overwrite existing folder. Exiting to avoid mistakes...");
                 return false;
             }
-            CreateDirectories();
-            CreateTemplateFile();
+
+            if (!this.Template)
+            {
+                Console.WriteLine("No template specified, using default.");
+                this.TemplatePath = Path.Combine(Utils.EXECUTINGFOLDER, "Templates", "default");
+            }
+            else
+            {
+                Console.WriteLine($"Using template : '{this.Template.PositionalValue}'");
+                this.TemplatePath = Path.Combine(Utils.EXECUTINGFOLDER, "Templates", this.Template.PositionalValue);
+            }   
+            if (!Directory.Exists(this.TemplatePath))
+            {
+                Console.WriteLine($"Template path {this.TemplatePath} does not exist! Exiting...");
+                return false;
+            }
+
+            CreateFromTemplate();
+            CreateExtraDirectories();
             WriteProjectFiles();
             Process.Start("explorer.exe", this.ModPath);
             return true;
@@ -71,25 +90,36 @@ namespace BBbuilder
             return true;
         }
 
-        private void CreateDirectories()
+        private void CreateExtraDirectories()
         {
             Console.WriteLine("Path of new mod: " + this.ModPath);
-            Directory.CreateDirectory(this.ModPath);
             Directory.CreateDirectory(Path.Combine(this.ModPath, ".vscode"));
             Directory.CreateDirectory(Path.Combine(this.ModPath, "assets"));
             Directory.CreateDirectory(Path.Combine(this.ModPath, "unpacked_brushes"));
-            Directory.CreateDirectory(Path.Combine(this.ModPath, "scripts", "!mods_preload"));
         }
 
-        private bool CreateTemplateFile()
+        private void CreateFromTemplate()
         {
-            string nutTemplate = Utils.ReadFile("BBbuilder.template_preload.nut");
-            nutTemplate = nutTemplate.Replace("$name", this.ModName);
-            string[] pathArray = new string[] { this.ModPath, "scripts", "!mods_preload", this.ModName + ".nut" };
-            File.WriteAllText(Path.Combine(pathArray), nutTemplate);
-            string gitignore = Utils.ReadFile("BBbuilder.gitignore_template");
-            File.WriteAllText(Path.Combine(this.ModPath, ".gitignore"), gitignore);
-            return true;
+            Utils.Copy(this.TemplatePath, this.ModPath);
+            string[] directories = Directory.GetDirectories(this.ModPath, "*.*", SearchOption.AllDirectories);
+            foreach (string directory in directories)
+            {
+                string newDirectory = directory.Replace("$Name", this.ModName[0].ToString().ToUpper() + this.ModName.Substring(1));
+                newDirectory = directory.Replace("$name", this.ModName);
+                if (directory != newDirectory) Directory.Move(directory, newDirectory);
+            }
+
+            string[] files = Directory.GetFiles(this.ModPath, "*.*", SearchOption.AllDirectories);
+            foreach (string fileName in files)
+            {
+                string newFileName = fileName.Replace("$Name", this.ModName[0].ToString().ToUpper() + this.ModName.Substring(1));
+                newFileName = fileName.Replace("$name", this.ModName);
+                if(fileName != newFileName) File.Move(fileName, newFileName);
+                string text = File.ReadAllText(newFileName);
+                text = text.Replace("$Name", this.ModName[0].ToString().ToUpper() + this.ModName.Substring(1));
+                text = text.Replace("$name", this.ModName);
+                File.WriteAllText(newFileName, text);
+            }
         }
 
         private bool WriteProjectFiles()
