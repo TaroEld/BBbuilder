@@ -16,7 +16,7 @@ namespace BBbuilder
         string ModName;
         string ModPath;
         string TemplatePath;
-        readonly OptionFlag Replace = new("-replace", "Replace the files in an existing folder.");
+        readonly OptionFlag Replace = new("-replace", "Overwrite the files in an existing folder. Keeps other files in the existing folder.");
         readonly OptionFlag AltPath = new("-alt", "Specify alternative path to extract the mod to.", true);
         readonly OptionFlag Template = new("-template", "Specify the template you want to use depending of your mod objectives, or technologies", true);
         public InitCommand()
@@ -39,11 +39,7 @@ namespace BBbuilder
             {
                 return false;
             }
-            if (this.Replace)
-            {
-                Directory.Delete(this.ModPath, true);
-            }
-            else if (Directory.Exists(this.ModPath))
+            if (Directory.Exists(this.ModPath) && !this.Replace)
             {
                 Console.WriteLine($"Directory '{this.ModPath}' already exists! Use flag '-replace' to overwrite existing folder. Exiting to avoid mistakes...");
                 return false;
@@ -64,8 +60,14 @@ namespace BBbuilder
                 Console.WriteLine($"Template path {this.TemplatePath} does not exist! Exiting...");
                 return false;
             }
-
-            CreateFromTemplate();
+            if (this.Replace && Directory.Exists(this.ModPath))
+            {
+                ReplaceFromTemplate();
+            }
+            else
+            {
+                CreateFromTemplate();
+            }
             CreateExtraDirectories();
             WriteProjectFiles();
             Process.Start("explorer.exe", this.ModPath);
@@ -124,6 +126,35 @@ namespace BBbuilder
                 text = text.Replace("$name", this.ModName);
                 File.WriteAllText(newFileName, text);
             }
+        }
+
+        private void ReplaceFromTemplate()
+        {
+            string tempPath = this.ModPath + "_bbb_temp";
+            string tempName = this.ModName + "_bbb_temp";
+            Utils.Copy(this.TemplatePath, tempPath);
+            string[] directories = Directory.GetDirectories(tempPath, "*.*", SearchOption.AllDirectories);
+            foreach (string directory in directories)
+            {
+                string newDirectory = directory.Replace("$Name", this.ModName[0].ToString().ToUpper() + this.ModName.Substring(1));
+                newDirectory = newDirectory.Replace("$name", this.ModName);
+                if (directory != newDirectory) Directory.Move(directory, newDirectory);
+            }
+
+            string[] files = Directory.GetFiles(tempPath, "*.*", SearchOption.AllDirectories);
+            foreach (string fileName in files)
+            {
+                string newFileName = fileName.Replace("$Name", this.ModName[0].ToString().ToUpper() + this.ModName.Substring(1));
+                newFileName = newFileName.Replace("$name", this.ModName);
+                if (fileName != newFileName) File.Move(fileName, newFileName);
+                string text = File.ReadAllText(newFileName);
+                text = text.Replace("$Name", this.ModName[0].ToString().ToUpper() + this.ModName.Substring(1));
+                text = text.Replace("$name", this.ModName);
+                File.WriteAllText(newFileName, text);
+                if (File.Exists(newFileName.Replace(tempName, this.ModName))) Console.WriteLine($"Overwriting file {newFileName.Replace(tempName, this.ModName)}");
+            }
+            Utils.Copy(tempPath, this.ModPath);
+            Directory.Delete(tempPath, true);
         }
 
         private bool WriteProjectFiles()
