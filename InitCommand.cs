@@ -108,21 +108,22 @@ namespace BBbuilder
         {
             Utils.Copy(this.TemplatePath, this.ModPath);
             string[] directories = Directory.GetDirectories(this.ModPath, "*.*", SearchOption.AllDirectories);
+            string upperCaseName = this.ModName[0].ToString().ToUpper() + this.ModName[1..];
             foreach (string directory in directories)
             {
-                string newDirectory = directory.Replace("$Name", this.ModName[0].ToString().ToUpper() + this.ModName.Substring(1));
-                newDirectory = directory.Replace("$name", this.ModName);
+                string newDirectory = directory.Replace("$Name", upperCaseName);
+                newDirectory = newDirectory.Replace("$name", this.ModName);
                 if (directory != newDirectory) Directory.Move(directory, newDirectory);
             }
 
             string[] files = Directory.GetFiles(this.ModPath, "*.*", SearchOption.AllDirectories);
             foreach (string fileName in files)
             {
-                string newFileName = fileName.Replace("$Name", this.ModName[0].ToString().ToUpper() + this.ModName.Substring(1));
-                newFileName = fileName.Replace("$name", this.ModName);
-                if(fileName != newFileName) File.Move(fileName, newFileName);
+                string newFileName = fileName.Replace("$Name", upperCaseName);
+                newFileName = newFileName.Replace("$name", this.ModName);
+                if (fileName != newFileName) File.Move(fileName, newFileName);
                 string text = File.ReadAllText(newFileName);
-                text = text.Replace("$Name", this.ModName[0].ToString().ToUpper() + this.ModName.Substring(1));
+                text = text.Replace("$Name", upperCaseName);
                 text = text.Replace("$name", this.ModName);
                 File.WriteAllText(newFileName, text);
             }
@@ -132,11 +133,12 @@ namespace BBbuilder
         {
             string tempPath = this.ModPath + "_bbb_temp";
             string tempName = this.ModName + "_bbb_temp";
+            string upperCaseName = this.ModName[0].ToString().ToUpper() + this.ModName[1..];
             Utils.Copy(this.TemplatePath, tempPath);
             string[] directories = Directory.GetDirectories(tempPath, "*.*", SearchOption.AllDirectories);
             foreach (string directory in directories)
             {
-                string newDirectory = directory.Replace("$Name", this.ModName[0].ToString().ToUpper() + this.ModName.Substring(1));
+                string newDirectory = directory.Replace("$Name", upperCaseName);
                 newDirectory = newDirectory.Replace("$name", this.ModName);
                 if (directory != newDirectory) Directory.Move(directory, newDirectory);
             }
@@ -144,11 +146,11 @@ namespace BBbuilder
             string[] files = Directory.GetFiles(tempPath, "*.*", SearchOption.AllDirectories);
             foreach (string fileName in files)
             {
-                string newFileName = fileName.Replace("$Name", this.ModName[0].ToString().ToUpper() + this.ModName.Substring(1));
+                string newFileName = fileName.Replace("$Name", upperCaseName);
                 newFileName = newFileName.Replace("$name", this.ModName);
                 if (fileName != newFileName) File.Move(fileName, newFileName);
                 string text = File.ReadAllText(newFileName);
-                text = text.Replace("$Name", this.ModName[0].ToString().ToUpper() + this.ModName.Substring(1));
+                text = text.Replace("$Name", upperCaseName);
                 text = text.Replace("$name", this.ModName);
                 File.WriteAllText(newFileName, text);
                 if (File.Exists(newFileName.Replace(tempName, this.ModName))) Console.WriteLine($"Overwriting file {newFileName.Replace(tempName, this.ModName)}");
