@@ -81,7 +81,7 @@ namespace BBbuilder
             this.InitCommandArray.Add("init");
 
             this.ModName = this.Rename ? this.Rename.PositionalValue : Path.GetFileNameWithoutExtension(this.ZipPath);
-            this.ModPath = Path.Combine(Properties.Settings.Default.ModPath, this.ModName);
+            this.ModPath = Path.Combine(Utils.ModPath, this.ModName);
             this.InitCommandArray.Add(this.ModName);
             if (this.AltPath)
             {

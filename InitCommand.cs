@@ -92,7 +92,7 @@ namespace BBbuilder
                 }
                 this.ModPath = Path.Combine(this.AltPath.PositionalValue, this.ModName);
             }
-            else this.ModPath = Path.Combine(Properties.Settings.Default.ModPath, this.ModName);
+            else this.ModPath = Path.Combine(Utils.ModPath, this.ModName);
             return true;
         }
 
@@ -163,26 +163,26 @@ namespace BBbuilder
         {
             var sublimeProjectObject = new SublimeProject
             {
-                build_systems = Array.Empty<string>(),
-                folders = new List<Folder>()
+                Build_systems = Array.Empty<string>(),
+                Folders = new List<Folder>()
             };
             var vsCodeProjectObject = new VSCodeProject
             {
-                settings = Array.Empty<string>(),
-                folders = new List<Folder>()
+                Settings = Array.Empty<string>(),
+                Folders = new List<Folder>()
             };
             // For vscode, the mod folder must come first
-            vsCodeProjectObject.folders.Add(new Folder { path = ".." });
-            if (Properties.Settings.Default.Folders != null)
+            vsCodeProjectObject.Folders.Add(new Folder { Path = ".." });
+            if (Utils.FoldersArray != null)
             {
-                foreach (string line in Properties.Settings.Default.Folders)
+                foreach (string line in Utils.FoldersArray)
                 {
-                    sublimeProjectObject.folders.Add(new Folder { path = line });
-                    vsCodeProjectObject.folders.Add(new Folder { path = line });
+                    sublimeProjectObject.Folders.Add(new Folder { Path = line });
+                    vsCodeProjectObject.Folders.Add(new Folder { Path = line });
                 }
             }
             // Add mod folder too
-            sublimeProjectObject.folders.Add(new Folder { path = "." });
+            sublimeProjectObject.Folders.Add(new Folder { Path = "." });
 
             var options = new JsonSerializerOptions { WriteIndented = true };
             string sublimeJsonString = JsonSerializer.Serialize(sublimeProjectObject, options);
@@ -194,20 +194,20 @@ namespace BBbuilder
     }
     public class SublimeProject
     {
-        public String[] build_systems { get; set; }
+        public String[] Build_systems { get; set; }
 
-        public List<Folder> folders { get; set; }
+        public List<Folder> Folders { get; set; }
     }
 
     public class VSCodeProject
     {
-        public String[] settings { get; set; }
+        public String[] Settings { get; set; }
 
-        public List<Folder> folders { get; set; }
+        public List<Folder> Folders { get; set; }
     }
 
     public class Folder
     {
-        public String path { get; set; }
+        public String Path { get; set; }
     }
 }

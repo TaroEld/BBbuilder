@@ -2,20 +2,18 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Data.Sqlite;
 
 namespace BBbuilder
 {
     class ConfigCommand : Command
     {
-
+        private SqliteConnection Connection;
         public ConfigCommand()
         {
             this.Name = "config";
             this.Description = "Configure the settings that are used to create and build mods";
+            this.Connection = new SqliteConnection("Data Source=./tools/settings.sqlite");
             this.Commands = new Dictionary<string, string>
             {
                 {"datapath", "Set path to the data directory. (For example: bbuilder config datapath G:/Games/SteamLibrary/steamapps/common/Battle Brothers/data)"},
@@ -26,19 +24,64 @@ namespace BBbuilder
             };
         }
 
+        public string getValueFromDB(string _id)
+        {
+            this.Connection.Open();
+            var command = this.Connection.CreateCommand();
+            string ret = "";
+            command.CommandText =
+            @"
+                SELECT value
+                FROM settings
+                WHERE id = $id
+            ";
+            command.Parameters.AddWithValue("$id", _id);
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    ret = reader.GetString(0);
+                }
+            }
+            this.Connection.Close();
+            return ret;
+        }
+        public void WriteValueToDb(string _id, string _value)
+        {
+            this.Connection.Open();
+            var command = this.Connection.CreateCommand();
+            string ret = "";
+            command.CommandText =
+            @"
+                UPDATE settings
+                SET value = $value
+                WHERE id = $id
+            ";
+            command.Parameters.AddWithValue("$id", _id);
+            command.Parameters.AddWithValue("$value", _value);
+            command.ExecuteNonQuery();
+            this.Connection.Close();
+        }
+
         public void SetupConfig()
         {
-            while (!Directory.Exists(Properties.Settings.Default.GamePath))
+            Utils.GamePath = getValueFromDB("GamePath");
+            Utils.ModPath = getValueFromDB("ModPath");
+            Utils.Folders = getValueFromDB("Folders");
+            Utils.FoldersArray = Utils.Folders.Split(";");
+            Utils.MoveZip = bool.Parse(getValueFromDB("MoveZip"));
+
+            while (!Directory.Exists(Utils.GamePath))
             {
                 Console.WriteLine("Please pass the path to the 'data' game directory. For example: G:/Games/SteamLibrary/steamapps/common/Battle Brothers/data");
                 string passedPath = Console.ReadLine();
                 if (!ValidateDataPath(passedPath))
                     continue;
-                Properties.Settings.Default.GamePath = passedPath;
+                Utils.GamePath = passedPath;
                 Console.WriteLine($"datapath set to {passedPath}.");
-                Properties.Settings.Default.Save();
+                WriteValueToDb("GamePath", Utils.GamePath);
             }
-            while (!Directory.Exists(Properties.Settings.Default.ModPath))
+            while (!Directory.Exists(Utils.ModPath))
             {
                 Console.WriteLine("Please pass the path to the directory where you want new mods to be placed. For example: G:/Games/BB/Mods/WIP");
                 string passedPath = Console.ReadLine();
@@ -47,10 +90,11 @@ namespace BBbuilder
                     Console.WriteLine($"Directory {passedPath} does not exist!");
                      continue;
                 }
-                Properties.Settings.Default.ModPath = passedPath;
+                Utils.ModPath = passedPath;
                 Console.WriteLine($"datapath set to {passedPath}.");
-                Properties.Settings.Default.Save();
+                WriteValueToDb("ModPath", Utils.ModPath);
             }
+
             UpdateBuildFiles();
         }
 
@@ -76,21 +120,23 @@ namespace BBbuilder
         public static void PrintConfig()
         {
             Console.WriteLine("Current config:");
-            Console.WriteLine($"Data Path: {Properties.Settings.Default.GamePath}");
-            Console.WriteLine($"Mods Path: {Properties.Settings.Default.ModPath}");
-            if (Properties.Settings.Default.Folders == null)
+            Console.WriteLine($"Data Path: {Utils.GamePath}");
+            Console.WriteLine($"Mods Path: {Utils.ModPath}");
+            if (Utils.FoldersArray == null)
             {
                 Console.WriteLine("No Project Folders defined");
             }
             else
             {
                 Console.WriteLine("Project Folders:");
-                foreach (string line in Properties.Settings.Default.Folders)
+                foreach (string line in Utils.FoldersArray)
                 {
                     Console.WriteLine(line);
                 }
             }
+            Console.WriteLine($"Move Zip: {Utils.MoveZip}");
         }
+
         public override bool HandleCommand(string[] _args)
         {
             if (_args.Length < 3 || !Commands.ContainsKey(_args[1]))
@@ -110,35 +156,42 @@ namespace BBbuilder
                 {
                     Console.WriteLine($"Directory '{passedPath}' does not exist!");
                 }
-                if (command == "datapath")
-                {
-                    Properties.Settings.Default.GamePath = passedPath;
-                    Console.WriteLine($"Set datapath to {passedPath}");
-                }
                 else
                 {
-                    Properties.Settings.Default.ModPath = passedPath;
-                    Console.WriteLine($"Set modpath to {passedPath}");
+                    if (command == "datapath")
+                    {
+                        Utils.GamePath = passedPath;
+                        WriteValueToDb("GamePath", passedPath);
+                        Console.WriteLine($"Set datapath to {passedPath}");
+                    }
+                    else
+                    {
+                        Utils.ModPath = passedPath;
+                        WriteValueToDb("ModPath", passedPath);
+                        Console.WriteLine($"Set modpath to {passedPath}");
+                    }
                 }
             }
             if (command == "folders")
             {
-                Properties.Settings.Default.Folders = new StringCollection();
+                Utils.Folders = "";
                 var folderArgs = new ArraySegment<string>(_args, 2, _args.Length-2);
-                // Properties.Settings.Default.Folders.Clear();
+                Utils.FoldersArray = folderArgs.Array;
                 foreach (string line in folderArgs)
                 {
                     if (!Directory.Exists(line))
                         Console.WriteLine($"WARNING: Passed path {line} is not an existing folder!");
-                    Properties.Settings.Default.Folders.Add(line);
+                    Utils.Folders += line + ";";
                     Console.WriteLine($"Added path {line} to folders to be added to build file.");
                 }
+                Utils.Folders = Utils.Folders[0..^1];
+                WriteValueToDb("Folders", Utils.Folders);
             }
             if (command == "movezip")
             {
-                Properties.Settings.Default.MoveZip = Convert.ToBoolean(_args[2]);
+                Utils.MoveZip = Convert.ToBoolean(_args[2]);
+                WriteValueToDb("MoveZip", _args[2]);
             }
-            Properties.Settings.Default.Save();
             PrintConfig();
             UpdateBuildFiles();
             return true;

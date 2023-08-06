@@ -130,8 +130,7 @@ namespace BBbuilder
             Parallel.For(0, allNutFilesAsPath.Length, (i, state) =>
             {
                 string nutFilePath = allNutFilesAsPath[i];
-                string cnutFilePath = Path.ChangeExtension(nutFilePath, ".cnut");
-                string sqCommand = String.Format("-o NUL -c \"{1}\"", cnutFilePath, nutFilePath);
+                string sqCommand = String.Format("-o NUL -c \"{0}\"", nutFilePath);
 
                 using (Process compiling = new Process())
                 {
@@ -302,7 +301,7 @@ namespace BBbuilder
 
         private bool CopyZipToData()
         {
-            string gamePath = Properties.Settings.Default.GamePath;
+            string gamePath = Utils.GamePath;
             string zipName = $"{this.ModName}.zip";
             
             string dataZipPath = Path.Combine(gamePath, zipName);
@@ -310,7 +309,7 @@ namespace BBbuilder
             {
                 File.Delete(dataZipPath);
             }
-            if (Properties.Settings.Default.MoveZip)
+            if (Utils.MoveZip)
                 File.Move(this.ZipPath, dataZipPath);
             else
                 File.Copy(this.ZipPath, dataZipPath);
@@ -325,7 +324,7 @@ namespace BBbuilder
                 Console.WriteLine("Stopping BattleBrothers.exe...");
                 instance.Kill();
             }
-            string bbFolder = Directory.GetParent(Properties.Settings.Default.GamePath).ToString();
+            string bbFolder = Directory.GetParent(Utils.GamePath).ToString();
             string bbExe = Path.Combine(bbFolder, "win32", "BattleBrothers.exe");
             Console.WriteLine($"Starting Battle Brothers ({bbExe})");
             using (Process startGame = new Process())
