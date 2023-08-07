@@ -75,5 +75,7 @@ namespace BBbuilder
             Console.WriteLine($"Description: {this.Description}");
             PrintCommands();
         }
+
+        public void CleanUp() { }
     }
 }

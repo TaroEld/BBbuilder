@@ -42,14 +42,12 @@ namespace BBbuilder
                 Utils.PrintHelp(Commands);
             }
             else
-            {                   
-                if (Commands[arguments[0]].HandleCommand(arguments))
-                {
-                    watch.Stop();
-
-                    Console.WriteLine($"Execution Time: {watch.ElapsedMilliseconds} ms");
-                    return 0;
-                }
+            {
+                Commands[arguments[0]].HandleCommand(arguments);
+                Commands[arguments[0]].CleanUp();
+                watch.Stop();
+                Console.WriteLine($"Execution Time: {watch.ElapsedMilliseconds} ms");
+                return 0;
             }
             watch.Stop();
 

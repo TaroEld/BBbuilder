@@ -100,46 +100,38 @@ namespace BBbuilder
             if (!this.UIOnly && !this.NoCompile && !CompileFiles())
             {
                 Console.WriteLine("Failed while compiling files");
-                RemoveOldFiles();
                 return false;
             }
             if (this.Transpile && !this.TranspileToES3())
             {
                 Console.WriteLine("Failed while transpiling to ES3!");
-                RemoveOldFiles();
                 return false;
             }
 
             // Leave early if compile only is specified
             if (this.CompileOnly)
             {
-                RemoveOldFiles();
                 return true;
             }
             if (!this.NoPack && !PackBrushFiles())
             {
                 Console.WriteLine("Failed while packing brush files");
-                RemoveOldFiles();
                 return false;
             }
             if (!ZipFolders())
             {
                 Console.WriteLine("Failed while zipping files");
-                RemoveOldFiles();
                 return false;
             }
             if (!CopyZipToData())
             {
                 Console.WriteLine("Failed while copying new zip to data!");
-                RemoveOldFiles();
                 return false;
             }
             if (this.StartGame)
             {
                 KillAndStartBB();
             }
-
-            RemoveOldFiles();
             return true;
         }
 
@@ -416,7 +408,7 @@ namespace BBbuilder
             }
         }
 
-        private void RemoveOldFiles()
+        new public void CleanUp()
         {
             if (File.Exists(this.ZipPath))
             {
