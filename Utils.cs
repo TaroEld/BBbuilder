@@ -28,7 +28,7 @@ namespace BBbuilder
             string fileAsString;
             var assembly = Assembly.GetExecutingAssembly();
             using (Stream stream = assembly.GetManifestResourceStream(_path))
-            using (StreamReader reader = new StreamReader(stream))
+            using (StreamReader reader = new(stream))
             {
                 fileAsString = reader.ReadToEnd();
             }
@@ -48,8 +48,8 @@ namespace BBbuilder
         // copied from https://learn.microsoft.com/en-us/dotnet/api/system.io.directoryinfo?redirectedfrom=MSDN&view=net-6.0 
         public static void Copy(string sourceDirectory, string targetDirectory)
         {
-            DirectoryInfo diSource = new DirectoryInfo(sourceDirectory);
-            DirectoryInfo diTarget = new DirectoryInfo(targetDirectory);
+            DirectoryInfo diSource = new(sourceDirectory);
+            DirectoryInfo diTarget = new(targetDirectory);
 
             CopyAll(diSource, diTarget);
         }

@@ -108,18 +108,18 @@ namespace BBbuilder
 
         private void CreateFromTemplate()
         {
-            Utils.Copy(this.TemplatePath, this.ModPath);
-            string[] directories = Directory.GetDirectories(this.ModPath, "*.*", SearchOption.AllDirectories);
             string upperCaseName = this.ModName[0].ToString().ToUpper() + this.ModName[1..];
-            foreach (string directory in directories)
+            string[] templateDirectories = Directory.GetDirectories(this.ModPath, "*.*", SearchOption.AllDirectories);
+            Utils.Copy(this.TemplatePath, this.ModPath);
+            foreach (string directory in templateDirectories)
             {
                 string newDirectory = directory.Replace("$Name", upperCaseName);
                 newDirectory = newDirectory.Replace("$name", this.ModName);
                 if (directory != newDirectory) Directory.Move(directory, newDirectory);
             }
 
-            string[] files = Directory.GetFiles(this.ModPath, "*.*", SearchOption.AllDirectories);
-            foreach (string fileName in files)
+            string[] templateFiles = Directory.GetFiles(this.ModPath, "*.*", SearchOption.AllDirectories);
+            foreach (string fileName in templateFiles)
             {
                 string newFileName = fileName.Replace("$Name", upperCaseName);
                 newFileName = newFileName.Replace("$name", this.ModName);
@@ -137,16 +137,16 @@ namespace BBbuilder
             string tempName = this.ModName + "_bbb_temp";
             string upperCaseName = this.ModName[0].ToString().ToUpper() + this.ModName[1..];
             Utils.Copy(this.TemplatePath, tempPath);
-            string[] directories = Directory.GetDirectories(tempPath, "*.*", SearchOption.AllDirectories);
-            foreach (string directory in directories)
+            string[] templateDirectories = Directory.GetDirectories(tempPath, "*.*", SearchOption.AllDirectories);
+            foreach (string directory in templateDirectories)
             {
                 string newDirectory = directory.Replace("$Name", upperCaseName);
                 newDirectory = newDirectory.Replace("$name", this.ModName);
                 if (directory != newDirectory) Directory.Move(directory, newDirectory);
             }
 
-            string[] files = Directory.GetFiles(tempPath, "*.*", SearchOption.AllDirectories);
-            foreach (string fileName in files)
+            string[] templateFiles = Directory.GetFiles(tempPath, "*.*", SearchOption.AllDirectories);
+            foreach (string fileName in templateFiles)
             {
                 string newFileName = fileName.Replace("$Name", upperCaseName);
                 newFileName = newFileName.Replace("$name", this.ModName);

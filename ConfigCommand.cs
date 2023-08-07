@@ -50,7 +50,6 @@ namespace BBbuilder
         {
             this.Connection.Open();
             var command = this.Connection.CreateCommand();
-            string ret = "";
             command.CommandText =
             @"
                 UPDATE settings

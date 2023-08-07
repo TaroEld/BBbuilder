@@ -15,13 +15,8 @@ namespace BBbuilder
 {
     class BuildCommand : Command
     {
-        String[] ExcludedAssetFolders = new String[] { ".git", ".github", "unpacked_brushes", ".vscode", ".utils", "assets", "modtools", "music", "sounds", "gfx", "brushes" };
-        String[] ExcludedZipFolders = new String[] { ".git", ".github", "unpacked_brushes", ".vscode", ".utils", "assets", "modtools" };
-        String[] ExcludedScriptFolders = new String[] { "ui", ".git", ".github", "gfx", "preload", "brushes", "music", "sounds", "unpacked_brushes", "tempfolder", ".vscode", "nexus", ".utils", "assets" };
-        string ModPath;
-        string ModName;
-        string ZipPath;
-        string BuildPath;
+        readonly String[] ExcludedZipFolders = new String[] { ".git", ".github", "unpacked_brushes", ".vscode", ".utils", "assets", "modtools", "node_modules" };
+        readonly String[] ExcludedScriptFolders = new String[] { "ui", ".git", ".github", "gfx", "preload", "brushes", "music", "sounds", "unpacked_brushes", "tempfolder", ".vscode", "nexus", ".utils", "assets" };
         readonly OptionFlag ScriptOnly = new("-scriptonly", "Only pack script files. The mod will have a '_scripts' suffix.");
         readonly OptionFlag CompileOnly = new("-compileonly", "Compile the .nut files without creating a .zip.");
         readonly OptionFlag StartGame = new("-restart", "Exit and then start BattleBrothers.exe after building the mod.");
@@ -29,6 +24,11 @@ namespace BBbuilder
         readonly OptionFlag NoCompile = new("-nocompile", "Speed up the build by not compiling files");
         readonly OptionFlag NoPack = new("-nopack", "Speed up the build by not repacking brushes");
         readonly OptionFlag Transpile = new("-transpile", "Translate js file to es3. It allow you to use modern js syntax and features to create your mod.");
+
+        string ModPath;
+        string ModName;
+        string ZipPath;
+        string BuildPath;
         public BuildCommand()
         {
             this.Name = "build";
@@ -153,7 +153,7 @@ namespace BBbuilder
                 string nutFilePath = allNutFilesAsPath[i];
                 string sqCommand = String.Format("-o NUL -c \"{0}\"", nutFilePath);
 
-                using (Process compiling = new Process())
+                using (Process compiling = new())
                 {
                     compiling.StartInfo.UseShellExecute = false;
                     compiling.StartInfo.RedirectStandardOutput = true;
@@ -228,7 +228,7 @@ namespace BBbuilder
             return true;
         }
 
-        private string[] getAllowedFolders(string[] _allowedFolders)
+        private string[] GetAllowedFolders(string[] _allowedFolders)
         {
             List<string> ret = new();
             string[] allFolders = Directory.GetDirectories(this.BuildPath);
@@ -243,7 +243,7 @@ namespace BBbuilder
             return ret.ToArray();
         }
 
-        private string[] getAllFoldersExcept(string[] _forbiddenFolders)
+        private string[] GetAllFoldersExcept(string[] _forbiddenFolders)
         {
             List<string> ret = new();
             string[] allFolders = Directory.GetDirectories(this.BuildPath);
@@ -262,7 +262,7 @@ namespace BBbuilder
         {
             List<string> ret = new();
 
-            string[] allowedFolders = getAllFoldersExcept(this.ExcludedScriptFolders);
+            string[] allowedFolders = GetAllFoldersExcept(this.ExcludedScriptFolders);
             foreach (string folderPath in allowedFolders)
             {
                 ret.AddRange(Directory.GetFiles(folderPath, "*.nut", SearchOption.AllDirectories));
@@ -301,7 +301,7 @@ namespace BBbuilder
                 {
                     File.Delete(Path.Combine(brushesPath, brushName));
                 }
-                using (Process packBrush = new Process())
+                using (Process packBrush = new())
                 {
                     packBrush.StartInfo.UseShellExecute = false;
                     packBrush.StartInfo.RedirectStandardOutput = true;
@@ -348,21 +348,21 @@ namespace BBbuilder
             if (this.ScriptOnly)
             {
                 string[] excludedFolders = this.ExcludedScriptFolders.Where(val => val != "ui").ToArray();
-                allowedFolders = getAllFoldersExcept(excludedFolders);
+                allowedFolders = GetAllFoldersExcept(excludedFolders);
             }
             else if (this.UIOnly)
             {
-                allowedFolders = getAllowedFolders(new string[] { "ui", "gfx" });
+                allowedFolders = GetAllowedFolders(new string[] { "ui", "gfx" });
             }
             else
-                allowedFolders = getAllFoldersExcept(this.ExcludedZipFolders);
+                allowedFolders = GetAllFoldersExcept(this.ExcludedZipFolders);
             using (var zip = new Ionic.Zip.ZipFile(this.ZipPath))
             {
                 foreach (string folderPath in allowedFolders)
                 {
                     if (Directory.GetFiles(folderPath).Length == 0 && Directory.GetDirectories(folderPath).Length == 0)
                         continue;
-                    DirectoryInfo target = new DirectoryInfo(folderPath);
+                    DirectoryInfo target = new(folderPath);
                     Console.WriteLine($"Added folder {target.Name} to zip.");
                     zip.AddDirectory(folderPath, target.Name);
                 }
@@ -400,7 +400,7 @@ namespace BBbuilder
             string bbFolder = Directory.GetParent(Utils.GamePath).ToString();
             string bbExe = Path.Combine(bbFolder, "win32", "BattleBrothers.exe");
             Console.WriteLine($"Starting Battle Brothers ({bbExe})");
-            using (Process startGame = new Process())
+            using (Process startGame = new())
             {
                 startGame.StartInfo.UseShellExecute = true;
                 startGame.StartInfo.FileName = bbExe;
@@ -433,10 +433,10 @@ namespace BBbuilder
         /**
         * install a npm dependency.
         */
-        private static void installNpmDependency(String npmPackageToInstall, string installationPath)
+        private static void InstallNpmDependency(String npmPackageToInstall, string installationPath)
         {
             
-            using (Process compiling = new Process())
+            using (Process compiling = new())
             {
                 //move process to the current directory
                 compiling.StartInfo.WorkingDirectory = installationPath;
@@ -463,7 +463,7 @@ namespace BBbuilder
                     if (installIfMissing)
                     {
                         Console.WriteLine($"Installing {name}...");
-                        installNpmDependency(name, installationPath);
+                        InstallNpmDependency(name, installationPath);
                     }
                 }
             }
@@ -474,7 +474,7 @@ namespace BBbuilder
         */
         private static void CheckNpmPresence()
         {
-            using (Process compiling = new Process())
+            using (Process compiling = new())
             {
                 compiling.StartInfo.UseShellExecute = false;
                 compiling.StartInfo.RedirectStandardOutput = true;
