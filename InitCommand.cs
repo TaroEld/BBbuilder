@@ -102,16 +102,12 @@ namespace BBbuilder
             Directory.CreateDirectory(Path.Combine(this.ModPath, ".vscode"));
             Directory.CreateDirectory(Path.Combine(this.ModPath, "assets"));
             Directory.CreateDirectory(Path.Combine(this.ModPath, "unpacked_brushes"));
-<<<<<<< HEAD
-=======
             Directory.CreateDirectory(Path.Combine(this.ModPath, "scripts", "!mods_preload"));
             Directory.CreateDirectory(Path.Combine(this.ModPath, "ui", "mods", this.ModName));
->>>>>>> d6361fd (add babel)
         }
 
         private void CreateFromTemplate()
         {
-<<<<<<< HEAD
             Utils.Copy(this.TemplatePath, this.ModPath);
             string[] directories = Directory.GetDirectories(this.ModPath, "*.*", SearchOption.AllDirectories);
             string upperCaseName = this.ModName[0].ToString().ToUpper() + this.ModName[1..];
@@ -163,7 +159,6 @@ namespace BBbuilder
             }
             Utils.Copy(tempPath, this.ModPath);
             Directory.Delete(tempPath, true);
-=======
             string nutTemplate = Utils.ReadFile("BBbuilder.template_preload.nut");
             nutTemplate = nutTemplate.Replace("$name", this.ModName);
             string[] pathArrayNut = new string[] { this.ModPath, "scripts", "!mods_preload", this.ModName + ".nut" };
@@ -177,9 +172,6 @@ namespace BBbuilder
             jsTemplate = jsTemplate.Replace("$Name", this.ModName.First().ToString().ToUpper() + this.ModName.Substring(1));
             string[] pathArrayJs = new string[] { this.ModPath, "ui", "mods", this.ModName, "index.js"};
             File.WriteAllText(Path.Combine(pathArrayJs), jsTemplate);
-
-            return true;
->>>>>>> d6361fd (add babel)
         }
 
         private bool WriteProjectFiles()

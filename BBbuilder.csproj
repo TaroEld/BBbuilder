@@ -12,22 +12,12 @@
     <None Remove="build_template_sublime" />
     <None Remove="build_template_vs" />
     <None Remove="gitignore_template" />
-<<<<<<< HEAD
-=======
-    <None Remove="template_preload.nut" />
-    <None Remove="template_index.js" />
->>>>>>> d6361fd (add babel)
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="build_template_sublime" />
     <EmbeddedResource Include="build_template_vs" />
     <EmbeddedResource Include="gitignore_template" />
-<<<<<<< HEAD
-=======
-    <EmbeddedResource Include="template_preload.nut" />
-    <EmbeddedResource Include="template_index.js" />
->>>>>>> d6361fd (add babel)
   </ItemGroup>
 
   <ItemGroup>
@@ -51,14 +41,11 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-<<<<<<< HEAD
     <None Include="$(SolutionDir)tools\**" CopyToOutputDirectory="Always" LinkBase="config" />
     <None Include="$(SolutionDir)Templates\**" CopyToOutputDirectory="Always" LinkBase="config" />
-=======
     <None Include="tools\**" CopyToOutputDirectory="Always" LinkBase="config" />
     <None Include="babel.config.json" CopyToOutputDirectory="Always" LinkBase="config" />
     <None Include="package.json" CopyToOutputDirectory="Always" LinkBase="config" />
->>>>>>> d6361fd (add babel)
   </ItemGroup>
 
 </Project>
