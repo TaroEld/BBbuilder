@@ -182,11 +182,13 @@ namespace BBbuilder
             Console.WriteLine("Starting to transpile to ES3...");
             string localWorkingDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             string[] dependencies = new string[] { "@babel/cli", "@babel/preset-env", "browserify", "core-js" };
+
+            if (!CheckNpmPresence()) return false;
+
             Stopwatch es3Watch = new();
-            CheckNpmPresence();
             es3Watch.Start();
             Console.WriteLine("-- Check npm dependencies...");
-            CheckNpmDependencies(dependencies, localWorkingDirectory);
+            if (!CheckNpmDependencies(dependencies, localWorkingDirectory)) return false;
             Console.WriteLine($"-- Check npm dependencies took {es3Watch.Elapsed.TotalSeconds} s");
             string babelLoc = Path.Combine(localWorkingDirectory, "node_modules", ".bin", "babel");
             string browserifyLoc = Path.Combine(localWorkingDirectory, "node_modules", ".bin", "browserify");
@@ -453,45 +455,66 @@ namespace BBbuilder
         /**
         * Checks if a npm dependency is installed and installs it if it is not.
         */
-        private static void CheckNpmDependencies(string[] names, string installationPath, bool installIfMissing = true)
+        private static bool CheckNpmDependencies(string[] names, string installationPath, bool installIfMissing = true)
         {
             foreach (string name in names)
             {
                 string depPath = Path.Combine(installationPath, "node_modules", name);
                 if (!Directory.Exists(depPath))
                 {
+                    Console.WriteLine($"Missing npm dependency {name}...");
                     if (installIfMissing)
                     {
                         Console.WriteLine($"Installing {name}...");
                         InstallNpmDependency(name, installationPath);
                     }
+                    else
+                    {
+                        Console.WriteLine($"parameter installIfMissing is false, please install dependency {name} and try again");
+                        return false;
+                    }
                 }
             }
+            return true;
         }
 
         /**
         * Checks if npm is installed and exits the program if it is not.
         */
-        private static void CheckNpmPresence()
+        private static bool CheckNpmPresence()
         {
-            using (Process compiling = new())
+            string pathVar = Environment.GetEnvironmentVariable("path");
+            bool hasNpm = pathVar.Contains("nodejs");
+            if (!hasNpm)
             {
-                compiling.StartInfo.UseShellExecute = false;
-                compiling.StartInfo.RedirectStandardOutput = true;
-                compiling.StartInfo.FileName = "cmd.exe";
-                compiling.StartInfo.Arguments = String.Format("/C npm -v");
-                compiling.Start();
-                compiling.WaitForExit();
-
-                string output = compiling.StandardOutput.ReadToEnd();
-                if (output == "")
-                {
-                    Console.WriteLine("npm not found. Please install Node.js and try again (https://nodejs.org/en/download).");
-                    Console.WriteLine("Press any key to exit...");
-                    Console.ReadKey();
-                    Environment.Exit(0);
-                }
+                Console.WriteLine("npm not found in PATH variable. Please install Node.js (https://nodejs.org/en/download) or add the folder to PATH and try again.");
+                Console.WriteLine("Press any key to exit...");
+                Console.ReadKey();
+                return false;
             }
+            return true;
+            //using (Process compiling = new())
+            //{
+            //    compiling.StartInfo.UseShellExecute = false;
+            //    compiling.StartInfo.RedirectStandardOutput = true;
+            //    compiling.StartInfo.FileName = "cmd.exe";
+            //    // compiling.StartInfo.Arguments = String.Format("/C npm -v");
+            //    compiling.StartInfo.Arguments = String.Format("echo %PATH%");
+            //    compiling.Start();
+            //    compiling.WaitForExit();
+
+            //    string output = compiling.StandardOutput.ReadToEnd();
+            //    Console.WriteLine(output);
+            //    bool hasNpm = output.Contains("nodejs");
+            //    //if (output == "")
+            //    if (!hasNpm)
+            //    {
+            //        Console.WriteLine("npm not found. Please install Node.js and try again (https://nodejs.org/en/download).");
+            //        Console.WriteLine("Press any key to exit...");
+            //        Console.ReadKey();
+            //        Environment.Exit(0);
+            //    }
+            //}
         }
     }
 }
