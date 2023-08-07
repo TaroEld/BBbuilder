@@ -159,19 +159,6 @@ namespace BBbuilder
             }
             Utils.Copy(tempPath, this.ModPath);
             Directory.Delete(tempPath, true);
-            string nutTemplate = Utils.ReadFile("BBbuilder.template_preload.nut");
-            nutTemplate = nutTemplate.Replace("$name", this.ModName);
-            string[] pathArrayNut = new string[] { this.ModPath, "scripts", "!mods_preload", this.ModName + ".nut" };
-            File.WriteAllText(Path.Combine(pathArrayNut), nutTemplate);
-
-            string gitignore = Utils.ReadFile("BBbuilder.gitignore_template");
-            File.WriteAllText(Path.Combine(this.ModPath, ".gitignore"), gitignore);
-
-            string jsTemplate = Utils.ReadFile("BBbuilder.template_index.js");
-            jsTemplate = jsTemplate.Replace("$name", this.ModName);
-            jsTemplate = jsTemplate.Replace("$Name", this.ModName.First().ToString().ToUpper() + this.ModName.Substring(1));
-            string[] pathArrayJs = new string[] { this.ModPath, "ui", "mods", this.ModName, "index.js"};
-            File.WriteAllText(Path.Combine(pathArrayJs), jsTemplate);
         }
 
         private bool WriteProjectFiles()
