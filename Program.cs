@@ -14,7 +14,6 @@ namespace BBbuilder
     {
         static int Main(string[] args)
         {
-            // Properties.Settings.Default.Reset();
             var watch = new System.Diagnostics.Stopwatch();
             watch.Start();
 
@@ -28,8 +27,6 @@ namespace BBbuilder
             Commands.Add("config", config);
 
             string[] arguments = args;
-            // Debug arguments
-            // string[] arguments = { "build", "G:/Games/BB/Mods/WIP/mod_reforged" };
 
             if (arguments == null || arguments.Length == 0)
             {
@@ -46,12 +43,12 @@ namespace BBbuilder
                 Commands[arguments[0]].HandleCommand(arguments);
                 Commands[arguments[0]].CleanUp();
                 watch.Stop();
-                Console.WriteLine($"Execution Time: {watch.ElapsedMilliseconds} ms");
+                Console.WriteLine($"Total Execution Time: {watch.ElapsedMilliseconds} ms");
                 return 0;
             }
             watch.Stop();
 
-            Console.WriteLine($"Execution Time: {watch.ElapsedMilliseconds} ms");
+            Console.WriteLine($"Total Execution Time: {watch.ElapsedMilliseconds} ms");
             return 1;
         }
 

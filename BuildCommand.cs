@@ -93,9 +93,9 @@ namespace BBbuilder
                 return false;
             }
             if (!this.CompileOnly)
-                Console.WriteLine($"Attempting to create {this.ZipPath}");
+                Console.WriteLine($"Attempting to build {this.ModPath}");
             else
-                Console.WriteLine($"Compiling files of mod {this.ZipPath}");
+                Console.WriteLine($"Compiling files of mod {this.ModPath}");
 
             if (!this.UIOnly && !this.NoCompile && !CompileFiles())
             {
@@ -370,7 +370,7 @@ namespace BBbuilder
                 }
                 zip.Save();
             }
-            Console.WriteLine($"Successfully zipped {this.ZipPath}!");
+            Console.WriteLine($"Successfully zipped {this.ModPath}!");
             return true;
         }
 
