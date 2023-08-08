@@ -18,7 +18,7 @@ namespace BBbuilder
             {
                 {"datapath", "Set path to the data directory. (For example: bbuilder config datapath G:/Games/SteamLibrary/steamapps/common/Battle Brothers/data)"},
                 {"modpath", "Set path to the mods directory. (For example: bbuilder config modpath G:/Games/BB/Mods/WIP)" },
-                {"folders", "Add folders to be included in projects. Must be space. New mods added by the init command are automatically added." +
+                {"folders", "Add folders to be included in projects. Must be space. New mods added by the init command are automatically added. Pass nothing to remove folders." +
                 " (For example: bbuilder config folders G:/Games/BB/Mods/WIP/mod_msu F:/MODDING/basegame/scripts)"},
                 {"movezip", "Whether you want the final .zip file to be copied or moved to data. Default is 'false' (copy). Pass 'true' to move instead." }
             };
