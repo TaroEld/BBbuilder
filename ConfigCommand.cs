@@ -121,62 +121,51 @@ namespace BBbuilder
             Console.WriteLine("Current config:");
             Console.WriteLine($"Data Path: {Utils.GamePath}");
             Console.WriteLine($"Mods Path: {Utils.ModPath}");
-            if (Utils.FoldersArray == null)
+            Console.WriteLine("Project Folders:");
+            foreach (string line in Utils.FoldersArray)
             {
-                Console.WriteLine("No Project Folders defined");
-            }
-            else
-            {
-                Console.WriteLine("Project Folders:");
-                foreach (string line in Utils.FoldersArray)
-                {
-                    Console.WriteLine(line);
-                }
+                Console.WriteLine(line);
             }
             Console.WriteLine($"Move Zip: {Utils.MoveZip}");
         }
 
         public override bool HandleCommand(string[] _args)
         {
-            if (_args.Length < 3 || !Commands.ContainsKey(_args[1]))
+            if (_args.Length == 1)
             {
-                Console.WriteLine("Invalid command passed. Printing help and current config:\n");
+                PrintHelp();
+                PrintConfig();
+                return false;
+            }
+            if (!Commands.ContainsKey(_args[1]))
+            {
+                Console.WriteLine("Invalid subcommand of command 'config' passed. Printing help and current config:\n");
                 PrintHelp();
                 Console.WriteLine("");
                 PrintConfig();
                 return false;
             }
             string command = _args[1];
-            Console.WriteLine($"Passed command is {command}");
-            if ((command == "datapath" || command == "modpath"))
+            if (command == "folders") HandleFolderCommand(_args);
+            else if (command == "datapath" || command == "modpath") HandlePathCommand(_args);
+            else if (command == "movezip") HandleMoveZipCommand(_args);
+            PrintConfig();
+            UpdateBuildFiles();
+            return true;
+        }
+
+        private void HandleFolderCommand(string[] _args)
+        {
+            Utils.Folders = "";
+            if (_args.Length < 3)
             {
-                string passedPath = _args[2];
-                if (!Directory.Exists(passedPath))
-                {
-                    Console.WriteLine($"Directory '{passedPath}' does not exist!");
-                }
-                else
-                {
-                    if (command == "datapath")
-                    {
-                        Utils.GamePath = passedPath;
-                        WriteValueToDb("GamePath", passedPath);
-                        Console.WriteLine($"Set datapath to {passedPath}");
-                    }
-                    else
-                    {
-                        Utils.ModPath = passedPath;
-                        WriteValueToDb("ModPath", passedPath);
-                        Console.WriteLine($"Set modpath to {passedPath}");
-                    }
-                }
+                Utils.FoldersArray = Array.Empty<string>();
+                Console.WriteLine("Cleared folders.");
             }
-            if (command == "folders")
+            else
             {
-                Utils.Folders = "";
-                var folderArgs = new ArraySegment<string>(_args, 2, _args.Length-2);
-                Utils.FoldersArray = folderArgs.Array;
-                foreach (string line in folderArgs)
+                Utils.FoldersArray = _args[2..];
+                foreach (string line in Utils.FoldersArray)
                 {
                     if (!Directory.Exists(line))
                         Console.WriteLine($"WARNING: Passed path {line} is not an existing folder!");
@@ -184,17 +173,48 @@ namespace BBbuilder
                     Console.WriteLine($"Added path {line} to folders to be added to build file.");
                 }
                 Utils.Folders = Utils.Folders[0..^1];
-                WriteValueToDb("Folders", Utils.Folders);
             }
-            if (command == "movezip")
-            {
-                Utils.MoveZip = Convert.ToBoolean(_args[2]);
-                WriteValueToDb("MoveZip", _args[2]);
-            }
-            PrintConfig();
-            UpdateBuildFiles();
-            return true;
+            WriteValueToDb("Folders", Utils.Folders);
         }
+
+        private void HandlePathCommand(string[] _args)
+        {
+            if (_args.Length < 3)
+            {
+                Console.WriteLine("Invalid parameters passed. Printing help and current config:\n");
+                PrintHelp();
+                Console.WriteLine("");
+                PrintConfig();
+                return;
+            }
+            string passedPath = _args[2];
+            if (!Directory.Exists(passedPath))
+            {
+                Console.WriteLine($"Directory '{passedPath}' does not exist!");
+                return;
+            }
+            if (_args[1] == "datapath")
+            {
+                Utils.GamePath = passedPath;
+                WriteValueToDb("GamePath", passedPath);
+                Console.WriteLine($"Set datapath to {passedPath}");
+            }
+            else
+            {
+                Utils.ModPath = passedPath;
+                WriteValueToDb("ModPath", passedPath);
+                Console.WriteLine($"Set modpath to {passedPath}");
+            }
+        }
+
+
+        private void HandleMoveZipCommand(string[] _args)
+        {
+
+            Utils.MoveZip = Convert.ToBoolean(_args[2]);
+            WriteValueToDb("MoveZip", _args[2]);
+        }
+
 
         private bool ValidateDataPath(string _path)
         {
