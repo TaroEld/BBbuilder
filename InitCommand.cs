@@ -165,26 +165,26 @@ namespace BBbuilder
         {
             var sublimeProjectObject = new SublimeProject
             {
-                Build_systems = Array.Empty<string>(),
-                Folders = new List<Folder>()
+                build_systems = Array.Empty<string>(),
+                folders = new List<Folder>()
             };
             var vsCodeProjectObject = new VSCodeProject
             {
-                Settings = Array.Empty<string>(),
-                Folders = new List<Folder>()
+                settings = Array.Empty<string>(),
+                folders = new List<Folder>()
             };
             // For vscode, the mod folder must come first
-            vsCodeProjectObject.Folders.Add(new Folder { Path = ".." });
+            vsCodeProjectObject.folders.Add(new Folder { path = ".." });
             if (Utils.FoldersArray != null)
             {
                 foreach (string line in Utils.FoldersArray)
                 {
-                    sublimeProjectObject.Folders.Add(new Folder { Path = line });
-                    vsCodeProjectObject.Folders.Add(new Folder { Path = line });
+                    sublimeProjectObject.folders.Add(new Folder { path = line });
+                    vsCodeProjectObject.folders.Add(new Folder { path = line });
                 }
             }
             // Add mod folder too
-            sublimeProjectObject.Folders.Add(new Folder { Path = "." });
+            sublimeProjectObject.folders.Add(new Folder { path = "." });
 
             var options = new JsonSerializerOptions { WriteIndented = true };
             string sublimeJsonString = JsonSerializer.Serialize(sublimeProjectObject, options);
@@ -196,20 +196,20 @@ namespace BBbuilder
     }
     public class SublimeProject
     {
-        public String[] Build_systems { get; set; }
+        public String[] build_systems { get; set; }
 
-        public List<Folder> Folders { get; set; }
+        public List<Folder> folders { get; set; }
     }
 
     public class VSCodeProject
     {
-        public String[] Settings { get; set; }
+        public String[] settings { get; set; }
 
-        public List<Folder> Folders { get; set; }
+        public List<Folder> folders { get; set; }
     }
 
     public class Folder
     {
-        public String Path { get; set; }
+        public String path { get; set; }
     }
 }
