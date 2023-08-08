@@ -108,9 +108,9 @@ namespace BBbuilder
 
         private void CreateFromTemplate()
         {
-            string upperCaseName = this.ModName[0].ToString().ToUpper() + this.ModName[1..];
-            string[] templateDirectories = Directory.GetDirectories(this.ModPath, "*.*", SearchOption.AllDirectories);
             Utils.Copy(this.TemplatePath, this.ModPath);
+            string[] templateDirectories = Directory.GetDirectories(this.ModPath, "*.*", SearchOption.AllDirectories);
+            string upperCaseName = this.ModName[0].ToString().ToUpper() + this.ModName[1..];
             foreach (string directory in templateDirectories)
             {
                 string newDirectory = directory.Replace("$Name", upperCaseName);
