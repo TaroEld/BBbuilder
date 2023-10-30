@@ -13,7 +13,7 @@ namespace BBbuilder
         {
             this.Name = "config";
             this.Description = "Configure the settings that are used to create and build mods";
-            this.Connection = new SqliteConnection("Data Source=./tools/settings.sqlite");
+            this.Connection = new SqliteConnection($"Data Source={Utils.DBPATH}");
             this.Commands = new Dictionary<string, string>
             {
                 {"datapath", "Set path to the data directory. (For example: bbuilder config datapath G:/Games/SteamLibrary/steamapps/common/Battle Brothers/data)"},

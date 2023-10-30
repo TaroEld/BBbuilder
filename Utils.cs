@@ -16,6 +16,7 @@ namespace BBbuilder
         public static string BBRUSHERPATH = Path.Combine(EXECUTINGFOLDER, "tools", "bbrusher.exe");
         public static string BBSQPATH = Path.Combine(EXECUTINGFOLDER, "tools", "bbsq.exe");
         public static string NUTCRACKERPATH = Path.Combine(EXECUTINGFOLDER, "tools", "nutcracker.exe");
+        public static string DBPATH = Path.Combine(EXECUTINGFOLDER, "tools", "settings.sqlite");
 
         public static string GamePath = "";
         public static string ModPath = "";
