@@ -7,10 +7,10 @@ Shipped with this application is the Battle Brothers mod kit by Adam Milazzo: ht
 This tool has shortcuts to conduct most common tasks for developing mods: 
 - Initialising a new mod by creating a folder structure and scaffolding to quickly start writing code
 - Building the mod, which does some checks (compiling files for syntax errors), can optionally transpile JavaScript files to ES3, packs brush files, and copies it to the data folder  
+- Relaunching the game.
 
 As a command line tool, it can be run with the windows cmd terminal. 
 To make things more convenient, the tool will create editor config files for VSCode and Sublime Text which setup projects and provide the basic build commands.  
-Alternatively, it can be useful to add the program folder to the environment variables, to be able to call them from any cmd window. See here for example: https://linuxhint.com/add-directory-to-path-environment-variables-windows/
 
 ## How to install
 To use this program, simply extract the .zip in a convenient folder. No further installing is needed.  
@@ -20,34 +20,40 @@ If you wish to use ES3 transpiling, you will need to install node.js and have it
 Calling `bbbuilder.exe` without any other arguments will give you an overview of all the commands and parameters/flags. Calling `bbbuilder.exe <commandname>` will give you an overview of that command.  
  
 ### config
-Saves config values in a database. If you first start the program, it will prompt you to provide values for the first two of the following commands:
-	- datapath: The directory of the game to copy the built mod and optionally (re)start the game
-	- modpath: The directory of your mods folder, where newly initialised mods will be placed
-	- folders: Folders to be included in the editor config files (for example, adding the vanilla game files folder for easier searching)
-	- movezip: Whether you'd like to delete the zip after building
-The config will also print out the current config.
+Saves config values in a database. If you first start the program, it will prompt you to provide values for the `datapath` and `modpath` commands. Afterwards, it can be used to change values, or check the current configuration.
+#### commands
+- `datapath <path>`: The directory of the game to copy the built mod and optionally (re)start the game
+- `modpath <path>`: The directory of your mods folder, where newly initialised mods will be placed
+- `folders <folder1,folder2,...>`: Comma-separated list of folders to be included in the editor config files (for example, adding the vanilla game files folder). 
+- `movezip <true|false>`: Whether you'd like to delete the zip after building the mod and copying it to `datapath`. Apparently, some people don't like having the same .zip file in both places maybe they operate on 1.44 MB floppys.
 
-### init
-To create a new mod. A folder structure is created, providing a light scaffold of folders and files. 
 
-By default, the mod will be initialised into the folder specified in the `modpath` config value. With the flag `-altpath <path>`, you can specify another folder to place the new mod.  
-With the flag `-template <templatename>`, a template can be specified. These templates are found in the `Templates` folder within the .zip. You can customize these templates by either editing the existing ones, or adding new folders.  
-With `-replace`, you can indicate that you'd like to replace an existing folder.
+### init \<modname\>
+Create a new mod. with the name `<modname>` A folder structure is created, providing a light scaffold of folders and files. This speeds up the generation of new mods and provides consistency between your creations.  
+By default, the mod will be initialised into the folder specified in the `modpath` config value, with the foldername \<modname\>.
+The generated folders and files depend on the template used, see the `-template` flag. 
+#### Flags
+- `-altpath <path>`: Specify another folder to place the new mod. Example: `init mod_my_first_mod -altpath "C:\BB Modding\My_Mods\"` 
+- `-template <templatename>`: Specify which template to use. The template defines what files and folders will be created in the new mod directory. The default templates are found in the `Templates` folder within the .zip. You can customize these templates by either editing the existing ones, or adding new folders.  
+- `-replace`: Indicate that you'd like to replace the files in an existing folder. Only files that exist in the template will be overwritten in the target folder. If this flag is not specified, the program will show you an error message if you specify a folder that already exists.
 
-Example usage: `bbbuilder `
+Example usage: `bbbuilder init mod_my_first_mod`
 
-### extract
+### extract \<modpath\>
 Equal to the init command, but extracts existing mods instead, decompiling files if necessary. This is useful if you downloaded a mod from someone else, and would like to take a look. The other `init` flags can also be used here.
+
+Example usage: `bbbuilder extract "C:\Users\Taro\Downloads\mod_cool_things.zip" -altpath "C:\BB Modding\Other_peoples_mods\"`
 
 ### build
 The files of your mod are packed together to create a new zip. .nut files are compiled to test for syntax errors, and sprites are packed into brush files. 
 There are a number of flags that can be set to do only parts of the packing progress, for example, only compiling the .nut files to test for syntax errors:
-    -scriptonly: Only pack script files. The mod will have a '_scripts' suffix.
-    -compileonly: Compile the .nut files without creating a .zip.
-    -uionly: Only zip the gfx and ui folders. The mod will have a '_ui' suffix.
-    -nocompile: Speed up the build by not compiling files.
-    -nopack: Speed up the build by not repacking brushes.
-    -restart: Exit and then start BattleBrothers.exe after building the mod.
+- `-restart`: Exit and then restart BattleBrothers.exe after building the mod.  
+- `-scriptonly`: Only pack script (`.nut`) files. The mod will have a '_scripts' suffix.
+- `-compileonly`: Compile the `.nut` files without creating a .zip. This is used to check the syntax errors.
+- `-uionly`: Only zip the gfx and ui folders. The mod will have a '_ui' suffix.
+- `-nocompile`: Speed up the build by not compiling files.
+- `-nopack`: Speed up the build by not repacking brushes.
+
 Optionally, you can tell the program to transpile the JavaScript files to ES3. This is the JavaScript version the game uses. With this functionality, you can write modern JS code in your mods, using 'new' features such as `class`es.
  
 ## Editor config files
@@ -62,7 +68,7 @@ See here: https://code.visualstudio.com/docs/editor/tasks#_user-level-tasks
 Like with Sublime Text, an editor project file will be created. This is placed in the `.vscode` folder.
 
 ## Example usage:
-Download and extract the program in a folder, say "C:\Users\USER\Desktop\bbbuilder".  
+Download and extract the program in a folder, say `C:\BB Modding\bbbuilder`.  
 Open cmd in this folder. A convenient way is to click the adress bar of file explorer, and write `cmd`.
 Write `bbbuilder.exe` into the terminal. The program will ask for the data path of battle brothers.
 For Steam users: 
@@ -76,7 +82,10 @@ For GoG users: Find your install location.
 In the next step, the game will ask for the mods folder, as in where your mods shall be placed in the future. If you don't have one yet, create it, as it must be an existing folder. 
 Also copypaste that path into the terminal.
 
-Now that we defined the basic paths, we can intialise our first mod. Write `bbbuilder.exe init mod_test`. The resulting folder will be opened in file explorer.  
-To open this project in VSCode or Sublime Text, doubleclick the `.vscode/mod_test.code-workspace` or `mod_test.sublime-project` file, respectively. I'll be going with the latter.  
-After doubleclicking the `mod_test.sublime-project`, sublime will open up. On the left-hand sidebar, you can see the folders of this project. As 
-At this stage, the most intersting file is `/scripts/!mods_preload/mod_test.nut`. A few things 
+Now that we defined the basic paths, we can intialise our first mod. Write `bbbuilder.exe init mod_my_first_mod`. The resulting folder will be opened in file explorer.  
+To open this project in VSCode or Sublime Text, doubleclick the `.vscode/mod_my_first_mod.code-workspace` or `mod_my_first_mod.sublime-project` file, respectively. I'll be going with the latter.  
+After doubleclicking the `mod_my_first_mod.sublime-project`, sublime will open up. On the left-hand sidebar, you can see the folders of this project. As 
+At this stage, the most intersting file is `/scripts/!mods_preload/mod_my_first_mod.nut`. A few things 
+
+## Misc
+It can be useful to add the program folder to the environment variables, to be able to call them from any cmd window. See here for example: https://linuxhint.com/add-directory-to-path-environment-variables-windows/
