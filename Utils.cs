@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace BBbuilder
 {
@@ -16,13 +14,29 @@ namespace BBbuilder
         public static string BBRUSHERPATH = Path.Combine(EXECUTINGFOLDER, "tools", "bbrusher.exe");
         public static string BBSQPATH = Path.Combine(EXECUTINGFOLDER, "tools", "bbsq.exe");
         public static string NUTCRACKERPATH = Path.Combine(EXECUTINGFOLDER, "tools", "nutcracker.exe");
-        public static string DBPATH = Path.Combine(EXECUTINGFOLDER, "tools", "settings.sqlite");
+        public static string CONFIGPATH = Path.Combine(Utils.EXECUTINGFOLDER, "tools", "config.json");
+        public static ConfigData Data { get; set; }
 
-        public static string GamePath = "";
-        public static string ModPath = "";
-        public static string Folders = "";
-        public static string[] FoldersArray = Array.Empty<string>();
-        public static bool MoveZip = false;
+        public static void CreateJSON()
+        {
+            Utils.Data = new ConfigData();
+            Utils.WriteJSON(Utils.Data);
+        }
+
+        public static void WriteJSON(ConfigData _configData)
+        {
+            string jsonString = JsonSerializer.Serialize(_configData);
+            File.WriteAllText(Utils.CONFIGPATH, jsonString);
+        }
+
+        public static void GetJsonData()
+        {
+            if (!File.Exists(Utils.CONFIGPATH))
+            {
+                Utils.CreateJSON();
+            }
+            Utils.Data = JsonSerializer.Deserialize<ConfigData>(File.ReadAllText(Utils.CONFIGPATH))!;
+        }
 
         public static string ReadFile(string _path)
         {

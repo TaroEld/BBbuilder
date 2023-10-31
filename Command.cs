@@ -33,13 +33,6 @@ namespace BBbuilder
                     flag.Validate(_args);
                 }
             }
-            foreach(string argument in _args)
-            {
-                if(argument[0].ToString() == "-")
-                {
-                    Console.WriteLine($"Found unknown flag {argument}!");
-                }
-            }
         }
 
         void PrintCommands()

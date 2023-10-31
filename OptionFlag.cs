@@ -10,8 +10,8 @@ namespace BBbuilder
     {
         public bool Value;
         public string Flag;
-        string Description;
-        bool Positional;
+        readonly string Description;
+        readonly bool Positional;
         public string PositionalValue;
         public OptionFlag(string _flag, string _description, bool _positional = false)
         {

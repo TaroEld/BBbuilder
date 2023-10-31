@@ -92,7 +92,7 @@ namespace BBbuilder
                 }
                 this.ModPath = Path.Combine(this.AltPath.PositionalValue, this.ModName);
             }
-            else this.ModPath = Path.Combine(Utils.ModPath, this.ModName);
+            else this.ModPath = Path.Combine(Utils.Data.ModPath, this.ModName);
             return true;
         }
 
@@ -175,9 +175,9 @@ namespace BBbuilder
             };
             // For vscode, the mod folder must come first
             vsCodeProjectObject.folders.Add(new Folder { path = ".." });
-            if (Utils.FoldersArray != null)
+            if (Utils.Data.FoldersArray != null)
             {
-                foreach (string line in Utils.FoldersArray)
+                foreach (string line in Utils.Data.FoldersArray)
                 {
                     sublimeProjectObject.folders.Add(new Folder { path = line });
                     vsCodeProjectObject.folders.Add(new Folder { path = line });

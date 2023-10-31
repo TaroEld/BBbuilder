@@ -22,7 +22,6 @@
 
   <ItemGroup>
     <PackageReference Include="DotNetZip" Version="1.16.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="5.0.17" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="6.0.0" />
   </ItemGroup>
 
@@ -45,6 +44,10 @@
     <None Include="Templates\**" CopyToOutputDirectory="Always" LinkBase="config" />
     <None Include="babel.config.json" CopyToOutputDirectory="Always" LinkBase="config" />
     <None Include="package.json" CopyToOutputDirectory="Always" LinkBase="config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Templates\default\readme\" />
+    <Folder Include="Templates\ui\readme\" />
   </ItemGroup>
 
 </Project>

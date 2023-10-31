@@ -15,8 +15,8 @@ namespace BBbuilder
 {
     class BuildCommand : Command
     {
-        readonly String[] ExcludedZipFolders = new String[] { ".git", ".github", "unpacked_brushes", ".vscode", ".utils", "assets", "modtools", "node_modules" };
-        readonly String[] ExcludedScriptFolders = new String[] { "ui", ".git", ".github", "gfx", "preload", "brushes", "music", "sounds", "unpacked_brushes", "tempfolder", ".vscode", "nexus", ".utils", "assets" };
+        readonly string[] ExcludedZipFolders = new string[] { ".git", ".github", "unpacked_brushes", ".vscode", ".utils", "assets", "modtools", "node_modules" };
+        readonly string[] ExcludedScriptFolders = new string[] { "ui", ".git", ".github", "gfx", "preload", "brushes", "music", "sounds", "unpacked_brushes", "tempfolder", ".vscode", "nexus", ".utils", "assets" };
         readonly OptionFlag ScriptOnly = new("-scriptonly", "Only pack script files. The mod will have a '_scripts' suffix.");
         readonly OptionFlag CompileOnly = new("-compileonly", "Compile the .nut files without creating a .zip.");
         readonly OptionFlag StartGame = new("-restart", "Exit and then start BattleBrothers.exe after building the mod.");
@@ -376,7 +376,7 @@ namespace BBbuilder
 
         private bool CopyZipToData()
         {
-            string gamePath = Utils.GamePath;
+            string gamePath = Utils.Data.GamePath;
             string zipName = $"{this.ModName}.zip";
 
             string dataZipPath = Path.Combine(gamePath, zipName);
@@ -384,7 +384,7 @@ namespace BBbuilder
             {
                 File.Delete(dataZipPath);
             }
-            if (Utils.MoveZip)
+            if (Utils.Data.MoveZip)
                 File.Move(this.ZipPath, dataZipPath);
             else
                 File.Copy(this.ZipPath, dataZipPath);
@@ -399,7 +399,7 @@ namespace BBbuilder
                 Console.WriteLine("Stopping BattleBrothers.exe...");
                 instance.Kill();
             }
-            string bbFolder = Directory.GetParent(Utils.GamePath).ToString();
+            string bbFolder = Directory.GetParent(Utils.Data.GamePath).ToString();
             string bbExe = Path.Combine(bbFolder, "win32", "BattleBrothers.exe");
             Console.WriteLine($"Starting Battle Brothers ({bbExe})");
             using (Process startGame = new())
