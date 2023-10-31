@@ -29,14 +29,6 @@ namespace BBbuilder
             Commands.Add("config", config);
 
             string[] arguments = args;
-            for (int x = 0; x < arguments.Length; x++)
-            {
-                if (arguments[x][0].ToString() == "-")
-                {
-                    Console.WriteLine($"Replaced argument '{arguments[x]}' with '{arguments[x][1..]}'.");
-                    arguments[x] = arguments[x][1..];
-                }
-            }
             if (arguments == null || arguments.Length == 0)
             {
                 Console.WriteLine($"No command passed, printing possible commands.\n");
