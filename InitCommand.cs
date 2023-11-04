@@ -17,15 +17,21 @@ namespace BBbuilder
         string ModPath;
         string TemplatePath;
         readonly OptionFlag Replace = new("-replace", "Overwrite the files in an existing folder. Keeps other files in the existing folder.");
-        readonly OptionFlag AltPath = new("-alt", "Specify alternative path to extract the mod to.", true);
-        readonly OptionFlag Template = new("-template", "Specify the template you want to use depending of your mod objectives, or technologies", true);
+        readonly OptionFlag AltPath = new("-altpath <path>", "Specify another folder to place the new mod. " +
+            "\n    Example: `init mod_my_first_mod altpath \"C:\\BB Modding\\My_Mods\\\"` ");
+        readonly OptionFlag Template = new("-template <templatename>", " Specify which template to use. The template defines what files and folders will be created in the new mod directory. " +
+            "\nThe default templates are found in the `Templates` folder within the .zip. You can customize these templates by either editing the existing ones, or adding new folders." +
+            "\n    Example: 'bbbuilder init my_cool_mod -template ui");
         public InitCommand()
         {
             this.Name = "init";
-            this.Description = "Initialises a new mod. Pass the name of the mod to be initialised.";
+            this.Description = "Create a new mod with the name `<modname>`. A folder structure is created, providing a light scaffold of folders and files. " +
+                "\nThis speeds up the generation of new mods and provides consistency between your creations.  " +
+                "\nBy default, the mod will be initialised into the folder specified in the `modpath` config value, with the foldername <modname>." +
+                "\nThe generated folders and files depend on the template used, see the `-template` flag. ";
             this.Arguments = new string[]
             {
-                "Mandatory: Specify name of the new mod. The new mod will be created in your specified 'mods' directory. (Example: bbuilder init mod_test)"
+                "<modname> : Mandatory. Specify name of the new mod. The new mod will be created in your specified 'mods' directory. (Example: bbuilder init mod_test)"
             };
             this.Flags = new OptionFlag[] { this.Replace, this.AltPath, this.Template };
         }

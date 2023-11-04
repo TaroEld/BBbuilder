@@ -10,15 +10,26 @@ namespace BBbuilder
     {
         public bool Value;
         public string Flag;
+        readonly string Parameter;
         readonly string Description;
         readonly bool Positional;
         public string PositionalValue;
-        public OptionFlag(string _flag, string _description, bool _positional = false)
+        public OptionFlag(string _flag, string _description)
         {
-            this.Flag = _flag;
+            if (_flag.Split(" ").Length > 1)
+            {
+                this.Flag = _flag.Split(" ")[0];
+                this.Parameter = _flag.Split(" ")[1];
+                this.Positional = true;
+            }
+            else
+            {
+                this.Flag = _flag;
+                this.Positional = false;
+            }
             this.Description = _description;
             this.Value = false;
-            this.Positional = _positional;
+            
         }
         public void Validate(List<string> _args)
         {
@@ -45,8 +56,7 @@ namespace BBbuilder
         }
         public void PrintDescription()
         {
-            string positional = this.Positional ? "(positional)" : "";
-            Console.WriteLine($"{this.Flag} {positional}: {this.Description}");
+            Console.WriteLine($"{this.Flag} {this.Parameter}: {this.Description}");
         }
 
         // Allows instances to be used as simple bools.

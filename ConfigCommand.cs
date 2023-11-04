@@ -13,11 +13,16 @@ namespace BBbuilder
             this.Description = "Configure the settings that are used to create and build mods";
             this.Commands = new Dictionary<string, string>
             {
-                {"datapath", "Set path to the data directory. (For example: bbuilder config datapath G:/Games/SteamLibrary/steamapps/common/Battle Brothers/data)"},
-                {"modpath", "Set path to the mods directory. (For example: bbuilder config modpath G:/Games/BB/Mods/WIP)" },
-                {"folders", "Add folders to be included in projects. Must be space. New mods added by the init command are automatically added. Pass nothing to remove folders." +
-                " (For example: bbuilder config folders G:/Games/BB/Mods/WIP/mod_msu F:/MODDING/basegame/scripts)"},
-                {"movezip", "Whether you want the final .zip file to be copied or moved to data. Default is 'false' (copy). Pass 'true' to move instead." }
+                {"-datapath <path>", "Set path to the directory of the game to copy the .zip of the mod to and optionally (re)start the game." +
+                    "\n    Example: 'bbuilder config -datapath \"G:/Games/SteamLibrary/steamapps/common/Battle Brothers/data\"'"},
+                {"-modpath <path>", "Set the path to the directory of your mods folder, where newly initialised or extracted mods will be placed by default."+
+                    "\n    Example: 'bbuilder config -modpath \"C:/BB Modding/My Mods\"'" },
+                {"-folders <folderpath_1 folderpath_2 ...>", "Space-separated list of folders to be included in the editor config files (for example, adding the vanilla game files folder)." + 
+                    "\n    Replaces the current list of folders.nothing to remove folders." +
+                    "\n    A new mod created through init or extract is automatically added to its own workspace, so no need to specify it." +
+                    "\n    Example: 'bbuilder config -folders \"C:/BB Modding/Other Mods/mod_msu\" \"C:/BB Modding/basegame/scripts\""},
+                {"-movezip <true|false>", "Whether you'd like to delete the zip after building the mod and copying it to `datapath`." +
+                    "\n    Example: 'bbbuilder config -movezip true'"}
             };
         }
 
@@ -96,9 +101,9 @@ namespace BBbuilder
                 return false;
             }
             string command = _args[1];
-            if (command == "folders") HandleFolderCommand(_args);
-            else if (command == "datapath" || command == "modpath") HandlePathCommand(_args);
-            else if (command == "movezip") HandleMoveZipCommand(_args);
+            if (command == "-folders") HandleFolderCommand(_args);
+            else if (command == "-datapath" || command == "-modpath") HandlePathCommand(_args);
+            else if (command == "-movezip") HandleMoveZipCommand(_args);
             PrintConfig();
             Utils.WriteJSON(Utils.Data);
             UpdateBuildFiles();
