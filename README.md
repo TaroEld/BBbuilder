@@ -59,10 +59,10 @@ Optionally, you can tell the program to transpile the JavaScript files to ES3. T
 ## Editor config files
 This program is best used with VSCode or Sublime Text, as it will generate editor config files for them.
 Upon first and every subsequent use, config files for the editors Sublime Text 3 and Visual Studio Code are created. 
-### Sublime Text 3 
+### Sublime Text 3
 The Sublime sublime-build file is copied to the %appdata% directory, and the build commands should be available right away.  
 If you initialise or extract a mod, a `sublime-project` file will be placed in the mod folder. Use this with Sublime Text (drag it into the editor, or doubleclick the file) to open the mod as a project.
-### VSCode 
+### VSCode
 The VSCode tasks.json file is created in the /tools folder of the program. It must be manually copied or inserted into an existing tasks.json file.  
 See here: https://code.visualstudio.com/docs/editor/tasks#_user-level-tasks  
 Like with Sublime Text, an editor project file will be created. This is placed in the `.vscode` folder.
@@ -80,13 +80,18 @@ For Steam users:
 - Paste it into the cmd terminal  
 For GoG users: Find your install location.
 
-In the next step, the game will ask for the mods folder, as in where your mods shall be placed in the future. If you don't have one yet, create it, as it must be an existing folder. Example: `C:\BB Modding\My Mods`
+In the next step, the game will ask for the mods folder, as in where your mods will be placed in the future. If you don't have one yet, create it, as it must be an existing folder. Example: `C:\BB Modding\My Mods`
 Also copypaste that path into the terminal.
 
 Now that we defined the basic paths, we can intialise our first mod. Write `bbbuilder.exe init mod_my_first_mod`. It will be created in the modpath folder that we defined in the previous step. The result will be opened in file explorer.  
 To open this project in VSCode or Sublime Text, doubleclick the `.vscode/mod_my_first_mod.code-workspace` or `mod_my_first_mod.sublime-project` file, respectively. I'll be going with the latter.  
 After doubleclicking the `mod_my_first_mod.sublime-project`, sublime will open up. On the left-hand sidebar, you can see the folders of this project. As 
-At this stage, the most intersting file is `/scripts/!mods_preload/mod_my_first_mod.nut`. A few things 
+At this stage, the most intersting file is `/scripts/!mods_preload/mod_my_first_mod.nut`. A few things are to be adapted here:
+- ::RENAME is your `namespace`. This means that this is a name that you can use to refer to things related to your mod, such as config values. You will need to change this, for example to `::MyNewMod`.
+- The commented lines can be uncommented or deleted. The first two register User Interface files, which you'll likely not need at this time, so just delete them. The third line registers your mod as a MSU mod. This depends on what you want to do with it.
+
+At this point, you can work on your mod. I won't be writing a modding tutorial here, so head on to the modding discord or other places.
+After you have made some changes, you can build your mod. In Sublime Text, this is done with ctrl+shift+b. If the config has been set up properly, you'll see multiple options. The most common one is `bb_build - Update Mod and launch`, which will create the new zip, copy it into data, and launch the game.
 
 ## Misc
 It can be useful to add the program folder to the environment variables, to be able to call them from any cmd window. See here for example: https://linuxhint.com/add-directory-to-path-environment-variables-windows/
