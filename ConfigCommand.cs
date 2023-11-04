@@ -28,24 +28,19 @@ namespace BBbuilder
             {
                 Console.WriteLine("Please pass the path to the 'data' game directory. For example: G:/Games/SteamLibrary/steamapps/common/Battle Brothers/data");
                 string passedPath = Console.ReadLine();
-                if (!ValidateDataPath(passedPath))
-                    continue;
-                Utils.Data.GamePath = passedPath;
-                changed = true;
-                Console.WriteLine($"datapath set to {passedPath}.");
+                string[] args = { "", "-datapath", passedPath};
+                changed = HandlePathCommand(args);
+                if (changed)
+                    Utils.Data.GamePath = passedPath;
             }
             while (!Directory.Exists(Utils.Data.ModPath))
             {
                 Console.WriteLine("Please pass the path to the directory where you want new mods to be placed. For example: G:/Games/BB/Mods/WIP");
                 string passedPath = Console.ReadLine();
-                if (!Directory.Exists(passedPath))
-                {
-                    Console.WriteLine($"Directory {passedPath} does not exist!");
-                     continue;
-                }
-                Utils.Data.ModPath = passedPath;
-                changed = true;
-                Console.WriteLine($"datapath set to {passedPath}.");
+                string[] args = { "", "-datapath", passedPath };
+                changed = HandlePathCommand(args);
+                if (changed)
+                    Utils.Data.ModPath = passedPath;
             }
             if (changed) Utils.WriteJSON(Utils.Data);
             UpdateBuildFiles();
@@ -132,24 +127,21 @@ namespace BBbuilder
             }
         }
 
-        private void HandlePathCommand(string[] _args)
+        private bool HandlePathCommand(string[] _args)
         {
-            if (_args.Length < 3)
-            {
-                Console.WriteLine("Invalid parameters passed. Printing help and current config:\n");
-                PrintHelp();
-                Console.WriteLine("");
-                PrintConfig();
-                return;
-            }
             string passedPath = _args[2];
             if (!Directory.Exists(passedPath))
             {
                 Console.WriteLine($"Directory '{passedPath}' does not exist!");
-                return;
+                return false;
             }
-            if (_args[1] == "datapath")
+            if (_args[1] == "-datapath")
             {
+                if (new DirectoryInfo(passedPath).Name != "data")
+                {
+                    Console.WriteLine($"Directory {passedPath} is not a data folder! Example path: G:/Games/SteamLibrary/steamapps/common/Battle Brothers/data");
+                    return false;
+                }
                 Utils.Data.GamePath = passedPath;
                 Console.WriteLine($"Set datapath to {passedPath}");
             }
@@ -158,6 +150,7 @@ namespace BBbuilder
                 Utils.Data.ModPath = passedPath;
                 Console.WriteLine($"Set modpath to {passedPath}");
             }
+            return true;
         }
 
 
@@ -173,12 +166,6 @@ namespace BBbuilder
             if (!Directory.Exists(_path))
             {
                 Console.WriteLine($"Directory {_path} does not exist!");
-                return false;
-            }
-            Console.WriteLine(new DirectoryInfo(_path).Name);
-            if (new DirectoryInfo(_path).Name != "data")
-            {
-                Console.WriteLine($"Directory {_path} is not a data folder! Example path: G:/Games/SteamLibrary/steamapps/common/Battle Brothers/data");
                 return false;
             }
             return true;
