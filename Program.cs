@@ -19,14 +19,15 @@ namespace BBbuilder
 
             Utils.GetJsonData();
 
-            Dictionary<string, Command> Commands = new();
-            
-            Commands.Add("build", new BuildCommand());
-            Commands.Add("init", new InitCommand());
-            Commands.Add("extract", new ExtractCommand());
-            var config = new ConfigCommand();
+            Dictionary<string, Command> Commands = new()
+            {
+                { "build", new BuildCommand() },
+                { "init", new InitCommand() },
+                { "extract", new ExtractCommand() },
+                { "config", new ConfigCommand() }
+            };
+            var config = (ConfigCommand)Commands["config"];
             config.SetupConfig();
-            Commands.Add("config", config);
 
             string[] arguments = args;
             if (arguments == null || arguments.Length == 0)
