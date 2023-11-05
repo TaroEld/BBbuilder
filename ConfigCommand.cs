@@ -7,6 +7,7 @@ namespace BBbuilder
 {
     class ConfigCommand : Command
     {
+        readonly OptionFlag Clear = new("-clear", "Clears all settings.");
         public ConfigCommand()
         {
             this.Name = "config";
@@ -23,6 +24,10 @@ namespace BBbuilder
                     "\n    Example: 'bbuilder config -folders \"C:/BB Modding/Other Mods/mod_msu\" \"C:/BB Modding/basegame/scripts\""},
                 {"-movezip <true|false>", "Whether you'd like to delete the zip after building the mod and copying it to `datapath`." +
                     "\n    Example: 'bbbuilder config -movezip true'"}
+            };
+            this.Flags = new OptionFlag[]
+            {
+               this.Clear
             };
         }
 
@@ -92,7 +97,15 @@ namespace BBbuilder
                 PrintConfig();
                 return false;
             }
-            if (!Commands.ContainsKey(_args[1]))
+            this.ParseFlags(new List<string>(_args));
+            if (this.Clear)
+            {
+                this.HandleClearCommand(_args);
+                Console.WriteLine("Cleared all config values.");
+                return true;
+            }
+            string command = _args[1];
+            if (!Commands.ContainsKey(command))
             {
                 Console.WriteLine("Invalid subcommand of command 'config' passed. Printing help and current config:\n");
                 PrintHelp();
@@ -100,7 +113,6 @@ namespace BBbuilder
                 PrintConfig();
                 return false;
             }
-            string command = _args[1];
             if (command == "-folders") HandleFolderCommand(_args);
             else if (command == "-datapath" || command == "-modpath") HandlePathCommand(_args);
             else if (command == "-movezip") HandleMoveZipCommand(_args);
@@ -165,6 +177,10 @@ namespace BBbuilder
             Utils.Data.MoveZip = Convert.ToBoolean(_args[2]);
         }
 
+        private void HandleClearCommand(string[] _args)
+        {
+            Utils.CreateJSON();
+        }
 
         private bool ValidateDataPath(string _path)
         {
