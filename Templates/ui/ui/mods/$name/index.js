@@ -1,10 +1,10 @@
-class $Name {
-    sqHandle = null
-    static id = "$Name";
+var $Name {
+    sqHandle : null,
+    ModID : "$Name",
 
-    onConnection(sqHandle) {
+    onConnection : function(sqHandle) {
         this.sqHandle = sqHandle;
     }
 }
 
-registerScreen($Name.id, new $Name());
+registerScreen($Name.id, $Name);
