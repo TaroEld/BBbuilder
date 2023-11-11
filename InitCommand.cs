@@ -108,59 +108,59 @@ namespace BBbuilder
             Directory.CreateDirectory(Path.Combine(this.ModPath, "ui", "mods", this.ModName));
         }
 
+        private string GetNameSpaceName(string _name)
+        {
+            while (_name.Contains("_"))
+            {
+                int idx = _name.IndexOf("_");
+                if (idx + 1 == _name.Length)
+                    return _name;
+                else
+                    _name = _name[0..idx] + _name[idx + 1].ToString().ToUpper() + _name[(idx + 2)..];
+            }
+            return _name;
+        }
         private void CreateFromTemplate()
         {
             Utils.Copy(this.TemplatePath, this.ModPath);
             string[] templateDirectories = Directory.GetDirectories(this.ModPath, "*.*", SearchOption.AllDirectories);
-            string upperCaseName = this.ModName[0].ToString().ToUpper() + this.ModName[1..];
-            foreach (string directory in templateDirectories)
-            {
-                string newDirectory = directory.Replace("$Name", upperCaseName);
-                newDirectory = newDirectory.Replace("$name", this.ModName);
-                if (directory != newDirectory) Directory.Move(directory, newDirectory);
-            }
-
             string[] templateFiles = Directory.GetFiles(this.ModPath, "*.*", SearchOption.AllDirectories);
-            foreach (string fileName in templateFiles)
-            {
-                string newFileName = fileName.Replace("$Name", upperCaseName);
-                newFileName = newFileName.Replace("$name", this.ModName);
-                if (fileName != newFileName) File.Move(fileName, newFileName);
-                string text = File.ReadAllText(newFileName);
-                text = text.Replace("$Name", upperCaseName);
-                text = text.Replace("$name", this.ModName);
-                File.WriteAllText(newFileName, text);
-            }
+            InitTemplateFiles(templateDirectories, templateFiles);
         }
 
         private void ReplaceFromTemplate()
         {
             string tempPath = this.ModPath + "_bbb_temp";
             string tempName = this.ModName + "_bbb_temp";
-            string upperCaseName = this.ModName[0].ToString().ToUpper() + this.ModName[1..];
             Utils.Copy(this.TemplatePath, tempPath);
             string[] templateDirectories = Directory.GetDirectories(tempPath, "*.*", SearchOption.AllDirectories);
-            foreach (string directory in templateDirectories)
+            string[] templateFiles = Directory.GetFiles(tempPath, "*.*", SearchOption.AllDirectories);
+            InitTemplateFiles(templateDirectories, templateFiles, true);
+            Utils.Copy(tempPath, this.ModPath);
+            Directory.Delete(tempPath, true);
+        }
+
+        private void InitTemplateFiles(string[] _templateDirectories,string[] _templateFiles, bool overwrite = false)
+        {
+            string upperCaseName = this.ModName[0].ToString().ToUpper() + this.ModName[1..];
+            string nameSpaceName = GetNameSpaceName(upperCaseName);
+            foreach (string directory in _templateDirectories)
             {
-                string newDirectory = directory.Replace("$Name", upperCaseName);
+                string newDirectory = directory.Replace("$Name", nameSpaceName);
                 newDirectory = newDirectory.Replace("$name", this.ModName);
                 if (directory != newDirectory) Directory.Move(directory, newDirectory);
             }
-
-            string[] templateFiles = Directory.GetFiles(tempPath, "*.*", SearchOption.AllDirectories);
-            foreach (string fileName in templateFiles)
+            foreach (string fileName in _templateFiles)
             {
                 string newFileName = fileName.Replace("$Name", upperCaseName);
                 newFileName = newFileName.Replace("$name", this.ModName);
                 if (fileName != newFileName) File.Move(fileName, newFileName);
                 string text = File.ReadAllText(newFileName);
                 text = text.Replace("$Name", upperCaseName);
+                text = text.Replace("$Space", nameSpaceName);
                 text = text.Replace("$name", this.ModName);
                 File.WriteAllText(newFileName, text);
-                if (File.Exists(newFileName.Replace(tempName, this.ModName))) Console.WriteLine($"Overwriting file {newFileName.Replace(tempName, this.ModName)}");
             }
-            Utils.Copy(tempPath, this.ModPath);
-            Directory.Delete(tempPath, true);
         }
 
         private bool WriteProjectFiles()

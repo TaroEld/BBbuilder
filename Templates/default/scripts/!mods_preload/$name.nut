@@ -1,11 +1,13 @@
-::$Name <- {
+::$Space <- {
 	ID = "$name",
-	Name = "RENAME",
+	Name = "$Space",
 	Version = "1.0.0"
 }
-::mods_registerMod(::$Name.ID, ::$Name.Version, ::$Name.Name);
+::mods_registerMod(::$Space.ID, ::$Space.Version, ::$Space.Name);
 
-::mods_queue(::$Name.ID, null, function()
+::mods_queue(::$Space.ID, null, function()
 {
-	// ::$Name.Mod <- ::MSU.Class.Mod(::$Name.ID, ::$Name.Version, ::$Name.Name); // Delete if not needed
+	::$Space.Mod <- ::MSU.Class.Mod(::$Space.ID, ::$Space.Version, ::$Space.Name);
+	::mods_registerJS("./mods/$Space/index.js");
+	::mods_registerCSS("./mods/$Space/index.css");
 })
