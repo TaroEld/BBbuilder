@@ -47,7 +47,7 @@ namespace BBbuilder
             {
                 Console.WriteLine("Please pass the path to the directory where you want new mods to be placed. For example: G:/Games/BB/Mods/WIP");
                 string passedPath = Console.ReadLine();
-                string[] args = { "", "-datapath", passedPath };
+                string[] args = { "", "-modpath", passedPath };
                 changed = HandlePathCommand(args);
                 if (changed)
                     Utils.Data.ModPath = passedPath;
