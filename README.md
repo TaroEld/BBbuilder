@@ -31,13 +31,23 @@ Saves config values in a database. If you first start the program, it will promp
 ### init \<modname\>
 Create a new mod. with the name `<modname>` A folder structure is created, providing a light scaffold of folders and files. This speeds up the generation of new mods and provides consistency between your creations.  
 By default, the mod will be initialised into the folder specified in the `modpath` config value, with the foldername \<modname\>.
-The generated folders and files depend on the template used, see the `-template` flag. 
+The generated folders and files depend on the template used, see [Templates](Templates)
 #### Flags
 - `-altpath <path>`: Specify another folder to place the new mod. Example: `init mod_my_first_mod altpath "C:\BB Modding\My_Mods\"` 
-- `-template <templatename>`: Specify which template to use. The template defines what files and folders will be created in the new mod directory. \n The default templates are found in the `Templates` folder within the .zip. You can customize these templates by either editing the existing ones, or adding new folders.  \n Example: 'bbbuilder init my_cool_mod -template ui' 
+- `-template <templatename>`: Specify which template to use. 
+\n Example: 'bbbuilder init my_cool_mod -template ui' 
 - `-replace`: Indicate that you'd like to replace the files in an existing folder. Only files that exist in the template will be overwritten in the target folder. If this flag is not specified, the program will show you an error message if you specify a folder that already exists.
 
-Example usage: `bbbuilder init mod_my_first_mod`
+#### Templates
+The template defines what files and folders will be created in the new mod directory. 
+The default templates are found in the `Templates` folder within the .zip. 
+You can customize these templates by either editing the existing ones, or adding new folders.  	
+Within the files and filenames, certain flags are removed: 
+	- "$name" -> <modname>
+	- "$Name" -> Upper-case-modname
+	- "$Space" -> CamelCase modname, where underscores are removed and the following letter capitalised. Example: "mod_new_thing" -> "ModNewThing"
+
+Example usage: `bbbuilder init mod_my_first_mod -template ui -replace`
 
 ### extract \<modpath\>
 Equal to the init command, but extracts existing mods instead, decompiling files if necessary. This is useful if you downloaded a mod from someone else, and would like to take a look. The other `init` flags can also be used here.
@@ -87,7 +97,6 @@ Now that we defined the basic paths, we can intialise our first mod. Write `bbbu
 To open this project in VSCode or Sublime Text, doubleclick the `.vscode/mod_my_first_mod.code-workspace` or `mod_my_first_mod.sublime-project` file, respectively. I'll be going with the latter.  
 After doubleclicking the `mod_my_first_mod.sublime-project`, sublime will open up. On the left-hand sidebar, you can see the folders of this project. As 
 At this stage, the most intersting file is `/scripts/!mods_preload/mod_my_first_mod.nut`. A few things are to be adapted here:
-- ::RENAME is your `namespace`. This means that this is a name that you can use to refer to things related to your mod, such as config values. You will need to change this, for example to `::MyNewMod`.
 - The commented lines can be uncommented or deleted. The first two register User Interface files, which you'll likely not need at this time, so just delete them. The third line registers your mod as a MSU mod. This depends on what you want to do with it.
 
 At this point, you can work on your mod. I won't be writing a modding tutorial here, so head on to the modding discord or other places.
