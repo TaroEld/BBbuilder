@@ -1,21 +1,18 @@
 ﻿using System;
 using System.IO;
-using System.IO.Compression;
 using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
-using System.Text;
 using System.Threading.Tasks;
-using Ionic;
-using Ionic.Zip;
-using System.Text.RegularExpressions;
 using System.Reflection;
+using Microsoft.Data.Sqlite;
+using Ionic.Zip;
 
 namespace BBbuilder
 {
     class BuildCommand : Command
     {
-        readonly string[] ExcludedZipFolders = new string[] { ".git", ".github", "unpacked_brushes", ".vscode", ".utils", "assets", "modtools", "node_modules" };
+        readonly string[] ExcludedZipFolders = new string[] {".bbbuilder", ".git", ".github", "unpacked_brushes", ".vscode", ".utils", "assets", "modtools", "node_modules" };
         readonly string[] ExcludedScriptFolders = new string[] { "ui", ".git", ".github", "gfx", "preload", "brushes", "music", "sounds", "unpacked_brushes", "tempfolder", ".vscode", "nexus", ".utils", "assets" };
         readonly OptionFlag ScriptOnly = new("-scriptonly", "Only pack script files. The mod will have a '_scripts' suffix.");
         readonly OptionFlag CompileOnly = new("-compileonly", "Compile the .nut files without creating a .zip.");
@@ -29,6 +26,11 @@ namespace BBbuilder
         string ModName;
         string ZipPath;
         string BuildPath;
+        string DBNAME = "dates.sqlite";
+        string ConnectionString;
+        Dictionary<string, DateTime> FileEditDatesInFolder;
+        Dictionary<string, DateTime> FileEditDatesInDB;
+        Dictionary<string, DateTime> FilesWhichChanged;
         public BuildCommand()
         {
             this.Name = "build";
@@ -38,6 +40,9 @@ namespace BBbuilder
                 "Mandatory: Specify the path of the mod to be built. (Example: bbuilder build G:/Games/BB/Mods/WIP/mod_msu)",
             };
             this.Flags = new OptionFlag[] { this.ScriptOnly, this.CompileOnly, this.StartGame, this.UIOnly, this.NoCompile, this.NoPack, this.Transpile };
+            this.FileEditDatesInFolder = new();
+            this.FileEditDatesInDB = new();
+            this.FilesWhichChanged = new();
         }
         private bool ParseCommand(List<string> _args)
         {
@@ -51,6 +56,8 @@ namespace BBbuilder
             this.ModPath = _args[1];
             this.BuildPath = this.ModPath;
             this.ModName = new DirectoryInfo(this.ModPath).Name;
+            string db_path = Path.Combine(this.ModPath, ".bbbuilder", this.DBNAME);
+            this.ConnectionString = $"Data Source={db_path}";
 
             if (this.ScriptOnly && this.UIOnly)
             {
@@ -77,8 +84,7 @@ namespace BBbuilder
                 Directory.CreateDirectory(this.BuildPath);
                 Utils.Copy(this.ModPath, this.BuildPath);
             }
-
-            this.ZipPath = this.BuildPath + ".zip";
+            this.ZipPath = Path.Combine(this.BuildPath, this.ModName + ".zip");
             return true;
         }
 
@@ -92,6 +98,10 @@ namespace BBbuilder
             {
                 return false;
             }
+            ReadFileDataFromFolder();
+            SetupFileDateDB();
+            ReadFileDataFromDB();
+            GetFilesWhichChanged();
             if (!this.CompileOnly)
                 Console.WriteLine($"Attempting to build {this.ModPath}");
             else
@@ -132,25 +142,128 @@ namespace BBbuilder
             {
                 KillAndStartBB();
             }
+            this.InsertFileData();
             return true;
         }
 
+        private void SetupFileDateDB()
+        {
+            if (!Directory.Exists(Path.Combine(this.ModPath, ".bbbuilder")))
+            {
+                Directory.CreateDirectory(Path.Combine(this.ModPath, ".bbbuilder"));
+            }
+            using (var connection = new SqliteConnection(this.ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name='FileData';";
+                    var tableName = command.ExecuteScalar();
+                    if (tableName == null)
+                    {
+                        command.CommandText = @"
+                        CREATE TABLE FileData (
+                            FilePath TEXT PRIMARY KEY,
+                            LastModified DATETIME NOT NULL
+                        );";
+                        command.ExecuteNonQuery();
+                    }
+                }
+            }
+        }
+
+        private void ReadFileDataFromFolder()
+        {
+            foreach (var folder in GetAllFoldersExcept(this.ExcludedZipFolders))
+            {
+                foreach(var file in Directory.EnumerateFiles(folder, "*.*", SearchOption.AllDirectories))
+                {
+                    this.FileEditDatesInFolder.Add(Path.GetRelativePath(this.ModPath, file), File.GetLastWriteTime(file));
+                }
+            }
+        }
+
+        private void ReadFileDataFromDB()
+        {
+            using (var connection = new SqliteConnection(this.ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "SELECT FilePath, LastModified FROM FileData;";
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            string filePath = reader.GetString(0);
+                            DateTime lastModified = reader.GetDateTime(1);
+                            this.FileEditDatesInDB.Add(filePath, lastModified);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void GetFilesWhichChanged()
+        {
+            foreach (var entry in this.FileEditDatesInFolder)
+            {
+                if (!(this.FileEditDatesInDB.ContainsKey(entry.Key)) || this.FileEditDatesInDB[entry.Key] < entry.Value)
+                    this.FilesWhichChanged.Add(entry.Key, entry.Value);
+            }
+        }
+
+        private bool HasFileChanged(string filePath)
+        {
+            return this.FilesWhichChanged.ContainsKey(Path.GetRelativePath(this.ModPath, filePath));
+        }
+
+        private void InsertFileData()
+        {
+            if (this.FilesWhichChanged.Count == 0) return;
+            using (var connection = new SqliteConnection(this.ConnectionString))
+            {
+                connection.Open();
+                using (var transaction = connection.BeginTransaction())
+                {
+                    var command = connection.CreateCommand();
+                    command.CommandText =
+                    @"
+                        INSERT OR REPLACE INTO FileData (FilePath, LastModified) VALUES ($FilePath, $LastModified);
+                    ";
+                    var path_p = command.CreateParameter();
+                    path_p.ParameterName = "$FilePath";
+                    command.Parameters.Add(path_p);
+                    var mod_p = command.CreateParameter();
+                    mod_p.ParameterName = "$LastModified";
+                    command.Parameters.Add(mod_p);
+                    foreach (var pathtime in this.FilesWhichChanged)
+                    {
+                        path_p.Value = pathtime.Key;
+                        mod_p.Value = pathtime.Value;
+                        command.ExecuteNonQuery();
+                    }
+                    transaction.Commit();
+                }
+            }
+        }
         private bool CompileFiles()
         {
-            string localWorkingDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             //get this script directory
             Console.WriteLine("Starting to compile files...");
             string[] allNutFilesAsPath = GetAllowedScriptFiles();
-            if (allNutFilesAsPath.Length == 0)
+            string[] changedNutFiles = allNutFilesAsPath.Where(f => HasFileChanged(f)).ToArray();
+            if (changedNutFiles.Length == 0)
             {
                 Console.WriteLine("No files to compile!");
                 return true;
             }
 
             bool noCompileErrors = true;
-            Parallel.For(0, allNutFilesAsPath.Length, (i, state) =>
+            Parallel.For(0, changedNutFiles.Length, (i, state) =>
             {
-                string nutFilePath = allNutFilesAsPath[i];
+                string nutFilePath = changedNutFiles[i];
                 string sqCommand = String.Format("-o NUL -c \"{0}\"", nutFilePath);
 
                 using (Process compiling = new())
@@ -169,10 +282,14 @@ namespace BBbuilder
 
                         noCompileErrors = false;
                     }
+                    else Console.WriteLine("Successfully compiled file " + nutFilePath);
                 }
             });
+            
             if (noCompileErrors)
+            {
                 Console.WriteLine("Successfully compiled files!");
+            }  
 
             return noCompileErrors;
         }
@@ -276,11 +393,6 @@ namespace BBbuilder
         private bool PackBrushFiles()
         {
             string brushesPath = Path.Combine(this.ModPath, "brushes");
-            if (Directory.Exists(brushesPath))
-            {
-                Directory.Delete(brushesPath, true);
-                Console.WriteLine($"Removed folder {brushesPath}");
-            }
             string folderPath = Path.Combine(this.ModPath, "unpacked_brushes");
             bool noCompileErrors = true;
             if (!Directory.Exists(folderPath) || Directory.GetDirectories(folderPath).Length == 0)
@@ -296,9 +408,15 @@ namespace BBbuilder
             Parallel.For(0, subFolders.Length, (i, state) =>
             {
                 string subFolder = subFolders[i];
+                string[] changedFiles = Directory.GetFiles(subFolder, "*", SearchOption.AllDirectories).Where(f => HasFileChanged(f)).ToArray();
+                if (changedFiles.Length == 0) {
+                    return;
+                }
+
                 string folderName = new DirectoryInfo(subFolder).Name;
                 string brushName = $"{folderName}.brush";
                 string command = $"pack {brushName} {subFolder}";
+
                 if (File.Exists(Path.Combine(brushesPath, brushName)))
                 {
                     File.Delete(Path.Combine(brushesPath, brushName));
