@@ -106,8 +106,6 @@ namespace BBbuilder
             Directory.CreateDirectory(Path.Combine(this.ModPath, ".vscode"));
             Directory.CreateDirectory(Path.Combine(this.ModPath, "assets"));
             Directory.CreateDirectory(Path.Combine(this.ModPath, "unpacked_brushes"));
-            Directory.CreateDirectory(Path.Combine(this.ModPath, "scripts", "!mods_preload"));
-            Directory.CreateDirectory(Path.Combine(this.ModPath, "ui", "mods", this.ModName));
         }
 
         public bool InitGitRepo()

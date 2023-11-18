@@ -33,6 +33,12 @@ namespace BBbuilder
                     flag.Validate(_args);
                 }
             }
+            if (_args.Count > 2)
+            {
+                Console.WriteLine("Unknown args/flags found:");
+                foreach (string arg in _args.ToArray()[2..])
+                    Console.WriteLine(arg);
+            }
         }
 
         void PrintCommands()

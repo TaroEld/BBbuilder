@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 using System.Reflection;
 using Microsoft.Data.Sqlite;
 using Ionic.Zip;
-using System.Text.RegularExpressions;
 
 namespace BBbuilder
 {
     class BuildCommand : Command
     {
+        readonly string[] NotIndexedFolders = new string[] { ".bbbuilder", ".git", ".github", ".vscode", ".utils", "assets", "modtools", "node_modules" };
         readonly string[] ExcludedZipFolders = new string[] {".bbbuilder", ".git", ".github", "unpacked_brushes", ".vscode", ".utils", "assets", "modtools", "node_modules" };
         readonly string[] ExcludedScriptFolders = new string[] { "ui", ".git", ".github", "gfx", "preload", "brushes", "music", "sounds", "unpacked_brushes", "tempfolder", ".vscode", "nexus", ".utils", "assets" };
         readonly OptionFlag StartGame = new("-restart", "Exit and then start BattleBrothers.exe after building the mod.");
@@ -94,10 +94,7 @@ namespace BBbuilder
             }
             if (this.Rebuild)
             {
-                if (File.Exists(this.DB_path))
-                    File.Delete(this.DB_path);
-                File.Delete(this.ZipPath);
-                Console.WriteLine("Rebuilding: Deleted .zip and database");
+                RebuildZipAndDB();
             }
             if (this.Diff)
                 File.Delete(this.ZipPath);
@@ -141,20 +138,37 @@ namespace BBbuilder
             return true;
         }
 
+        public void RebuildZipAndDB()
+        {
+            if (File.Exists(this.DB_path))
+            {
+                SqliteConnection.ClearAllPools();
+                File.Delete(this.DB_path);
+                SetupFileDateDB();
+            } 
+            if (File.Exists(this.ZipPath))
+                File.Delete(this.ZipPath);
+            Console.WriteLine("Rebuilding: Deleted .zip and database");
+        }
+
         private void SetupFileDateDB()
         {
-            if (!Directory.Exists(Path.Combine(this.ModPath, ".bbbuilder")))
+            if (!Directory.Exists(Path.Combine(this.BuildPath, ".bbbuilder")))
             {
-                Directory.CreateDirectory(Path.Combine(this.ModPath, ".bbbuilder"));
+                Directory.CreateDirectory(Path.Combine(this.BuildPath, ".bbbuilder"));
             }
             using (var connection = new SqliteConnection(this.ConnectionString))
             {
                 connection.Open();
+                bool use;
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name='FileData';";
-                    var tableName = command.ExecuteScalar();
-                    if (tableName == null)
+                    use = command.ExecuteScalar() == null;
+                }
+                if (use)
+                {
+                    using (var command = connection.CreateCommand())
                     {
                         command.CommandText = @"
                         CREATE TABLE FileData (
@@ -169,11 +183,11 @@ namespace BBbuilder
 
         private void ReadFileDataFromFolder()
         {
-            foreach (var folder in GetAllFoldersExcept(this.ExcludedZipFolders))
+            foreach (var folder in GetAllFoldersExcept(this.NotIndexedFolders))
             {
                 foreach(var file in Directory.EnumerateFiles(folder, "*.*", SearchOption.AllDirectories))
                 {
-                    this.FileEditDatesInFolder.Add(Path.GetRelativePath(this.ModPath, file), File.GetLastWriteTime(file));
+                    this.FileEditDatesInFolder.Add(Path.GetRelativePath(this.BuildPath, file), File.GetLastWriteTime(file));
                 }
             }
         }
@@ -204,14 +218,14 @@ namespace BBbuilder
         {
             foreach (var entry in this.FileEditDatesInFolder)
             {
-                if (!(this.FileEditDatesInDB.ContainsKey(entry.Key)) || this.FileEditDatesInDB[entry.Key] < entry.Value)
+                if (!(this.FileEditDatesInDB.ContainsKey(entry.Key)) || this.FileEditDatesInDB[entry.Key] != entry.Value)
                     this.FilesWhichChanged.Add(entry.Key, entry.Value);
             }
         }
 
         private bool HasFileChanged(string filePath)
         {
-            return this.FilesWhichChanged.ContainsKey(Path.GetRelativePath(this.ModPath, filePath));
+            return this.FilesWhichChanged.ContainsKey(Path.GetRelativePath(this.BuildPath, filePath));
         }
 
         private void InsertFileData()
@@ -222,24 +236,26 @@ namespace BBbuilder
                 connection.Open();
                 using (var transaction = connection.BeginTransaction())
                 {
-                    var command = connection.CreateCommand();
-                    command.CommandText =
-                    @"
-                        INSERT OR REPLACE INTO FileData (FilePath, LastModified) VALUES ($FilePath, $LastModified);
-                    ";
-                    var path_p = command.CreateParameter();
-                    path_p.ParameterName = "$FilePath";
-                    command.Parameters.Add(path_p);
-                    var mod_p = command.CreateParameter();
-                    mod_p.ParameterName = "$LastModified";
-                    command.Parameters.Add(mod_p);
-                    foreach (var pathtime in this.FilesWhichChanged)
+                    using (var command = connection.CreateCommand())
                     {
-                        path_p.Value = pathtime.Key;
-                        mod_p.Value = pathtime.Value;
-                        command.ExecuteNonQuery();
+                        command.CommandText =
+                        @"
+                            INSERT OR REPLACE INTO FileData (FilePath, LastModified) VALUES ($FilePath, $LastModified);
+                        ";
+                        var path_p = command.CreateParameter();
+                        path_p.ParameterName = "$FilePath";
+                        command.Parameters.Add(path_p);
+                        var mod_p = command.CreateParameter();
+                        mod_p.ParameterName = "$LastModified";
+                        command.Parameters.Add(mod_p);
+                        foreach (var pathtime in this.FilesWhichChanged)
+                        {
+                            path_p.Value = pathtime.Key;
+                            mod_p.Value = pathtime.Value;
+                            command.ExecuteNonQuery();
+                        }
+                        transaction.Commit();
                     }
-                    transaction.Commit();
                 }
             }
         }
@@ -343,8 +359,8 @@ namespace BBbuilder
         }
         private bool PackBrushFiles()
         {
-            string brushesPath = Path.Combine(this.ModPath, "brushes");
-            string folderPath = Path.Combine(this.ModPath, "unpacked_brushes");
+            string brushesPath = Path.Combine(this.BuildPath, "brushes");
+            string folderPath = Path.Combine(this.BuildPath, "unpacked_brushes");
             bool noCompileErrors = true;
             if (!Directory.Exists(folderPath) || Directory.GetDirectories(folderPath).Length == 0)
             {
@@ -378,7 +394,7 @@ namespace BBbuilder
                     packBrush.StartInfo.RedirectStandardOutput = true;
                     packBrush.StartInfo.FileName = Utils.BBRUSHERPATH;
                     packBrush.StartInfo.Arguments = command;
-                    packBrush.StartInfo.WorkingDirectory = this.ModPath;
+                    packBrush.StartInfo.WorkingDirectory = this.BuildPath;
                     packBrush.Start();
                     string output = packBrush.StandardOutput.ReadToEnd();
                     packBrush.WaitForExit();
@@ -391,15 +407,15 @@ namespace BBbuilder
                     else
                     {
                         Console.WriteLine($"Packed Brush {brushName}");
-                        File.Copy(Path.Combine(this.ModPath, brushName), Path.Combine(brushesPath, brushName));
-                        File.Delete(Path.Combine(this.ModPath, brushName));
+                        File.Copy(Path.Combine(this.BuildPath, brushName), Path.Combine(brushesPath, brushName));
+                        File.Delete(Path.Combine(this.BuildPath, brushName));
                     }
                 }
             });
-            DirectoryInfo wipFolder = Directory.GetParent(this.ModPath);
+            DirectoryInfo wipFolder = Directory.GetParent(this.BuildPath);
             if (Directory.Exists(Path.Combine(wipFolder.ToString(), "gfx")))
             {
-                Utils.Copy(Path.Combine(wipFolder.ToString(), "gfx"), Path.Combine(this.ModPath, "gfx"));
+                Utils.Copy(Path.Combine(wipFolder.ToString(), "gfx"), Path.Combine(this.BuildPath, "gfx"));
                 Directory.Delete(Path.Combine(wipFolder.ToString(), "gfx"), true);
             }
             if (noCompileErrors)
@@ -420,7 +436,7 @@ namespace BBbuilder
                     RedirectStandardOutput = true,
                     RedirectStandardError = false,
                     UseShellExecute = false,
-                    WorkingDirectory = this.ModPath
+                    WorkingDirectory = this.BuildPath
                 };
 
                 using (var process = Process.Start(processStartInfo))
@@ -441,10 +457,11 @@ namespace BBbuilder
 
         private List<string> GetFilesToZip()
         {
-
-            if (this.Diff) 
-                return this.GetDiffFiles();
-            List<string> files = this.FileEditDatesInFolder.Keys.Select(f => Path.Combine(this.BuildPath, f)).ToList();
+            List<string> files;
+            if (this.Diff)
+                files = this.GetDiffFiles();
+            files = this.FileEditDatesInFolder.Keys.Select(f => Path.Combine(this.BuildPath, f)).ToList();
+            files = files.Where(f => !f.Contains("unpacked_brushes")).ToList();
 
             if (!File.Exists(this.ZipPath))
                 return files;
@@ -466,7 +483,7 @@ namespace BBbuilder
             }
             if (recreateZip)
             {
-                File.Delete(this.ZipPath);
+                RebuildZipAndDB();
                 return files;
             }
             files = files.Where(f => this.FilesWhichChanged.ContainsKey(Path.GetRelativePath(this.BuildPath, f))).ToList();
@@ -481,7 +498,8 @@ namespace BBbuilder
                 foreach (string file in toZip)
                 { 
                     Console.WriteLine("Updating file in zip: " + file);
-                    zip.UpdateFile(file, Path.GetDirectoryName(Path.GetRelativePath(this.BuildPath, file)));
+                    var relativePath = Path.GetDirectoryName(Path.GetRelativePath(this.BuildPath, file));
+                    zip.UpdateFile(file, relativePath);
                 }
                 zip.Save();
             }
@@ -532,13 +550,13 @@ namespace BBbuilder
                 File.Delete(this.ZipPath);
                 Console.WriteLine($"Removed file {this.ZipPath}");
             }
-            string brushesPath = Path.Combine(this.ModPath, "brushes");
+            string brushesPath = Path.Combine(this.BuildPath, "brushes");
             if (Directory.Exists(brushesPath))
             {
                 Directory.Delete(brushesPath, true);
                 Console.WriteLine($"Removed folder {brushesPath}");
             }
-            DirectoryInfo wipFolder = Directory.GetParent(this.ModPath);
+            DirectoryInfo wipFolder = Directory.GetParent(this.BuildPath);
             string wipGfxPath = Path.Combine(wipFolder.ToString(), "gfx");
             if (Directory.Exists(wipGfxPath))
             {
@@ -547,12 +565,11 @@ namespace BBbuilder
             }
         }
 
-        /**
-        * install a npm dependency.
-        */
         private static void InstallNpmDependency(String npmPackageToInstall, string installationPath)
         {
-            
+            /** By Kfox
+            * install a npm dependency.
+            */
             using (Process compiling = new())
             {
                 //move process to the current directory
@@ -566,12 +583,11 @@ namespace BBbuilder
             }
         }
 
-
-        /**
-        * Checks if a npm dependency is installed and installs it if it is not.
-        */
         private static bool CheckNpmDependencies(string[] names, string installationPath, bool installIfMissing = true)
         {
+            /** By KFfox
+            * Checks if a npm dependency is installed and installs it if it is not.
+            */
             foreach (string name in names)
             {
                 string depPath = Path.Combine(installationPath, "node_modules", name);
@@ -593,11 +609,11 @@ namespace BBbuilder
             return true;
         }
 
-        /**
-        * Checks if npm is installed and exits the program if it is not.
-        */
         private static bool CheckNpmPresence()
         {
+            /** By KFfox
+            * Checks if npm is installed and exits the program if it is not.
+            */
             string pathVar = Environment.GetEnvironmentVariable("path");
             bool hasNpm = pathVar.Contains("nodejs");
             if (!hasNpm)
@@ -608,22 +624,6 @@ namespace BBbuilder
                 return false;
             }
             return true;
-        }
-
-
-        private string[] GetAllowedFolders(string[] _allowedFolders)
-        {
-            List<string> ret = new();
-            string[] allFolders = Directory.GetDirectories(this.BuildPath);
-            foreach (string folderPath in allFolders)
-            {
-                string folderName = new DirectoryInfo(folderPath).Name;
-                if (_allowedFolders.Contains(folderName))
-                {
-                    ret.Add(folderPath);
-                }
-            }
-            return ret.ToArray();
         }
 
         private string[] GetAllFoldersExcept(string[] _forbiddenFolders)

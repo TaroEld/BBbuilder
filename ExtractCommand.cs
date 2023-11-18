@@ -96,6 +96,8 @@ namespace BBbuilder
             }
             if (this.Replace)
                 this.InitCommandArray.Add("-replace");
+            this.InitCommandArray.Add("-template");
+            this.InitCommandArray.Add("blank");
             return true;
         }
 
