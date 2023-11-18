@@ -10,8 +10,8 @@ namespace BBbuilder
     {
         public bool Value;
         public string Flag;
-        readonly string Parameter;
-        readonly string Description;
+        public readonly string Parameter;
+        public readonly string Description;
         readonly bool Positional;
         public string PositionalValue;
         public OptionFlag(string _flag, string _description)
@@ -34,7 +34,7 @@ namespace BBbuilder
         public void Validate(List<string> _args)
         {
             int idx = _args.IndexOf(this.Flag);
-            if (idx > 0)
+            if (idx > -1)
             {
                 _args.RemoveAt(idx);
                 this.Value = true;
@@ -53,10 +53,6 @@ namespace BBbuilder
             {
                 this.Value = false;
             }
-        }
-        public void PrintDescription()
-        {
-            Console.WriteLine($"{this.Flag} {this.Parameter}: {this.Description}");
         }
 
         // Allows instances to be used as simple bools.

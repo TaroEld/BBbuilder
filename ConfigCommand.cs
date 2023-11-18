@@ -1,33 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-
+using System.Linq;
 
 namespace BBbuilder
 {
     class ConfigCommand : Command
     {
+        readonly OptionFlag DataPath = new("-datapath <path>", "Set path to the directory of the game to copy the .zip of the mod to and optionally (re)start the game." +
+                    "\n    Example: 'bbuilder config -datapath \"G:/Games/SteamLibrary/steamapps/common/Battle Brothers/data\"'");
+        readonly OptionFlag ModsPath = new("-modpath <path>", "Set the path to the directory of your mods folder, where newly initialised or extracted mods will be placed by default." +
+                    "\n    Example: 'bbuilder config -modpath \"C:/BB Modding/My Mods\"'");
+        readonly OptionFlag Folders = new("-folders <folderpath_1,folderpath_2 ...>", "Comma-separated list of folders to be included in the editor config files (for example, adding the vanilla game files folder)." +
+                    "\n    Replaces the current list of folders.nothing to remove folders." +
+                    "\n    A new mod created through init or extract is automatically added to its own workspace, so no need to specify it.");
+        readonly OptionFlag MoveZip = new("-movezip <true|false>", "Whether you'd like to delete the zip after building the mod and copying it to `datapath`." +
+                    "\n    Example: 'bbbuilder config -movezip true'");
+
         readonly OptionFlag Clear = new("-clear", "Clears all settings.");
         public ConfigCommand()
         {
             this.Name = "config";
             this.Description = "Configure the settings that are used to create and build mods";
-            this.Commands = new Dictionary<string, string>
-            {
-                {"-datapath <path>", "Set path to the directory of the game to copy the .zip of the mod to and optionally (re)start the game." +
-                    "\n    Example: 'bbuilder config -datapath \"G:/Games/SteamLibrary/steamapps/common/Battle Brothers/data\"'"},
-                {"-modpath <path>", "Set the path to the directory of your mods folder, where newly initialised or extracted mods will be placed by default."+
-                    "\n    Example: 'bbuilder config -modpath \"C:/BB Modding/My Mods\"'" },
-                {"-folders <folderpath_1 folderpath_2 ...>", "Space-separated list of folders to be included in the editor config files (for example, adding the vanilla game files folder)." + 
-                    "\n    Replaces the current list of folders.nothing to remove folders." +
-                    "\n    A new mod created through init or extract is automatically added to its own workspace, so no need to specify it." +
-                    "\n    Example: 'bbuilder config -folders \"C:/BB Modding/Other Mods/mod_msu\" \"C:/BB Modding/basegame/scripts\""},
-                {"-movezip <true|false>", "Whether you'd like to delete the zip after building the mod and copying it to `datapath`." +
-                    "\n    Example: 'bbbuilder config -movezip true'"}
-            };
             this.Flags = new OptionFlag[]
             {
-               this.Clear
+              this.DataPath, this.ModsPath, this.Folders, this.MoveZip, this.Clear
             };
         }
 
@@ -38,8 +35,9 @@ namespace BBbuilder
             {
                 Console.WriteLine("Please pass the path to the 'data' game directory. For example: G:/Games/SteamLibrary/steamapps/common/Battle Brothers/data");
                 string passedPath = Console.ReadLine();
-                string[] args = { "", "-datapath", passedPath};
-                changed = HandlePathCommand(args);
+                OptionFlag flag = new(this.DataPath.Flag + " " + this.DataPath.Parameter, this.DataPath.Description);
+                flag.Validate(new List<string> { "-datapath", passedPath });
+                changed = HandlePathCommand(flag);
                 if (changed)
                     Utils.Data.GamePath = passedPath;
             }
@@ -47,8 +45,8 @@ namespace BBbuilder
             {
                 Console.WriteLine("Please pass the path to the directory where you want new mods to be placed. For example: G:/Games/BB/Mods/WIP");
                 string passedPath = Console.ReadLine();
-                string[] args = { "", "-modpath", passedPath };
-                changed = HandlePathCommand(args);
+                OptionFlag flag = new(this.ModsPath.Flag + " " + this.ModsPath.Parameter, this.ModsPath.Description);
+                flag.Validate(new List<string> { "-datapath", passedPath });
                 if (changed)
                     Utils.Data.ModPath = passedPath;
             }
@@ -98,99 +96,102 @@ namespace BBbuilder
                 return false;
             }
             this.ParseFlags(new List<string>(_args));
-            if (this.Clear)
+            if (!this.Flags.Where(c => c).Any())
             {
-                this.HandleClearCommand(_args);
-                Console.WriteLine("Cleared all config values.");
-                return true;
-            }
-            string command = _args[1];
-            if (!Commands.ContainsKey(command))
-            {
-                Console.WriteLine("Invalid subcommand of command 'config' passed. Printing help and current config:\n");
+                Console.WriteLine("No valid flags passed!\n");
                 PrintHelp();
                 Console.WriteLine("");
                 PrintConfig();
                 return false;
             }
-            if (command == "-folders") HandleFolderCommand(_args);
-            else if (command == "-datapath" || command == "-modpath") HandlePathCommand(_args);
-            else if (command == "-movezip") HandleMoveZipCommand(_args);
+            if (this.Clear)
+            {
+                this.HandleClearCommand();
+                return true;
+            }
+            if (this.DataPath)
+            {
+                HandlePathCommand(this.DataPath);
+            }
+            if (this.ModsPath)
+            {
+                HandlePathCommand(this.ModsPath);
+            }
+            if (this.Folders)
+            {
+                HandleFolderCommand(this.Folders);
+            }
+            if (this.MoveZip)
+            {
+                HandleMoveZipCommand(this.MoveZip);
+            }
             PrintConfig();
             Utils.WriteJSON(Utils.Data);
             UpdateBuildFiles();
             return true;
         }
 
-        private void HandleFolderCommand(string[] _args)
+        private void HandleFolderCommand(OptionFlag flag)
         {
-            Utils.Data.Folders = "";
-            if (_args.Length < 3)
+            string[] folders = flag.PositionalValue.Split(',');
+            if (folders.Length == 0)
             {
                 Utils.Data.FoldersArray = Array.Empty<string>();
                 Console.WriteLine("Cleared folders.");
             }
             else
             {
-                Utils.Data.FoldersArray = _args[2..];
+                Utils.Data.FoldersArray = folders;
                 foreach (string line in Utils.Data.FoldersArray)
                 {
                     if (!Directory.Exists(line))
                         Console.WriteLine($"WARNING: Passed path {line} is not an existing folder!");
-                    Utils.Data.Folders += line + ";";
                     Console.WriteLine($"Added path {line} to folders to be added to build file.");
                 }
-                Utils.Data.Folders = Utils.Data.Folders[0..^1];
             }
         }
 
-        private bool HandlePathCommand(string[] _args)
+        private bool HandlePathCommand(OptionFlag _flag)
         {
-            string passedPath = _args[2];
-            if (!Directory.Exists(passedPath))
+            if (!Directory.Exists(_flag.PositionalValue))
             {
-                Console.WriteLine($"Directory '{passedPath}' does not exist!");
+                Console.WriteLine($"Directory '{_flag.PositionalValue}' does not exist!");
                 return false;
             }
-            if (_args[1] == "-datapath")
+            if (_flag.Flag == "-datapath")
             {
-                if (new DirectoryInfo(passedPath).Name != "data")
+                if (new DirectoryInfo(_flag.PositionalValue).Name != "data")
                 {
-                    Console.WriteLine($"Directory {passedPath} is not a data folder! Example path: G:/Games/SteamLibrary/steamapps/common/Battle Brothers/data");
+                    Console.WriteLine($"Directory {_flag.PositionalValue} is not a data folder! Example path: G:/Games/SteamLibrary/steamapps/common/Battle Brothers/data");
                     return false;
                 }
-                Utils.Data.GamePath = passedPath;
-                Console.WriteLine($"Set datapath to {passedPath}");
+                Utils.Data.GamePath = _flag.PositionalValue;
+                Console.WriteLine($"Set datapath to {_flag.PositionalValue}");
             }
             else
             {
-                Utils.Data.ModPath = passedPath;
-                Console.WriteLine($"Set modpath to {passedPath}");
+                Utils.Data.ModPath = _flag.PositionalValue;
+                Console.WriteLine($"Set modpath to {_flag.PositionalValue}");
             }
             return true;
         }
 
 
-        private void HandleMoveZipCommand(string[] _args)
+        private void HandleMoveZipCommand(OptionFlag _flag)
         {
-
-            Utils.Data.MoveZip = Convert.ToBoolean(_args[2]);
+            if (_flag.PositionalValue != "true" &&  _flag.PositionalValue != "false")
+            {
+                Console.WriteLine("You need to pass either 'true' or 'false' to -movezip !");
+                return;
+            }
+            Utils.Data.MoveZip = Convert.ToBoolean(_flag.PositionalValue);
+            Console.WriteLine($"Set MoveZip to {Convert.ToBoolean(_flag.PositionalValue)}.");
         }
 
-        private void HandleClearCommand(string[] _args)
+        private void HandleClearCommand()
         {
             Utils.CreateJSON();
+            Console.WriteLine("Cleared all config values.");
         }
-
-        private bool ValidateDataPath(string _path)
-        {
-            if (!Directory.Exists(_path))
-            {
-                Console.WriteLine($"Directory {_path} does not exist!");
-                return false;
-            }
-            return true;
-        }
-
     }
 }

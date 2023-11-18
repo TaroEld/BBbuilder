@@ -10,7 +10,6 @@ namespace BBbuilder
     {
         public string GamePath { get; set; } = "";
         public string ModPath { get; set; } = "";
-        public string Folders { get; set; } = "";
         public bool MoveZip { get; set; } = false;
         public string[] FoldersArray { get; set; } = new string[0];
         

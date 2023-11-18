@@ -24,7 +24,7 @@ namespace BBbuilder
             this.Description = "Extract an existing mod to a new or specified directory";
             this.Arguments = new String[]
             {
-                "Mandatory: Specify path of mod to extract. The file will be put in your specified 'mods' directory. (Example: bbuilder extract C:/Users/user/Desktop/mod_test.zip)"
+                "<zipPath>: Specify path of mod to extract. The file will be put in your specified 'mods' directory. (Example: bbuilder extract C:/Users/user/Desktop/mod_test.zip)"
             };
             this.InitCommandArray = new List<string>();
             this.Flags = new OptionFlag[] { this.Replace, this.Rename, this.AltPath }; 

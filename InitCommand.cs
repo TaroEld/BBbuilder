@@ -27,7 +27,7 @@ namespace BBbuilder
                 "\nThe generated folders and files depend on the template used, see the `-template` flag. ";
             this.Arguments = new string[]
             {
-                "<modname> : Mandatory. Specify name of the new mod. The new mod will be created in your specified 'mods' directory. (Example: bbuilder init mod_test)"
+                "<modname>: Specify name of the new mod. The new mod will be created in your specified 'mods' directory. (Example: bbuilder init mod_test)"
             };
             this.Flags = new OptionFlag[] { this.Replace, this.AltPath, this.Template };
         }

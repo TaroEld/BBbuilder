@@ -37,20 +37,12 @@ namespace BBbuilder
 
         void PrintCommands()
         {
-            if (this.Commands.Count > 0)
-            {
-                Console.WriteLine("List of subcommands:");
-                foreach (KeyValuePair<string, string> entry in this.Commands)
-                {
-                    Console.WriteLine($"{entry.Key} : {entry.Value}");
-                }
-            }
             if (this.Arguments != null && this.Arguments.Length > 0)
             {
                 Console.WriteLine("List of arguments:");
                 foreach (string entry in this.Arguments)
                 {
-                    Console.WriteLine(entry);
+                    Console.WriteLine("*** " + entry);
                 }
             }
             if (this.Flags != null && this.Flags.Length > 0)
@@ -58,14 +50,14 @@ namespace BBbuilder
                 Console.WriteLine("List of flags:");
                 foreach (OptionFlag flag in this.Flags)
                 {
-                    flag.PrintDescription();
+                    Console.WriteLine($"** '{flag.Flag} {flag.Parameter}': {flag.Description}");
                 }
             }
         }
         public void PrintHelp()
         {
-            Console.WriteLine($"Printing help for command {this.Name}:");
-            Console.WriteLine($"Description: {this.Description}");
+            Console.WriteLine($"**** Printing help for command '{this.Name}'");
+            Console.WriteLine($"Description: {this.Description}\n");
             PrintCommands();
         }
 
