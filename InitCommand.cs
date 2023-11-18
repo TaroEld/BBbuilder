@@ -74,6 +74,8 @@ namespace BBbuilder
             WriteProjectFiles();
             if (Utils.IsGitInstalled())
                 InitGitRepo();
+            if (this.Template && this.Template.PositionalValue == "blank")
+                File.Delete(Path.Combine(this.ModPath, "dummydelete")); // VS doesn't copy the folder if it doesn't have a file in it...
             Process.Start("explorer.exe", this.ModPath);
             return true;
         }
