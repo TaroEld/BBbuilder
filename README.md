@@ -20,18 +20,19 @@ If you wish to use ES3 transpiling, you will need to install node.js and have it
 Calling `bbbuilder.exe` without any other arguments will give you an overview of all the commands and parameters/flags. Calling `bbbuilder.exe <commandname>` will give you an overview of that command.  
  
 ### config
-Saves config values in a database. If you first start the program, it will prompt you to provide values for the `datapath` and `modpath` commands. Afterwards, it can be used to change values, or check the current configuration.
+Saves config values in a database. If you first start the program, it will prompt you to provide values for the `-datapath` and `-modpath` commands. Afterwards, it can be used to change values, or check the current configuration.
 #### commands
 - `-datapath <path>`: Set the path to the directory of the game to copy the .zip of the mod to and optionally (re)start the game.
 - `-modpath <path>`: Set the path to the directory of your mods folder, where newly initialised or extracted mods will be placed by default.
-- `-folders <folder1,folder2,...>`: Space-separated list of folders to be included in the editor config files (for example, adding the vanilla game files folder). 
-- `-movezip <true|false>`: Whether you'd like to delete the zip after building the mod and copying it to `datapath`. Apparently, some people don't like having the same .zip file in both places maybe they operate on 1.44 MB floppys.
+- `-folders <folder1,folder2,...>`: Space-separated list of folders to be included in the editor config files (for example, adding the vanilla game files folder).
+- `-movezip <true|false>`: Whether you'd like to delete the zip after building the mod and copying it to `datapath`. You will need to pass either `true` or `false`. Default is `false`.  
 
 
 ### init \<modname\>
 Create a new mod. with the name `<modname>` A folder structure is created, providing a light scaffold of folders and files. This speeds up the generation of new mods and provides consistency between your creations.  
 By default, the mod will be initialised into the folder specified in the `modpath` config value, with the foldername \<modname\>.
 The generated folders and files depend on the template used, see [Templates](Templates)
+If `git` is available (in PATH), a git repository will be initialised.  
 #### Flags
 - `-altpath <path>`: Specify another folder to place the new mod. Example: `init mod_my_first_mod altpath "C:\BB Modding\My_Mods\"` 
 - `-template <templatename>`: Specify which template to use. 
@@ -42,7 +43,7 @@ The generated folders and files depend on the template used, see [Templates](Tem
 The template defines what files and folders will be created in the new mod directory. 
 The default templates are found in the `Templates` folder within the .zip. 
 You can customize these templates by either editing the existing ones, or adding new folders.  	
-Within the files and filenames, certain flags are removed: 
+Within the files and filenames, certain template strings are replaced: 
 	- "$name" -> <modname>
 	- "$Name" -> Upper-case-modname
 	- "$Space" -> CamelCase modname, where underscores are removed and the following letter capitalised. Example: "mod_new_thing" -> "ModNewThing"
@@ -52,19 +53,20 @@ Example usage: `bbbuilder init mod_my_first_mod -template ui -replace`
 ### extract \<modpath\>
 Equal to the init command, but extracts existing mods instead, decompiling files if necessary. This is useful if you downloaded a mod from someone else, and would like to take a look. The other `init` flags can also be used here.
 
-Example usage: `bbbuilder extract "C:\Users\Taro\Downloads\mod_cool_things.zip" altpath "C:\BB Modding\Other_peoples_mods\"`
+Example usage: `bbbuilder extract "C:\Users\Taro\Downloads\mod_cool_things.zip" -altpath "C:\BB Modding\Other_peoples_mods\"`
 
-### build
-The files of your mod are packed together to create a new zip. .nut files are compiled to test for syntax errors, and sprites are packed into brush files. 
-There are a number of flags that can be set to do only parts of the packing progress, for example, only compiling the .nut files to test for syntax errors:
-- `-restart`: Exit and then restart BattleBrothers.exe after building the mod.  
-- `-scriptonly`: Only pack script (`.nut`) files. The mod will have a '_scripts' suffix.
-- `-compileonly`: Compile the `.nut` files without creating a .zip. This is used to check the syntax errors.
-- `-uionly`: Only zip the gfx and ui folders. The mod will have a '_ui' suffix.
-- `-nocompile`: Speed up the build by not compiling files.
-- `-nopack`: Speed up the build by not repacking brushes.
+### build \<modname\>
+The files of your mod are packed together to create a new zip. .nut files are compiled to test for syntax errors, and sprites are packed into brush files.  
+To speed things up, the game will compare the last modified date of the file(s) and only treat those that have been modified since the last time you packed a zip.  
+To keep track of these last modified times, a little database file is kept in the .bbbuilder folder of your mod. It will also go through an existing .zip (either in the mod folder, or that in /data if the `movezip` config is set to `true`) and check if files were removed, in which case the existing zip will be deleted and rebuild.
+You can force a complete rebuild of the mod with the `-rebuild` flag.  
 
-Optionally, you can tell the program to transpile the JavaScript files to ES3. This is the JavaScript version the game uses. With this functionality, you can write modern JS code in your mods, using 'new' features such as `class`es.
+There are a number of flags that can be set to do only parts of the packing progress:  
+- `-restart`: Exit and then start BattleBrothers.exe after building the mod.  
+- `-transpile`: Translate js file to es3. It allow you to use modern js syntax and features to create your mod. Advanced feature, you probably don't need to worry about it.  
+- `-rebuild`: Delete the database and the .zip to start from a clean slate.  
+- `-diff <referencebranch>,<wipbranch>`: Create the zip based on the diff between <referencebranch> and <wipbranch> Pass them comma-separated WITHOUT SPACE INBETWEEN. This requires the `git` command to be available via cmd. The purpose of this is creating patches.
+
  
 ## Editor config files
 This program is best used with VSCode or Sublime Text, as it will generate editor config files for them.
