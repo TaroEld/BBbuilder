@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Reflection;
 using Microsoft.Data.Sqlite;
 using Ionic.Zip;
+using System.Text.RegularExpressions;
 
 namespace BBbuilder
 {
@@ -14,19 +15,16 @@ namespace BBbuilder
     {
         readonly string[] ExcludedZipFolders = new string[] {".bbbuilder", ".git", ".github", "unpacked_brushes", ".vscode", ".utils", "assets", "modtools", "node_modules" };
         readonly string[] ExcludedScriptFolders = new string[] { "ui", ".git", ".github", "gfx", "preload", "brushes", "music", "sounds", "unpacked_brushes", "tempfolder", ".vscode", "nexus", ".utils", "assets" };
-        readonly OptionFlag ScriptOnly = new("-scriptonly", "Only pack script files. The mod will have a '_scripts' suffix.");
-        readonly OptionFlag CompileOnly = new("-compileonly", "Compile the .nut files without creating a .zip.");
         readonly OptionFlag StartGame = new("-restart", "Exit and then start BattleBrothers.exe after building the mod.");
-        readonly OptionFlag UIOnly = new("-uionly", "Only zip the gfx and ui folders. The mod will have a '_ui' suffix.");
-        readonly OptionFlag NoCompile = new("-nocompile", "Speed up the build by not compiling files");
-        readonly OptionFlag NoPack = new("-nopack", "Speed up the build by not repacking brushes");
         readonly OptionFlag Transpile = new("-transpile", "Translate js file to es3. It allow you to use modern js syntax and features to create your mod.");
+        readonly OptionFlag Rebuild = new("-rebuild", "Delete the database and the .zip to start from a clean slate.");
 
         string ModPath;
         string ModName;
         string ZipPath;
         string BuildPath;
         string DBNAME = "dates.sqlite";
+        string DB_path;
         string ConnectionString;
         Dictionary<string, DateTime> FileEditDatesInFolder;
         Dictionary<string, DateTime> FileEditDatesInDB;
@@ -37,9 +35,9 @@ namespace BBbuilder
             this.Description = "Builds your mod and creates a zip file that is copied to the data directory. Optionally can also simply compile the files.";
             this.Arguments = new string[]
             {
-                "Mandatory: Specify the path of the mod to be built. (Example: bbuilder build G:/Games/BB/Mods/WIP/mod_msu)",
+                "<modPath>: Specify the path of the mod to be built. (Example: bbuilder build G:/Games/BB/Mods/WIP/mod_msu)",
             };
-            this.Flags = new OptionFlag[] { this.ScriptOnly, this.CompileOnly, this.StartGame, this.UIOnly, this.NoCompile, this.NoPack, this.Transpile };
+            this.Flags = new OptionFlag[] {this.StartGame, this.Transpile, this.Rebuild};
             this.FileEditDatesInFolder = new();
             this.FileEditDatesInDB = new();
             this.FilesWhichChanged = new();
@@ -56,23 +54,8 @@ namespace BBbuilder
             this.ModPath = _args[1];
             this.BuildPath = this.ModPath;
             this.ModName = new DirectoryInfo(this.ModPath).Name;
-            string db_path = Path.Combine(this.ModPath, ".bbbuilder", this.DBNAME);
-            this.ConnectionString = $"Data Source={db_path}";
-
-            if (this.ScriptOnly && this.UIOnly)
-            {
-                Console.WriteLine("-scriptonly and -uionly are mutually exclusive!");
-                throw new Exception();
-            }
-            if (this.NoCompile && this.CompileOnly)
-            {
-                Console.WriteLine("-nocompile and -compileonly are mutually exclusive");
-                throw new Exception();
-            }
-            if (this.ScriptOnly)
-                this.ModName += "_scripts";
-            if (this.UIOnly)
-                this.ModName += "_ui";
+            this.DB_path = Path.Combine(this.ModPath, ".bbbuilder", this.DBNAME);
+            this.ConnectionString = $"Data Source={this.DB_path}";
 
             if (this.Transpile)
             {
@@ -98,16 +81,26 @@ namespace BBbuilder
             {
                 return false;
             }
+            if (Utils.Data.MoveZip && File.Exists(Path.Combine(Utils.Data.GamePath, this.ModName + ".zip")) && !File.Exists(this.ZipPath))
+            {
+                Console.WriteLine("Copying zip from Data");
+                File.Copy(Path.Combine(Utils.Data.GamePath, this.ModName + ".zip"), this.ZipPath);
+            }
+            if (this.Rebuild)
+            {
+                if (File.Exists(this.DB_path))
+                    File.Delete(this.DB_path);
+                File.Delete(this.ZipPath);
+                Console.WriteLine("Rebuilding: Deleted .zip and database");
+            }
             ReadFileDataFromFolder();
             SetupFileDateDB();
             ReadFileDataFromDB();
             GetFilesWhichChanged();
-            if (!this.CompileOnly)
-                Console.WriteLine($"Attempting to build {this.ModPath}");
-            else
-                Console.WriteLine($"Compiling files of mod {this.ModPath}");
+            Console.WriteLine($"Attempting to build {this.ModPath}");
 
-            if (!this.UIOnly && !this.NoCompile && !CompileFiles())
+
+            if (!CompileFiles())
             {
                 Console.WriteLine("Failed while compiling files");
                 return false;
@@ -118,17 +111,12 @@ namespace BBbuilder
                 return false;
             }
 
-            // Leave early if compile only is specified
-            if (this.CompileOnly)
-            {
-                return true;
-            }
-            if (!this.NoPack && !PackBrushFiles())
+            if (!PackBrushFiles())
             {
                 Console.WriteLine("Failed while packing brush files");
                 return false;
             }
-            if (!ZipFolders())
+            if (!ZipFiles())
             {
                 Console.WriteLine("Failed while zipping files");
                 return false;
@@ -346,50 +334,6 @@ namespace BBbuilder
 
             return true;
         }
-
-        private string[] GetAllowedFolders(string[] _allowedFolders)
-        {
-            List<string> ret = new();
-            string[] allFolders = Directory.GetDirectories(this.BuildPath);
-            foreach (string folderPath in allFolders)
-            {
-                string folderName = new DirectoryInfo(folderPath).Name;
-                if (_allowedFolders.Contains(folderName))
-                {
-                    ret.Add(folderPath);
-                }
-            }
-            return ret.ToArray();
-        }
-
-        private string[] GetAllFoldersExcept(string[] _forbiddenFolders)
-        {
-            List<string> ret = new();
-            string[] allFolders = Directory.GetDirectories(this.BuildPath);
-            foreach (string folderPath in allFolders)
-            {
-                string folderName = new DirectoryInfo(folderPath).Name;
-                if (!_forbiddenFolders.Contains(folderName))
-                {
-                    ret.Add(folderPath);
-                }
-            }
-            return ret.ToArray();
-        }
-
-        private string[] GetAllowedScriptFiles()
-        {
-            List<string> ret = new();
-
-            string[] allowedFolders = GetAllFoldersExcept(this.ExcludedScriptFolders);
-            foreach (string folderPath in allowedFolders)
-            {
-                ret.AddRange(Directory.GetFiles(folderPath, "*.nut", SearchOption.AllDirectories));
-            }
-            String[] retArray = ret.ToArray();
-            return retArray;
-        }
-
         private bool PackBrushFiles()
         {
             string brushesPath = Path.Combine(this.ModPath, "brushes");
@@ -456,35 +400,46 @@ namespace BBbuilder
             return noCompileErrors;
         }
 
-        private bool ZipFolders()
+        private List<string> GetFilesToZip()
         {
-            if (File.Exists(this.ZipPath))
+            List<string> files = this.FileEditDatesInFolder.Keys.Select(f => Path.Combine(this.BuildPath,f)).ToList();
+
+            if (!File.Exists(this.ZipPath))
+                return files;
+
+            bool recreateZip = false;
+            using (var zip = ZipFile.Read(this.ZipPath))
+            {
+                foreach (ZipEntry entry in zip)
+                {
+                    if (entry.IsDirectory) continue;
+                    string name = entry.FileName.Replace("/", @"\");
+                    if (!this.FileEditDatesInFolder.ContainsKey(name))
+                    {
+                        Console.WriteLine($"Found a file in .zip that is not in the folder, re-creating zip to make sure: {name}");
+                        recreateZip = true;
+                        break;
+                    }
+                }
+            }
+            if (recreateZip)
             {
                 File.Delete(this.ZipPath);
+                return files;
             }
-            // Using the Ionic DotNetZip library as this makes it significantly easier to recursively zip folders
+            files = files.Where(f => this.FilesWhichChanged.ContainsKey(Path.GetRelativePath(this.BuildPath, f))).ToList();
+            return files;
+        }
 
-            string[] allowedFolders;
-            if (this.ScriptOnly)
+        private bool ZipFiles()
+        {
+            List<string> toZip = GetFilesToZip();
+            using (var zip = new ZipFile(this.ZipPath))
             {
-                string[] excludedFolders = this.ExcludedScriptFolders.Where(val => val != "ui").ToArray();
-                allowedFolders = GetAllFoldersExcept(excludedFolders);
-            }
-            else if (this.UIOnly)
-            {
-                allowedFolders = GetAllowedFolders(new string[] { "ui", "gfx" });
-            }
-            else
-                allowedFolders = GetAllFoldersExcept(this.ExcludedZipFolders);
-            using (var zip = new Ionic.Zip.ZipFile(this.ZipPath))
-            {
-                foreach (string folderPath in allowedFolders)
-                {
-                    if (Directory.GetFiles(folderPath).Length == 0 && Directory.GetDirectories(folderPath).Length == 0)
-                        continue;
-                    DirectoryInfo target = new(folderPath);
-                    Console.WriteLine($"Added folder {target.Name} to zip.");
-                    zip.AddDirectory(folderPath, target.Name);
+                foreach (string file in toZip)
+                { 
+                    Console.WriteLine("Updating file in zip: " + file);
+                    zip.UpdateFile(file, Path.GetDirectoryName(Path.GetRelativePath(this.BuildPath, file)));
                 }
                 zip.Save();
             }
@@ -611,28 +566,50 @@ namespace BBbuilder
                 return false;
             }
             return true;
-            //using (Process compiling = new())
-            //{
-            //    compiling.StartInfo.UseShellExecute = false;
-            //    compiling.StartInfo.RedirectStandardOutput = true;
-            //    compiling.StartInfo.FileName = "cmd.exe";
-            //    // compiling.StartInfo.Arguments = String.Format("/C npm -v");
-            //    compiling.StartInfo.Arguments = String.Format("echo %PATH%");
-            //    compiling.Start();
-            //    compiling.WaitForExit();
+        }
 
-            //    string output = compiling.StandardOutput.ReadToEnd();
-            //    Console.WriteLine(output);
-            //    bool hasNpm = output.Contains("nodejs");
-            //    //if (output == "")
-            //    if (!hasNpm)
-            //    {
-            //        Console.WriteLine("npm not found. Please install Node.js and try again (https://nodejs.org/en/download).");
-            //        Console.WriteLine("Press any key to exit...");
-            //        Console.ReadKey();
-            //        Environment.Exit(0);
-            //    }
-            //}
+
+        private string[] GetAllowedFolders(string[] _allowedFolders)
+        {
+            List<string> ret = new();
+            string[] allFolders = Directory.GetDirectories(this.BuildPath);
+            foreach (string folderPath in allFolders)
+            {
+                string folderName = new DirectoryInfo(folderPath).Name;
+                if (_allowedFolders.Contains(folderName))
+                {
+                    ret.Add(folderPath);
+                }
+            }
+            return ret.ToArray();
+        }
+
+        private string[] GetAllFoldersExcept(string[] _forbiddenFolders)
+        {
+            List<string> ret = new();
+            string[] allFolders = Directory.GetDirectories(this.BuildPath);
+            foreach (string folderPath in allFolders)
+            {
+                string folderName = new DirectoryInfo(folderPath).Name;
+                if (!_forbiddenFolders.Contains(folderName))
+                {
+                    ret.Add(folderPath);
+                }
+            }
+            return ret.ToArray();
+        }
+
+        private string[] GetAllowedScriptFiles()
+        {
+            List<string> ret = new();
+
+            string[] allowedFolders = GetAllFoldersExcept(this.ExcludedScriptFolders);
+            foreach (string folderPath in allowedFolders)
+            {
+                ret.AddRange(Directory.GetFiles(folderPath, "*.nut", SearchOption.AllDirectories));
+            }
+            String[] retArray = ret.ToArray();
+            return retArray;
         }
     }
 }
