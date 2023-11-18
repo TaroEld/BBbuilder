@@ -72,6 +72,8 @@ namespace BBbuilder
             }
             CreateExtraDirectories();
             WriteProjectFiles();
+            if (Utils.IsGitInstalled())
+                InitGitRepo();
             Process.Start("explorer.exe", this.ModPath);
             return true;
         }
@@ -106,6 +108,46 @@ namespace BBbuilder
             Directory.CreateDirectory(Path.Combine(this.ModPath, "unpacked_brushes"));
             Directory.CreateDirectory(Path.Combine(this.ModPath, "scripts", "!mods_preload"));
             Directory.CreateDirectory(Path.Combine(this.ModPath, "ui", "mods", this.ModName));
+        }
+
+        public bool InitGitRepo()
+        {
+            try
+            {
+                var processStartInfo = new ProcessStartInfo
+                {
+                    FileName = "git",
+                    Arguments = "init",
+                    RedirectStandardOutput = false,
+                    RedirectStandardError = false,
+                    UseShellExecute = false,
+                    WorkingDirectory = this.ModPath
+                };
+
+                using (var process = Process.Start(processStartInfo))
+                {
+                    process.WaitForExit();
+                }
+
+                processStartInfo.Arguments = "add .";
+                using (var process = Process.Start(processStartInfo))
+                {
+                    process.WaitForExit();
+                }
+
+                processStartInfo.Arguments = "commit -m \"initial commit\"";
+                using (var process = Process.Start(processStartInfo))
+                {
+                    process.WaitForExit();
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return false;
+            }
         }
 
         private string GetNameSpaceName(string _name)

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Text.Json;
@@ -59,6 +60,34 @@ namespace BBbuilder
             }
             return;
         }
+
+        public static bool IsGitInstalled()
+        {
+            try
+            {
+                var processStartInfo = new ProcessStartInfo
+                {
+                    FileName = "where",
+                    Arguments = "git",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                };
+
+                using (var process = Process.Start(processStartInfo))
+                {
+                    StreamReader sr = process.StandardError;
+                    string output = sr.ReadToEnd();
+                    process.WaitForExit();
+                    return output.Length == 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
 
         // copied from https://learn.microsoft.com/en-us/dotnet/api/system.io.directoryinfo?redirectedfrom=MSDN&view=net-6.0 
         public static void Copy(string sourceDirectory, string targetDirectory)
