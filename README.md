@@ -24,9 +24,8 @@ Saves config values in a database. If you first start the program, it will promp
 #### commands
 - `-datapath <path>`: Set the path to the directory of the game to copy the .zip of the mod to and optionally (re)start the game.
 - `-modpath <path>`: Set the path to the directory of your mods folder, where newly initialised or extracted mods will be placed by default.
-- `-folders <folder1,folder2,...>`: Space-separated list of folders to be included in the editor config files (for example, adding the vanilla game files folder).
+- `-folders <folder1,folder2,...>`: Comma-separated list **without spaces inbetween** of folders to be included in the editor config files (for example, adding the vanilla game files folder).
 - `-movezip <true|false>`: Whether you'd like to delete the zip after building the mod and copying it to `datapath`. You will need to pass either `true` or `false`. Default is `false`.  
-
 
 ### init \<modname\>
 Create a new mod. with the name `<modname>` A folder structure is created, providing a light scaffold of folders and files. This speeds up the generation of new mods and provides consistency between your creations.  
@@ -50,9 +49,13 @@ Within the files and filenames, certain template strings are replaced:
 
 Example usage: `bbbuilder init mod_my_first_mod -template ui -replace`
 
-### extract \<modpath\>
+### extract \<zipPath\>
 Equal to the init command, but extracts existing mods instead, decompiling files if necessary. This is useful if you downloaded a mod from someone else, and would like to take a look. The other `init` flags can also be used here.
-
+*** <zipPath>: Specify path of mod to extract. The file will be put in your specified 'mods' directory. (Example: bbuilder extract C:/Users/user/Desktop/mod_test.zip)
+#### Flags
+- '-replace ': Replace the files in an existing folder.
+- '-rename <newname>': Renames the extracted mod.
+- '-altpath <path>': Specify alternative path to extract the mod to.
 Example usage: `bbbuilder extract "C:\Users\Taro\Downloads\mod_cool_things.zip" -altpath "C:\BB Modding\Other_peoples_mods\"`
 
 ### build \<modname\>
