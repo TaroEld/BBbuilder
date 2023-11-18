@@ -18,6 +18,7 @@ namespace BBbuilder
         readonly OptionFlag StartGame = new("-restart", "Exit and then start BattleBrothers.exe after building the mod.");
         readonly OptionFlag Transpile = new("-transpile", "Translate js file to es3. It allow you to use modern js syntax and features to create your mod.");
         readonly OptionFlag Rebuild = new("-rebuild", "Delete the database and the .zip to start from a clean slate.");
+        readonly OptionFlag Diff = new("-diff <referencebranch>,<wipbranch>", "Create the zip based on the diff between <referencebranch> and <wipbranch> Pass them comma-separated WITHOUT SPACE INBETWEEN.");
 
         string ModPath;
         string ModName;
@@ -37,7 +38,7 @@ namespace BBbuilder
             {
                 "<modPath>: Specify the path of the mod to be built. (Example: bbuilder build G:/Games/BB/Mods/WIP/mod_msu)",
             };
-            this.Flags = new OptionFlag[] {this.StartGame, this.Transpile, this.Rebuild};
+            this.Flags = new OptionFlag[] {this.StartGame, this.Transpile, this.Rebuild, this.Diff};
             this.FileEditDatesInFolder = new();
             this.FileEditDatesInDB = new();
             this.FilesWhichChanged = new();
@@ -67,6 +68,11 @@ namespace BBbuilder
                 Directory.CreateDirectory(this.BuildPath);
                 Utils.Copy(this.ModPath, this.BuildPath);
             }
+            if (this.Diff && !Utils.IsGitInstalled())
+            {
+                Console.WriteLine("Tried to use diff mode but git does not seem to be installed or accessible via PATH!");
+                return false;
+            }
             this.ZipPath = Path.Combine(this.BuildPath, this.ModName + ".zip");
             return true;
         }
@@ -81,7 +87,7 @@ namespace BBbuilder
             {
                 return false;
             }
-            if (Utils.Data.MoveZip && File.Exists(Path.Combine(Utils.Data.GamePath, this.ModName + ".zip")) && !File.Exists(this.ZipPath))
+            if (Utils.Data.MoveZip && !this.Diff && File.Exists(Path.Combine(Utils.Data.GamePath, this.ModName + ".zip")) && !File.Exists(this.ZipPath))
             {
                 Console.WriteLine("Copying zip from Data");
                 File.Copy(Path.Combine(Utils.Data.GamePath, this.ModName + ".zip"), this.ZipPath);
@@ -93,12 +99,13 @@ namespace BBbuilder
                 File.Delete(this.ZipPath);
                 Console.WriteLine("Rebuilding: Deleted .zip and database");
             }
+            if (this.Diff)
+                File.Delete(this.ZipPath);
             ReadFileDataFromFolder();
             SetupFileDateDB();
             ReadFileDataFromDB();
             GetFilesWhichChanged();
             Console.WriteLine($"Attempting to build {this.ModPath}");
-
 
             if (!CompileFiles())
             {
@@ -400,9 +407,44 @@ namespace BBbuilder
             return noCompileErrors;
         }
 
+        private List<string> GetDiffFiles()
+        {
+            string[] branches = this.Diff.PositionalValue.Split(",");
+            try
+            {
+                string output;
+                var processStartInfo = new ProcessStartInfo
+                {
+                    FileName = "git",
+                    Arguments = $"diff {branches[0]} {branches[1]} --name-only",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = false,
+                    UseShellExecute = false,
+                    WorkingDirectory = this.ModPath
+                };
+
+                using (var process = Process.Start(processStartInfo))
+                {
+                    StreamReader sr = process.StandardOutput;
+                    output = sr.ReadToEnd();
+                    process.WaitForExit();
+                }
+                var ret = output.Split("\n")[0..^1].ToList();
+                return ret.Select(f => Path.Combine(this.BuildPath, f)).ToList();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+            return new List<string>();
+        }
+
         private List<string> GetFilesToZip()
         {
-            List<string> files = this.FileEditDatesInFolder.Keys.Select(f => Path.Combine(this.BuildPath,f)).ToList();
+
+            if (this.Diff) 
+                return this.GetDiffFiles();
+            List<string> files = this.FileEditDatesInFolder.Keys.Select(f => Path.Combine(this.BuildPath, f)).ToList();
 
             if (!File.Exists(this.ZipPath))
                 return files;
