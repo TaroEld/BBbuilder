@@ -74,6 +74,8 @@ namespace BBbuilder
                 return false;
             }
             this.ZipPath = Path.Combine(this.BuildPath, this.ModName + ".zip");
+            if (this.Diff)
+                this.ZipPath = Path.Combine(this.BuildPath, this.ModName + "_patch.zip");
             return true;
         }
 
@@ -503,7 +505,7 @@ namespace BBbuilder
                 }
                 zip.Save();
             }
-            Console.WriteLine($"Successfully zipped {this.ModPath}!");
+            Console.WriteLine($"Successfully zipped {this.ModPath} ({this.ZipPath})!");
             return true;
         }
 
@@ -511,7 +513,7 @@ namespace BBbuilder
         {
             string gamePath = Utils.Data.GamePath;
             string zipName = $"{this.ModName}.zip";
-
+            if(this.Diff) zipName = $"{this.ModName}_patch.zip";
             string dataZipPath = Path.Combine(gamePath, zipName);
             if (File.Exists(dataZipPath))
             {
