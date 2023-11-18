@@ -13,34 +13,9 @@
 			"shell_cmd": "\"$bbbuild_path\" build \"$project_path\" -restart"
 		},
 		{
-			"name": "Update Mod without compiling and Launch",
-			"working_dir": "$project_path",
-			"shell_cmd": "\"$bbbuild_path\" build \"$project_path\" -restart -nocompile"
-		},
-		{
-			"name": "Update Without Assets",
+			"name": "Rebuild Mod",
 			"working_dir": "",
-			"shell_cmd": "\"$bbbuild_path\" build \"$project_path\" -scriptsonly"
-		},
-		{
-			"name": "Update Without Assets And Restart",
-			"working_dir": "",
-			"shell_cmd": "\"$bbbuild_path\" build \"$project_path\" -scriptsonly -restart"
-		},
-		{
-			"name": "Update UI only",
-			"working_dir": "",
-			"shell_cmd": "\"$bbbuild_path\" build \"$project_path\" -uionly"
-		},
-		{
-			"name": "Update UI only And Restart",
-			"working_dir": "",
-			"shell_cmd": "\"$bbbuild_path\" build \"$project_path\" -uionly -restart"
-		},
-		{
-			"name": "Compile files",
-			"working_dir": "",
-			"shell_cmd": "\"$bbbuild_path\" build \"$project_path\" -compileonly"
+			"shell_cmd": "\"$bbbuild_path\" build \"$project_path\" -rebuild"
 		},
 		{
 			"name": "Run File",

@@ -22,60 +22,9 @@
       }
     },
     {
-      "label": "bbbuilder: Update mod without compiling and launch",
+      "label": "bbbuilder: Rebuild mod",
       "type": "shell",
-      "command": "\"$bbbuild_path\" build \"${workspaceFolder}\" -restart -nocompile",
-      "problemMatcher": [],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      }
-    },
-    {
-      "label": "bbbuilder: Update without assets",
-      "type": "shell",
-      "command": "\"$bbbuild_path\" build \"${workspaceFolder}\" -scriptsonly",
-      "problemMatcher": [],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      }
-    },
-    {
-      "label": "bbbuilder: Update without assets and restart",
-      "type": "shell",
-      "command": "\"$bbbuild_path\" build \"${workspaceFolder}\" -scriptsonly -restart",
-      "problemMatcher": [],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      }
-    },
-    {
-      "label": "bbbuilder: Update UI only",
-      "type": "shell",
-      "command": "\"$bbbuild_path\" build \"${workspaceFolder}\" -uionly",
-      "problemMatcher": [],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      }
-    },
-    {
-      "label": "bbbuilder: Update UI only and restart",
-      "type": "shell",
-      "command": "\"$bbbuild_path\" build \"${workspaceFolder}\" -uionly -restart",
-      "problemMatcher": [],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      }
-    },
-    {
-      "label": "bbbuilder: Compile",
-      "files\",": null,
-      "type": "shell",
-      "command": "\"$bbbuild_path\" build \"${workspaceFolder}\" -compileonly",
+      "command": "\"$bbbuild_path\" build \"${workspaceFolder}\" -rebuild",
       "problemMatcher": [],
       "group": {
         "kind": "build",
