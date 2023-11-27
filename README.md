@@ -38,7 +38,7 @@ Saves config values in a database. If you first start the program, it will promp
 ### init \<modname\>
 Create a new mod. with the name `<modname>` A folder structure is created, providing a light scaffold of folders and files. This speeds up the generation of new mods and provides consistency between your creations.  
 By default, the mod will be initialised into the folder specified in the `modpath` config value, with the foldername \<modname\>.
-The generated folders and files depend on the template used, see [Templates](Templates)
+The generated folders and files depend on the template used, see [Templates](#templates)
 If `git` is available (in PATH), a git repository will be initialised.  
 #### Flags
 - `-altpath <path>`: Specify another folder to place the new mod. Example: `init mod_my_first_mod altpath "C:\BB Modding\My_Mods\"` 
@@ -48,7 +48,7 @@ If `git` is available (in PATH), a git repository will be initialised.
 
 #### Templates
 The template defines what files and folders will be created in the new mod directory. 
-The default templates are found in the `Templates` folder within the .zip. 
+The default templates are found in the [Templates](Templates) folder within the .zip. 
 You can customize these templates by either editing the existing ones, or adding new folders.  	
 Within the files and filenames, certain template strings are replaced: 
 	- "$name" -> <modname>
