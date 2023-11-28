@@ -68,11 +68,6 @@ namespace BBbuilder
                 Directory.CreateDirectory(this.BuildPath);
                 Utils.Copy(this.ModPath, this.BuildPath);
             }
-            if (this.Diff && !Utils.IsGitInstalled())
-            {
-                Console.WriteLine("Tried to use diff mode but git does not seem to be installed or accessible via PATH!");
-                return false;
-            }
             this.ZipPath = Path.Combine(this.BuildPath, this.ModName + ".zip");
             if (this.Diff)
                 this.ZipPath = Path.Combine(this.BuildPath, this.ModName + "_patch.zip");
@@ -88,6 +83,21 @@ namespace BBbuilder
             if (!ParseCommand(_args.ToList()))
             {
                 return false;
+            }
+            if (this.Diff)
+            {
+                if (!Utils.IsGitInstalled())
+                {
+                    Console.WriteLine("Tried to use diff mode but git does not seem to be installed or accessible via PATH!");
+                    return false;
+                }
+                string feature_branch_name = this.Diff.PositionalValue.Split(",")[1];
+                string current_branch = this.GetCurrentGitBranch();
+                if (feature_branch_name != current_branch)
+                {
+                    Console.WriteLine($"Tried to use diff mode with feature branch {feature_branch_name} but {current_branch} is checked out! Make sure to check out the feature branch.");
+                    return false;
+                }
             }
             if (Utils.Data.MoveZip && !this.Diff && File.Exists(Path.Combine(Utils.Data.GamePath, this.ModName + ".zip")) && !File.Exists(this.ZipPath))
             {
@@ -455,6 +465,28 @@ namespace BBbuilder
                 Console.WriteLine(ex);
             }
             return new List<string>();
+        }
+
+        private string GetCurrentGitBranch()
+        {
+            string output;
+            var processStartInfo = new ProcessStartInfo
+            {
+                FileName = "git",
+                Arguments = $"rev-parse --abbrev-ref HEAD",
+                RedirectStandardOutput = true,
+                RedirectStandardError = false,
+                UseShellExecute = false,
+                WorkingDirectory = this.BuildPath,
+            };
+
+            using (var process = Process.Start(processStartInfo))
+            {
+                StreamReader sr = process.StandardOutput;
+                output = sr.ReadToEnd();
+                process.WaitForExit();
+            }
+            return output.Split("\n")[0];
         }
 
         private List<string> GetFilesToZip()
