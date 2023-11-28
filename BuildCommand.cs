@@ -461,8 +461,8 @@ namespace BBbuilder
         {
             List<string> files;
             if (this.Diff)
-                files = this.GetDiffFiles();
-            files = this.FileEditDatesInFolder.Keys.Select(f => Path.Combine(this.BuildPath, f)).ToList();
+                return this.GetDiffFiles().Where(f => !f.Contains("unpacked_brushes")).ToList();
+            else files = this.FileEditDatesInFolder.Keys.Select(f => Path.Combine(this.BuildPath, f)).ToList();
             files = files.Where(f => !f.Contains("unpacked_brushes")).ToList();
 
             if (!File.Exists(this.ZipPath))
@@ -499,9 +499,17 @@ namespace BBbuilder
             {
                 foreach (string file in toZip)
                 { 
-                    Console.WriteLine("Updating file in zip: " + file);
+                    
                     var relativePath = Path.GetDirectoryName(Path.GetRelativePath(this.BuildPath, file));
-                    zip.UpdateFile(file, relativePath);
+                    if (this.Diff && !File.Exists(file))
+                    {
+                        Console.WriteLine("Skipping file in zip due to -diff: " + file);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Updating file in zip: " + file);
+                        zip.UpdateFile(file, relativePath);
+                    } 
                 }
                 zip.Save();
             }
