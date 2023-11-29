@@ -458,7 +458,7 @@ namespace BBbuilder
                     process.WaitForExit();
                 }
                 var ret = output.Split("\n")[0..^1].ToList();
-                return ret.Select(f => Path.Combine(this.BuildPath, f)).ToList();
+                return ret.Select(f => Path.Combine(this.BuildPath, f.Replace("/", @"\"))).ToList();
             }
             catch (Exception ex)
             {
@@ -493,7 +493,20 @@ namespace BBbuilder
         {
             List<string> files;
             if (this.Diff)
-                return this.GetDiffFiles().Where(f => !f.Contains("unpacked_brushes")).ToList();
+            {
+                files = this.GetDiffFiles();
+                List<string> brushesFiles = files.Where(f => f.Contains("unpacked_brushes")).ToList();
+                List<string> brushesFolders = new();
+                // add brushes folders as they are not tracked by git
+                foreach (string file in brushesFiles)
+                {
+                    string[] directories = file.Split(Path.DirectorySeparatorChar);
+                    string brushesFileName = directories[Array.IndexOf(directories, "unpacked_brushes") + 1] + ".brush";
+                    string brushPath = Path.Combine(this.BuildPath, "brushes", brushesFileName);
+                    brushesFolders.Add(brushPath);
+                }
+                files.AddRange(brushesFolders.Distinct().ToList());    
+            }
             else files = this.FileEditDatesInFolder.Keys.Select(f => Path.Combine(this.BuildPath, f)).ToList();
             files = files.Where(f => !f.Contains("unpacked_brushes")).ToList();
 
