@@ -3,21 +3,29 @@
 
 ## Overview
 This is a command-line application for Windows systems that helps in the development of mods for the game Battle Brothers.  
-Shipped with this application is the Battle Brothers mod kit by Adam Milazzo: http://www.adammil.net/blog/v133_Battle_Brothers_mod_kit.html 
-This tool has shortcuts to conduct most common tasks for developing mods: 
+It has shortcuts to conduct most common tasks for developing mods: 
 - Initialising a new mod by creating a folder structure and scaffolding to quickly start writing code
 - Building the mod, which does some checks (compiling files for syntax errors), can optionally transpile JavaScript files to ES3, packs brush files, and copies it to the data folder  
 - Relaunching the game.
+It also comes with other useful features, such as convenient extracting of mods by other people.  
 
 As a command line tool, it can be run with the windows cmd terminal, powershell or other means. 
-To make things more convenient, the tool will create editor config files for VSCode and Sublime Text which setup projects and provide the basic build commands. VScode is entirely free, Sublime Text is free but will occasionally nag you to buy it.
+To make things more convenient, the tool will create editor config files for VSCode and Sublime Text which setup projects and provide the basic build commands. VScode is entirely free, Sublime Text is free but will occasionally nag you to buy it.  
+Shipped with this application is the Battle Brothers mod kit by Adam Milazzo: http://www.adammil.net/blog/v133_Battle_Brothers_mod_kit.html . This kit is needed for many basic operations.  
 
 ## How to install
 To use this program, simply extract the .zip in a convenient folder. No further installing is needed.  
-If you wish to use ES3 transpiling, you will need to install node.js and have it available in your %PATH% environment. Download link: https://nodejs.org/en/download
+It can be useful to add the program folder to the environment variables, to be able to call them from any cmd window. See here for example: https://linuxhint.com/add-directory-to-path-environment-variables-windows/  
+If you wish to use ES3 transpiling, you will need to install node.js and have it available in your %PATH% environment. Download link: https://nodejs.org/en/download  
+Some optional features can only be used if you have git installed (so, available in your PATH / accessible from the command line). You can get it here: https://git-scm.com/downloads  . You should be using it when developing mods, anyways.  
+
+## How to use  
+This is a command line tool / CLI. This means that the program will be called over a cool looking black hacker terminal, while passing it [commands](#commands) and other values.   
+As that is often not very convenient, the tool will generate editor files for you, specifically for VSCode and Sublime Text. See here: [Editor config files](#editor-config-files)  
+Also, jump to [here](#example-usage) to get an idea of how that looks like.  
 
 ## Commands
-Calling `bbbuilder.exe` without any other arguments will give you an overview of all the commands and parameters/flags. Calling `bbbuilder.exe <commandname>` will give you an overview of that command.  
+Calling `bbbuilder.exe` without any other arguments will give you an overview of all the commands and arguments/flags. Calling `bbbuilder.exe <commandname>` will give you an overview of that command.  
  
 ### config
 Saves config values in a database. If you first start the program, it will prompt you to provide values for the `-datapath` and `-modpath` commands. Afterwards, it can be used to change values, or check the current configuration.
@@ -30,7 +38,7 @@ Saves config values in a database. If you first start the program, it will promp
 ### init \<modname\>
 Create a new mod. with the name `<modname>` A folder structure is created, providing a light scaffold of folders and files. This speeds up the generation of new mods and provides consistency between your creations.  
 By default, the mod will be initialised into the folder specified in the `modpath` config value, with the foldername \<modname\>.
-The generated folders and files depend on the template used, see [Templates](Templates)
+The generated folders and files depend on the template used, see [Templates](#templates)
 If `git` is available (in PATH), a git repository will be initialised.  
 #### Flags
 - `-altpath <path>`: Specify another folder to place the new mod. Example: `init mod_my_first_mod altpath "C:\BB Modding\My_Mods\"` 
@@ -40,7 +48,7 @@ If `git` is available (in PATH), a git repository will be initialised.
 
 #### Templates
 The template defines what files and folders will be created in the new mod directory. 
-The default templates are found in the `Templates` folder within the .zip. 
+The default templates are found in the [Templates](Templates) folder within the .zip. 
 You can customize these templates by either editing the existing ones, or adding new folders.  	
 Within the files and filenames, certain template strings are replaced: 
 	- "$name" -> <modname>
@@ -84,7 +92,7 @@ Like with Sublime Text, an editor project file will be created. This is placed i
 
 ## Example usage:
 Download and extract the program in a folder, for example `C:\BB Modding\bbbuilder`.  
-Open a terminal in this folder. A convenient way is to click the adress bar of file explorer within that folder, and write `cmd`.
+Open a terminal in this folder. A convenient way is to click the adress bar of file explorer within that folder, and write `cmd` or `ps`. You can also search for `cmd` or `powershell` in the windows search. I probably don't have to tell Linux nerds how this works.  
 Write `bbbuilder.exe` into the terminal to launch the program.
 As it's your first time using it, the program will ask for the `data` path of battle brothers.
 For Steam users: 
@@ -106,6 +114,3 @@ At this stage, the most intersting file is `/scripts/!mods_preload/mod_my_first_
 
 At this point, you can work on your mod. I won't be writing a modding tutorial here, so head on to the modding discord or other places.
 After you have made some changes, you can build your mod. In Sublime Text, this is done with ctrl+shift+b. If the config has been set up properly, you'll see multiple options. The most common one is `bb_build - Update Mod and launch`, which will create the new zip, copy it into data, and launch the game.
-
-## Misc
-It can be useful to add the program folder to the environment variables, to be able to call them from any cmd window. See here for example: https://linuxhint.com/add-directory-to-path-environment-variables-windows/
