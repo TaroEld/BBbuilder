@@ -277,6 +277,7 @@ namespace BBbuilder
             Console.WriteLine("Starting to compile files...");
             string[] allNutFilesAsPath = GetAllowedScriptFiles();
             string[] changedNutFiles = allNutFilesAsPath.Where(f => HasFileChanged(f)).ToArray();
+            List<string> outputBuffer = new();
             if (changedNutFiles.Length == 0)
             {
                 Console.WriteLine("No files to compile!");
@@ -299,10 +300,9 @@ namespace BBbuilder
                     compiling.WaitForExit();
                     if (compiling.ExitCode == -2)
                     {
-                        Console.WriteLine(String.Format("Error compiling file {0}!", nutFilePath));
                         StreamReader myStreamReader = compiling.StandardOutput;
-                        Console.WriteLine(myStreamReader.ReadLine());
-
+                        outputBuffer.Add(String.Format("Error compiling file {0}!", nutFilePath));
+                        outputBuffer.Add(myStreamReader.ReadLine());
                         noCompileErrors = false;
                     }
                     else Console.WriteLine("Successfully compiled file " + nutFilePath);
@@ -310,9 +310,15 @@ namespace BBbuilder
             });
             
             if (noCompileErrors)
-            {
                 Console.WriteLine("Successfully compiled files!");
-            }  
+            else
+            {
+                Console.WriteLine("Errors while compiling files!\n-------------------------------------");
+                foreach (string line in outputBuffer)
+                    Console.WriteLine(line);
+                Console.WriteLine("-------------------------------------");
+            }
+
 
             return noCompileErrors;
         }
@@ -374,16 +380,18 @@ namespace BBbuilder
             string brushesPath = Path.Combine(this.BuildPath, "brushes");
             string folderPath = Path.Combine(this.BuildPath, "unpacked_brushes");
             bool noCompileErrors = true;
+            bool packedBrushes = false;
+            List<string> outputBuffer = new();
             if (!Directory.Exists(folderPath) || Directory.GetDirectories(folderPath).Length == 0)
             {
                 Console.WriteLine("No brush files to pack!");
                 return true;
             }
+            string[] subFolders = Directory.GetDirectories(folderPath);
             if (!Directory.Exists(brushesPath))
             {
                 Directory.CreateDirectory(brushesPath);
             }
-            string[] subFolders = Directory.GetDirectories(folderPath);
             Parallel.For(0, subFolders.Length, (i, state) =>
             {
                 string subFolder = subFolders[i];
@@ -391,6 +399,7 @@ namespace BBbuilder
                 if (changedFiles.Length == 0) {
                     return;
                 }
+                packedBrushes = true;
 
                 string folderName = new DirectoryInfo(subFolder).Name;
                 string brushName = $"{folderName}.brush";
@@ -412,8 +421,8 @@ namespace BBbuilder
                     packBrush.WaitForExit();
                     if (packBrush.ExitCode == 2)
                     {
-                        Console.WriteLine($"Error building brush {brushName}!");
-                        Console.WriteLine(output);
+                        outputBuffer.Add($"Error building brush {brushName}!");
+                        outputBuffer.Add(output);
                         noCompileErrors = false;
                     }
                     else
@@ -424,13 +433,21 @@ namespace BBbuilder
                     }
                 }
             });
+
             DirectoryInfo wipFolder = Directory.GetParent(this.BuildPath);
             if (Directory.Exists(Path.Combine(wipFolder.ToString(), "gfx")))
             {
                 Utils.Copy(Path.Combine(wipFolder.ToString(), "gfx"), Path.Combine(this.BuildPath, "gfx"));
                 Directory.Delete(Path.Combine(wipFolder.ToString(), "gfx"), true);
             }
-            if (noCompileErrors)
+            if (!noCompileErrors)
+            {
+                Console.WriteLine("Errors while packing brushes!\n-------------------------------------");
+                foreach (string line in outputBuffer)
+                    Console.WriteLine(line);
+                Console.WriteLine("-------------------------------------");
+            }
+            if (noCompileErrors && packedBrushes)
                 Console.WriteLine("Successfully packed brush files!");
             return noCompileErrors;
         }
