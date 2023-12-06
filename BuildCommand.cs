@@ -113,7 +113,7 @@ namespace BBbuilder
             ReadFileDataFromFolder();
             SetupFileDateDB();
             ReadFileDataFromDB();
-            GetFilesWhichChanged();
+            UpdateFilesWhichChanged(this.FileEditDatesInFolder);
             Console.WriteLine($"Attempting to build {this.ModPath}");
 
             if (!CompileFiles())
@@ -226,9 +226,28 @@ namespace BBbuilder
             }
         }
 
-        private void GetFilesWhichChanged()
+        private void UpdateFileTimeDateEntry(string _filePath)
         {
-            foreach (var entry in this.FileEditDatesInFolder)
+            string relPath = Path.GetRelativePath(this.BuildPath, _filePath);
+            DateTime lastWriteTime = File.GetLastWriteTime(Path.Combine(_filePath));
+            if (this.FileEditDatesInFolder.ContainsKey(relPath))
+            {
+                if (this.FileEditDatesInFolder[relPath] != lastWriteTime)
+                    this.FileEditDatesInFolder[relPath] = lastWriteTime;
+                else return;
+            }
+            else
+                this.FileEditDatesInFolder.Add(relPath, lastWriteTime);
+
+            if (this.FilesWhichChanged.ContainsKey(relPath))
+                this.FilesWhichChanged[relPath] = lastWriteTime;
+            else
+                this.FilesWhichChanged.Add(relPath, lastWriteTime);
+        }
+
+        private void UpdateFilesWhichChanged(Dictionary<string, DateTime> dict)
+        {
+            foreach (var entry in dict)
             {
                 if (!(this.FileEditDatesInDB.ContainsKey(entry.Key)) || this.FileEditDatesInDB[entry.Key] != entry.Value)
                     this.FilesWhichChanged.Add(entry.Key, entry.Value);
@@ -449,6 +468,20 @@ namespace BBbuilder
             }
             if (noCompileErrors && packedBrushes)
                 Console.WriteLine("Successfully packed brush files!");
+            if (!packedBrushes)
+                Console.WriteLine("No brush files to pack!");
+            else
+            {
+                Dictionary<string, DateTime> changedPotentially = new();
+                foreach (string file in Directory.GetFiles(Path.Combine(this.BuildPath, brushesPath)))
+                {
+                    UpdateFileTimeDateEntry(file);
+                }
+                foreach (string file in Directory.GetFiles(Path.Combine(this.BuildPath, "gfx")))
+                {
+                    UpdateFileTimeDateEntry(file);
+                }
+            }
             return noCompileErrors;
         }
 
@@ -526,30 +559,6 @@ namespace BBbuilder
             }
             else files = this.FileEditDatesInFolder.Keys.Select(f => Path.Combine(this.BuildPath, f)).ToList();
             files = files.Where(f => !f.Contains("unpacked_brushes")).ToList();
-
-            if (!File.Exists(this.ZipPath))
-                return files;
-
-            bool recreateZip = false;
-            using (var zip = ZipFile.Read(this.ZipPath))
-            {
-                foreach (ZipEntry entry in zip)
-                {
-                    if (entry.IsDirectory) continue;
-                    string name = entry.FileName.Replace("/", @"\");
-                    if (!this.FileEditDatesInFolder.ContainsKey(name))
-                    {
-                        Console.WriteLine($"Found a file in .zip that is not in the folder, re-creating zip to make sure: {name}");
-                        recreateZip = true;
-                        break;
-                    }
-                }
-            }
-            if (recreateZip)
-            {
-                RebuildZipAndDB();
-                return files;
-            }
             files = files.Where(f => this.FilesWhichChanged.ContainsKey(Path.GetRelativePath(this.BuildPath, f))).ToList();
             return files;
         }
@@ -557,11 +566,27 @@ namespace BBbuilder
         private bool ZipFiles()
         {
             List<string> toZip = GetFilesToZip();
+            if (!File.Exists(this.ZipPath))
+                RebuildZipAndDB();
+            else
+            {
+                using (var zip = ZipFile.Read(this.ZipPath))
+                {
+                    foreach (ZipEntry entry in zip)
+                    {
+                        if (entry.IsDirectory) continue;
+                        string name = entry.FileName.Replace("/", @"\");
+                        if (!this.FileEditDatesInFolder.ContainsKey(name))
+                        {
+                            zip.RemoveEntry(entry);
+                        }
+                    }
+                }
+            }
             using (var zip = new ZipFile(this.ZipPath))
             {
                 foreach (string file in toZip)
                 { 
-                    
                     var relativePath = Path.GetDirectoryName(Path.GetRelativePath(this.BuildPath, file));
                     if (this.Diff && !File.Exists(file))
                     {
