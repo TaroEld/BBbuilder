@@ -13,18 +13,21 @@ namespace BBbuilder
     class BuildCommand : Command
     {
         readonly string[] NotIndexedFolders = new string[] { ".bbbuilder", ".git", ".github", ".vscode", ".utils", "assets", "modtools", "node_modules" };
-        readonly string[] ExcludedZipFolders = new string[] {".bbbuilder", ".git", ".github", "unpacked_brushes", ".vscode", ".utils", "assets", "modtools", "node_modules" };
+        readonly string[] ExcludedZipFolders = new string[] {"unpacked_brushes"};
         readonly string[] ExcludedScriptFolders = new string[] { "ui", ".git", ".github", "gfx", "preload", "brushes", "music", "sounds", "unpacked_brushes", "tempfolder", ".vscode", "nexus", ".utils", "assets" };
         readonly OptionFlag StartGame = new("-restart", "Exit and then start BattleBrothers.exe after building the mod.");
         readonly OptionFlag Transpile = new("-transpile", "Translate js file to es3. It allow you to use modern js syntax and features to create your mod.");
         readonly OptionFlag Rebuild = new("-rebuild", "Delete the database and the .zip to start from a clean slate.");
         readonly OptionFlag Diff = new("-diff <referencebranch>,<wipbranch>", "Create the zip based on the diff between <referencebranch> and <wipbranch> Pass them comma-separated WITHOUT SPACE INBETWEEN.");
+        readonly OptionFlag Debug = new("-debug", "TODO.");
 
+        string DBNAME = "dates.sqlite";
+        string DEBUG_START = "BBBUILDER_DEBUG_START";
+        string DEBUG_STOP = "BBBUILDER_DEBUG_STOP";
         string ModPath;
         string ModName;
         string ZipPath;
         string BuildPath;
-        string DBNAME = "dates.sqlite";
         string DB_path;
         string ConnectionString;
         Dictionary<string, DateTime> FileEditDatesInFolder;
@@ -38,7 +41,7 @@ namespace BBbuilder
             {
                 "<modPath>: Specify the path of the mod to be built. (Example: bbuilder build G:/Games/BB/Mods/WIP/mod_msu)",
             };
-            this.Flags = new OptionFlag[] {this.StartGame, this.Transpile, this.Rebuild, this.Diff};
+            this.Flags = new OptionFlag[] {this.StartGame, this.Transpile, this.Rebuild, this.Diff, this.Debug};
             this.FileEditDatesInFolder = new();
             this.FileEditDatesInDB = new();
             this.FilesWhichChanged = new();
@@ -71,6 +74,8 @@ namespace BBbuilder
             this.ZipPath = Path.Combine(this.BuildPath, this.ModName + ".zip");
             if (this.Diff)
                 this.ZipPath = Path.Combine(this.BuildPath, this.ModName + "_patch.zip");
+            if (this.Debug)
+                this.ZipPath = Path.Combine(this.BuildPath, this.ModName + "_debug.zip");
             return true;
         }
 
@@ -296,6 +301,7 @@ namespace BBbuilder
             Console.WriteLine("Starting to compile files...");
             string[] allNutFilesAsPath = GetAllowedScriptFiles();
             string[] changedNutFiles = allNutFilesAsPath.Where(f => HasFileChanged(f)).ToArray();
+            int compiledFiles = 0;
             List<string> outputBuffer = new();
             if (changedNutFiles.Length == 0)
             {
@@ -324,12 +330,13 @@ namespace BBbuilder
                         outputBuffer.Add(myStreamReader.ReadLine());
                         noCompileErrors = false;
                     }
-                    else Console.WriteLine("Successfully compiled file " + nutFilePath);
+                    else compiledFiles++;
+                    //else Console.WriteLine("Successfully compiled file " + nutFilePath);
                 }
             });
             
             if (noCompileErrors)
-                Console.WriteLine("Successfully compiled files!");
+                Console.WriteLine($"Successfully compiled {compiledFiles} files!");
             else
             {
                 Console.WriteLine("Errors while compiling files!\n-------------------------------------");
@@ -539,6 +546,73 @@ namespace BBbuilder
             return output.Split("\n")[0];
         }
 
+
+
+        private List<string> RemoveExcludedFolderFiles(List<string> _filesToZip)
+        {
+            foreach (string folderName in this.ExcludedZipFolders)
+            {
+                string safetyPath = Path.Combine(this.BuildPath, folderName);
+                _filesToZip = _filesToZip.Where(f => !f.Contains(safetyPath)).ToList();
+            }
+            return _filesToZip;
+        }
+
+        private Dictionary<string, string> ReplaceDebugStatements(List<string> _filesToZip)
+        {
+            string tempPath = Path.Combine(Path.GetTempPath(), "BBBuilder");
+            Dictionary<string, string> debugFiles = new();
+            Directory.CreateDirectory(tempPath);
+            var watch = new System.Diagnostics.Stopwatch();
+            watch.Start();
+            var files = Directory.EnumerateFiles(this.BuildPath, "*.nut", SearchOption.AllDirectories);
+            if (!this.Debug && !this.Rebuild)
+                files = files.Where(f => HasFileChanged(f)).ToList();
+            foreach (string filePath in files)
+            {
+                bool debugFile = false;
+                bool debugCurrent = false;
+                string line;
+                string[] lines = File.ReadAllLines(filePath);
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    line = lines[i];
+                    if (line.Length == 0)
+                        continue;
+                    if (line.Contains(DEBUG_START))
+                    {
+                        debugFile = true;
+                        debugCurrent = true;
+                        continue;
+                    }
+                    if (line.Contains(DEBUG_STOP))
+                    {
+                        debugCurrent = false;
+                        continue;
+                    }
+                    if (debugCurrent)
+                    {
+                        if (this.Debug && line.Length > 1 && line[0..2] == @"//")
+                            lines[i] = line[0..];
+                        else if (!this.Debug)
+                            lines[i] = @"//" + line; 
+                    }
+                }
+                if (debugFile)
+                {
+                    string tempfilePath = Path.Combine(tempPath, Path.GetFileName(filePath));
+                    File.WriteAllLines(tempfilePath, lines);
+                    debugFiles.Add(tempfilePath, Path.GetDirectoryName(Path.GetRelativePath(this.BuildPath, filePath)));
+                    _filesToZip.Remove(filePath);
+                    break;
+                }
+            }
+            watch.Stop();
+
+            Console.WriteLine($"Total debug Time: {watch.ElapsedMilliseconds} ms");
+            return debugFiles;
+        }
+
         private List<string> GetFilesToZip()
         {
             List<string> files;
@@ -558,17 +632,20 @@ namespace BBbuilder
                 files.AddRange(brushesFolders.Distinct().ToList());    
             }
             else files = this.FileEditDatesInFolder.Keys.Select(f => Path.Combine(this.BuildPath, f)).ToList();
-            files = files.Where(f => !f.Contains("unpacked_brushes")).ToList();
             files = files.Where(f => this.FilesWhichChanged.ContainsKey(Path.GetRelativePath(this.BuildPath, f))).ToList();
+            files = this.RemoveExcludedFolderFiles(files);
             return files;
         }
 
         private bool ZipFiles()
         {
-            List<string> toZip = GetFilesToZip();
             if (!File.Exists(this.ZipPath))
                 RebuildZipAndDB();
-            else
+            List<string> toZip = GetFilesToZip();
+            Dictionary<string, string> debugToZip = ReplaceDebugStatements(toZip);
+            int changedFiles = 0;
+            int removedFiles = 0;
+            if (File.Exists(this.ZipPath))
             {
                 using (var zip = ZipFile.Read(this.ZipPath))
                 {
@@ -579,6 +656,7 @@ namespace BBbuilder
                         if (!this.FileEditDatesInFolder.ContainsKey(name))
                         {
                             zip.RemoveEntry(entry);
+                            removedFiles++;
                         }
                     }
                 }
@@ -594,13 +672,23 @@ namespace BBbuilder
                     }
                     else
                     {
-                        Console.WriteLine("Updating file in zip: " + file);
+                        // Console.WriteLine("Updating file in zip: " + file);
                         zip.UpdateFile(file, relativePath);
+                        changedFiles++;
                     } 
+                }
+                foreach (string file in debugToZip.Keys)
+                {
+                    {
+                        var relPath = debugToZip[file];
+                        Console.WriteLine("Updating debug in zip: " + Path.Combine(relPath, Path.GetFileName(file)));
+                        zip.UpdateFile(file, relPath);
+                        changedFiles++;
+                    }
                 }
                 zip.Save();
             }
-            Console.WriteLine($"Successfully zipped {this.ModPath} ({this.ZipPath})!");
+            Console.WriteLine($"Successfully zipped {this.ModPath} ({this.ZipPath} | Added or changed files: {changedFiles}, removed files: {removedFiles})!");
             return true;
         }
 
@@ -609,6 +697,7 @@ namespace BBbuilder
             string gamePath = Utils.Data.GamePath;
             string zipName = $"{this.ModName}.zip";
             if(this.Diff) zipName = $"{this.ModName}_patch.zip";
+            if (this.Debug) zipName = $"{this.ModName}_debug.zip";
             string dataZipPath = Path.Combine(gamePath, zipName);
             if (File.Exists(dataZipPath))
             {
