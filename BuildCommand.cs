@@ -659,6 +659,8 @@ namespace BBbuilder
                             removedFiles++;
                         }
                     }
+                    if (removedFiles > 0)
+                        zip.Save();
                 }
             }
             using (var zip = new ZipFile(this.ZipPath))
