@@ -77,7 +77,18 @@ There are a number of flags that can be set to do only parts of the packing prog
 - `-transpile`: Translate js file to es3. It allow you to use modern js syntax and features to create your mod. Advanced feature, you probably don't need to worry about it.  
 - `-rebuild`: Delete the database and the .zip to start from a clean slate.  
 - `-diff <referencebranch>,<wipbranch>`: Create the zip based on the diff between <referencebranch> and <wipbranch> Pass them comma-separated WITHOUT SPACE INBETWEEN. This requires the `git` command to be available via cmd. The purpose of this is creating patches.
-
+- `-debug`: Create a debug build with the _debug suffix. By default, lines between the annotations `// BBBUILDER_DEBUG_START` and `// BBBUILDER_DEBUG_STOP` are commented out. With -debug, they are not commented out.  
+	- The purpose of this is to be able to provide debug builds with things like ::logInfo statements.
+Example:  
+```
+// BBBUILDER_DEBUG_START
+::logInfo("Hello, world!")
+// BBBUILDER_DEBUG_STOP
+Without the -debug flag, this becomes:
+// BBBUILDER_DEBUG_START
+// ::logInfo("Hello, world!")
+// BBBUILDER_DEBUG_STOP
+```
  
 ## Editor config files
 This program is best used with VSCode or Sublime Text, as it will generate editor config files for them.
