@@ -13,6 +13,11 @@
 			"shell_cmd": "\"$bbbuild_path\" build \"$project_path\" -restart"
 		},
 		{
+			"name": "Debug Build and Launch",
+			"working_dir": "$project_path",
+			"shell_cmd": "\"$bbbuild_path\" build \"$project_path\" -debug -restart"
+		},
+		{
 			"name": "Rebuild Mod",
 			"working_dir": "",
 			"shell_cmd": "\"$bbbuild_path\" build \"$project_path\" -rebuild"

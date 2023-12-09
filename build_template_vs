@@ -22,13 +22,23 @@
       }
     },
     {
+      "label": "bbbuilder: Debug Build and Launch",
+      "type": "shell",
+      "command": "\"$bbbuild_path\" build \"${workspaceFolder}\" -debug -restart",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
+    },
+    {
       "label": "bbbuilder: Rebuild mod",
       "type": "shell",
       "command": "\"$bbbuild_path\" build \"${workspaceFolder}\" -rebuild",
       "problemMatcher": [],
       "group": {
         "kind": "build",
-        "isDefault": true
+        "isDefault": false
       }
     },
     {
