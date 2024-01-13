@@ -429,7 +429,7 @@ namespace BBbuilder
 
                 string folderName = new DirectoryInfo(subFolder).Name;
                 string brushName = $"{folderName}.brush";
-                string command = $"pack {brushName} {subFolder}";
+                string command = $"pack \"{brushName}\" \"{subFolder}\"";
 
                 if (File.Exists(Path.Combine(brushesPath, brushName)))
                 {
