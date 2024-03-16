@@ -28,7 +28,7 @@ Also, jump to [here](#example-usage) to get an idea of how that looks like.
 Calling `bbbuilder.exe` without any other arguments will give you an overview of all the commands and arguments/flags. Calling `bbbuilder.exe <commandname>` will give you an overview of that command.  
  
 ### config
-Saves config values in a database. If you first start the program, it will prompt you to provide values for the `-datapath` and `-modpath` commands. Afterwards, it can be used to change values, or check the current configuration.
+A number of config options are available to be added and changed with `config`. If you first start the program, it will prompt you to provide values for the `-datapath` and `-modpath` commands. Afterwards, it can be used to change values, or check the current configuration.
 #### commands
 - `-datapath <path>`: Set the path to the directory of the game to copy the .zip of the mod to and optionally (re)start the game.
 - `-modpath <path>`: Set the path to the directory of your mods folder, where newly initialised or extracted mods will be placed by default.
