@@ -21,7 +21,7 @@ Some optional features can only be used if you have git installed (so, available
 
 ## How to use  
 This is a command line tool / CLI. This means that the program will be called over a cool looking black hacker terminal, while passing it [commands](#commands) and other values.   
-As that is often not very convenient, the tool will generate editor files for you, specifically for VSCode and Sublime Text. See here: [Editor config files](#editor-config-files)  
+As that is often not very convenient, the tool will generate editor files for you, specifically for VSCode and Sublime Text. See here: [Editor config files](#editor-config-files) This will allow you to "build" your mod, as in create a new zip, copy it to data and relaunch the game, in one keybind press.
 Also, jump to [here](#example-usage) to get an idea of how that looks like.  
 
 ## Commands
