@@ -1,4 +1,4 @@
-var $Name {
+var $name = {
     sqHandle : null,
     ModID : "$Name",
 
