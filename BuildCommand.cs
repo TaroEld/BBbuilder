@@ -26,6 +26,7 @@ namespace BBbuilder
         string DEBUG_STOP = "BBBUILDER_DEBUG_STOP";
         string ModPath;
         string ModName;
+        string ZipName;
         string ZipPath;
         string BuildPath;
         string DB_path;
@@ -71,11 +72,12 @@ namespace BBbuilder
                 Directory.CreateDirectory(this.BuildPath);
                 Utils.Copy(this.ModPath, this.BuildPath);
             }
-            this.ZipPath = Path.Combine(this.BuildPath, this.ModName + ".zip");
+            this.ZipName = this.ModName + ".zip";
             if (this.Diff)
-                this.ZipPath = Path.Combine(this.BuildPath, this.ModName + "_patch.zip");
+                this.ZipName = this.ModName + "_patch.zip";
             if (this.Debug)
-                this.ZipPath = Path.Combine(this.BuildPath, this.ModName + "_debug.zip");
+                this.ZipName = this.ModName + "_debug.zip";
+            this.ZipPath = Path.Combine(this.BuildPath, this.ZipName);
             return true;
         }
 
@@ -104,10 +106,10 @@ namespace BBbuilder
                     return false;
                 }
             }
-            if (Utils.Data.MoveZip && !this.Diff && File.Exists(Path.Combine(Utils.Data.GamePath, this.ModName + ".zip")) && !File.Exists(this.ZipPath))
+            if (Utils.Data.MoveZip && !this.Diff && File.Exists(Path.Combine(Utils.Data.GamePath, this.ZipName)) && !File.Exists(this.ZipPath))
             {
                 Console.WriteLine("Copying zip from Data");
-                File.Copy(Path.Combine(Utils.Data.GamePath, this.ModName + ".zip"), this.ZipPath);
+                File.Copy(Path.Combine(Utils.Data.GamePath, this.ZipName), this.ZipPath);
             }
             if (this.Rebuild)
             {
@@ -697,10 +699,7 @@ namespace BBbuilder
         private bool CopyZipToData()
         {
             string gamePath = Utils.Data.GamePath;
-            string zipName = $"{this.ModName}.zip";
-            if(this.Diff) zipName = $"{this.ModName}_patch.zip";
-            if (this.Debug) zipName = $"{this.ModName}_debug.zip";
-            string dataZipPath = Path.Combine(gamePath, zipName);
+            string dataZipPath = Path.Combine(gamePath, this.ZipName);
             if (File.Exists(dataZipPath))
             {
                 File.Delete(dataZipPath);
