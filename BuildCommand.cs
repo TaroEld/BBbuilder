@@ -226,7 +226,8 @@ namespace BBbuilder
         private void UpdateFileTimeDateEntry(string _filePath)
         {
             string relPath = Path.GetRelativePath(this.BuildPath, _filePath);
-            DateTime lastWriteTime = File.GetLastWriteTime(Path.Combine(_filePath));
+            DateTime lastWriteTime = File.GetLastWriteTime(Path.Combine(this.BuildPath, _filePath));
+            
             if (this.FileEditDatesInFolder.ContainsKey(relPath))
             {
                 // if the file was already in the folder, update the write time if it's different
