@@ -172,9 +172,9 @@ namespace BBbuilder
 
         private void SetupFileDateDB()
         {
-            if (!Directory.Exists(Path.Combine(this.BuildPath, ".bbbuilder")))
+            if (!Directory.Exists(Path.Combine(this.ModPath, ".bbbuilder")))
             {
-                Directory.CreateDirectory(Path.Combine(this.BuildPath, ".bbbuilder"));
+                Directory.CreateDirectory(Path.Combine(this.ModPath, ".bbbuilder"));
             }
             using (var connection = new SqliteConnection(this.ConnectionString))
             {
