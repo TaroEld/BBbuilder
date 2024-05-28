@@ -176,27 +176,23 @@ namespace BBbuilder
             {
                 Directory.CreateDirectory(Path.Combine(this.ModPath, ".bbbuilder"));
             }
-            using (var connection = new SqliteConnection(this.ConnectionString))
+            using var connection = new SqliteConnection(this.ConnectionString);
+            connection.Open();
+            bool use;
+            using (var command = connection.CreateCommand())
             {
-                connection.Open();
-                bool use;
-                using (var command = connection.CreateCommand())
-                {
-                    command.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name='FileData';";
-                    use = command.ExecuteScalar() == null;
-                }
-                if (use)
-                {
-                    using (var command = connection.CreateCommand())
-                    {
-                        command.CommandText = @"
+                command.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name='FileData';";
+                use = command.ExecuteScalar() == null;
+            }
+            if (use)
+            {
+                using var command = connection.CreateCommand();
+                command.CommandText = @"
                         CREATE TABLE FileData (
                             FilePath TEXT PRIMARY KEY,
                             LastModified DATETIME NOT NULL
                         );";
-                        command.ExecuteNonQuery();
-                    }
-                }
+                command.ExecuteNonQuery();
             }
         }
 
@@ -213,23 +209,17 @@ namespace BBbuilder
 
         private void ReadFileDataFromDB()
         {
-            using (var connection = new SqliteConnection(this.ConnectionString))
-            {
-                connection.Open();
-                using (var command = connection.CreateCommand())
-                {
-                    command.CommandText = "SELECT FilePath, LastModified FROM FileData;";
+            using var connection = new SqliteConnection(this.ConnectionString);
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "SELECT FilePath, LastModified FROM FileData;";
 
-                    using (var reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            string filePath = reader.GetString(0);
-                            DateTime lastModified = reader.GetDateTime(1);
-                            this.FileEditDatesInDB.Add(filePath, lastModified);
-                        }
-                    }
-                }
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                string filePath = reader.GetString(0);
+                DateTime lastModified = reader.GetDateTime(1);
+                this.FileEditDatesInDB.Add(filePath, lastModified);
             }
         }
 
@@ -239,17 +229,25 @@ namespace BBbuilder
             DateTime lastWriteTime = File.GetLastWriteTime(Path.Combine(_filePath));
             if (this.FileEditDatesInFolder.ContainsKey(relPath))
             {
-                if (this.FileEditDatesInFolder[relPath] != lastWriteTime)
+                // if the file was already in the folder, update the write time if it's different
+                if (this.FileEditDatesInFolder[relPath] != lastWriteTime) {
                     this.FileEditDatesInFolder[relPath] = lastWriteTime;
+                }
                 else return;
             }
             else
+            {
                 this.FileEditDatesInFolder.Add(relPath, lastWriteTime);
+            }   
 
             if (this.FilesWhichChanged.ContainsKey(relPath))
+            {
                 this.FilesWhichChanged[relPath] = lastWriteTime;
+            }
             else
+            {
                 this.FilesWhichChanged.Add(relPath, lastWriteTime);
+            }    
         }
 
         private void UpdateFilesWhichChanged(Dictionary<string, DateTime> dict)
@@ -346,8 +344,6 @@ namespace BBbuilder
                     Console.WriteLine(line);
                 Console.WriteLine("-------------------------------------");
             }
-
-
             return noCompileErrors;
         }
 
