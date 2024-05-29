@@ -7,6 +7,7 @@ namespace BBbuilder
     {
         static int Main(string[] args)
         {
+           
             var watch = new System.Diagnostics.Stopwatch();
             watch.Start();
 
@@ -35,15 +36,13 @@ namespace BBbuilder
             }
             else
             {
-                Commands[arguments[0]].HandleCommand(arguments);
+                bool success = Commands[arguments[0]].HandleCommand(arguments);
                 Commands[arguments[0]].CleanUp();
                 watch.Stop();
                 Console.WriteLine($"Total Execution Time: {watch.ElapsedMilliseconds} ms");
-                return 0;
+                return success? 0 : 1;
             }
             watch.Stop();
-
-            Console.WriteLine($"Total Execution Time: {watch.ElapsedMilliseconds} ms");
             return 1;
         }
 
