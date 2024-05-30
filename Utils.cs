@@ -18,6 +18,32 @@ namespace BBbuilder
         public static string CONFIGPATH = Path.Combine(Utils.EXECUTINGFOLDER, "tools", "config.json");
         public static ConfigData Data { get; set; }
 
+
+        public static bool KillAndStartBB()
+        {
+            Process[] activeBBInstances = Process.GetProcessesByName("BattleBrothers");
+            foreach (Process instance in activeBBInstances)
+            {
+                Console.WriteLine("Stopping BattleBrothers.exe...");
+                instance.Kill();
+            }
+            string bbFolder = Directory.GetParent(Utils.Data.GamePath).ToString();
+            string bbExe = Path.Combine(bbFolder, "win32", "BattleBrothers.exe");
+            if (!File.Exists(bbExe))
+            {
+                Console.Error.WriteLine($"Battle Brothers Exe not found under path {bbExe}! Check your data path! Current path:({Utils.Data.GamePath})");
+                return false;
+            }
+            Console.WriteLine($"Starting Battle Brothers ({bbExe})");
+            using (Process startGame = new())
+            {
+                startGame.StartInfo.UseShellExecute = true;
+                startGame.StartInfo.FileName = bbExe;
+                startGame.Start();
+            }
+            return true;
+        }
+
         public static void CreateJSON()
         {
             Utils.Data = new ConfigData();

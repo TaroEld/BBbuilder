@@ -151,7 +151,7 @@ namespace BBbuilder
             }
             if (this.StartGame)
             {
-                KillAndStartBB();
+                Utils.KillAndStartBB();
             }
             this.InsertFileData();
             return true;
@@ -706,25 +706,6 @@ namespace BBbuilder
             else
                 File.Copy(this.ZipPath, dataZipPath);
             return true;
-        }
-
-        private void KillAndStartBB()
-        {
-            Process[] activeBBInstances = Process.GetProcessesByName("BattleBrothers");
-            foreach (Process instance in activeBBInstances)
-            {
-                Console.WriteLine("Stopping BattleBrothers.exe...");
-                instance.Kill();
-            }
-            string bbFolder = Directory.GetParent(Utils.Data.GamePath).ToString();
-            string bbExe = Path.Combine(bbFolder, "win32", "BattleBrothers.exe");
-            Console.WriteLine($"Starting Battle Brothers ({bbExe})");
-            using (Process startGame = new())
-            {
-                startGame.StartInfo.UseShellExecute = true;
-                startGame.StartInfo.FileName = bbExe;
-                startGame.Start();
-            }
         }
 
         new public void CleanUp()

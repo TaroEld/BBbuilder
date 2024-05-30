@@ -15,6 +15,7 @@ namespace BBbuilder
 
             Dictionary<string, Command> Commands = new()
             {
+                { "start", new StartCommand()},
                 { "build", new BuildCommand() },
                 { "init", new InitCommand() },
                 { "extract", new ExtractCommand() },
