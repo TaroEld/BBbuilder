@@ -53,7 +53,7 @@ namespace BBbuilder
 
             if (!Directory.Exists(_args[1]))
             {
-                Console.WriteLine($"Passed mod path {_args[1]} does not exist!");
+                Console.Error.WriteLine($"Passed mod path {_args[1]} does not exist!");
                 return false;
             }
             this.ModPath = _args[1];
@@ -95,14 +95,14 @@ namespace BBbuilder
             {
                 if (!Utils.IsGitInstalled())
                 {
-                    Console.WriteLine("Tried to use diff mode but git does not seem to be installed or accessible via PATH!");
+                    Console.Error.WriteLine("Tried to use diff mode but git does not seem to be installed or accessible via PATH!");
                     return false;
                 }
                 string feature_branch_name = this.Diff.PositionalValue.Split(",")[1];
                 string current_branch = this.GetCurrentGitBranch();
                 if (feature_branch_name != current_branch)
                 {
-                    Console.WriteLine($"Tried to use diff mode with feature branch {feature_branch_name} but {current_branch} is checked out! Make sure to check out the feature branch.");
+                    Console.Error.WriteLine($"Tried to use diff mode with feature branch {feature_branch_name} but {current_branch} is checked out! Make sure to check out the feature branch.");
                     return false;
                 }
             }
@@ -125,28 +125,28 @@ namespace BBbuilder
 
             if (!CompileFiles())
             {
-                Console.WriteLine("Failed while compiling files");
+                Console.Error.WriteLine("Failed while compiling files");
                 return false;
             }
             if (this.Transpile && !this.TranspileToES3())
             {
-                Console.WriteLine("Failed while transpiling to ES3!");
+                Console.Error.WriteLine("Failed while transpiling to ES3!");
                 return false;
             }
 
             if (!PackBrushFiles())
             {
-                Console.WriteLine("Failed while packing brush files");
+                Console.Error.WriteLine("Failed while packing brush files");
                 return false;
             }
             if (!ZipFiles())
             {
-                Console.WriteLine("Failed while zipping files");
+                Console.Error.WriteLine("Failed while zipping files");
                 return false;
             }
             if (!CopyZipToData())
             {
-                Console.WriteLine("Failed while copying new zip to data!");
+                Console.Error.WriteLine("Failed while copying new zip to data!");
                 return false;
             }
             if (this.StartGame)
@@ -340,10 +340,10 @@ namespace BBbuilder
                 Console.WriteLine($"Successfully compiled {compiledFiles} files!");
             else
             {
-                Console.WriteLine("Errors while compiling files!\n-------------------------------------");
+                Console.Error.WriteLine("Errors while compiling files!\n-------------------------------------");
                 foreach (string line in outputBuffer)
-                    Console.WriteLine(line);
-                Console.WriteLine("-------------------------------------");
+                    Console.Error.WriteLine(line);
+                Console.Error.WriteLine("-------------------------------------");
             }
             return noCompileErrors;
         }
@@ -467,10 +467,10 @@ namespace BBbuilder
             }
             if (!noCompileErrors)
             {
-                Console.WriteLine("Errors while packing brushes!\n-------------------------------------");
+                Console.Error.WriteLine("Errors while packing brushes!\n-------------------------------------");
                 foreach (string line in outputBuffer)
-                    Console.WriteLine(line);
-                Console.WriteLine("-------------------------------------");
+                    Console.Error.WriteLine(line);
+                Console.Error.WriteLine("-------------------------------------");
             }
             if (noCompileErrors && packedBrushes)
                 Console.WriteLine("Successfully packed brush files!");
@@ -518,7 +518,7 @@ namespace BBbuilder
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                Console.Error.WriteLine(ex);
             }
             return new List<string>();
         }
@@ -562,7 +562,7 @@ namespace BBbuilder
             string tempPath = Path.Combine(Path.GetTempPath(), "BBBuilder");
             Dictionary<string, string> debugFiles = new();
             Directory.CreateDirectory(tempPath);
-            var watch = new System.Diagnostics.Stopwatch();
+            var watch = new Stopwatch();
             watch.Start();
             var files = Directory.EnumerateFiles(this.BuildPath, "*.nut", SearchOption.AllDirectories);
             if (!this.Debug && !this.Rebuild)
