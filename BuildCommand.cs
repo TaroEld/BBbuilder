@@ -677,15 +677,17 @@ namespace BBbuilder
             return true;
         }
 
-        override public void CleanUp(bool _ugly = false)
+        override public void CleanUp(bool success = true)
         {
             if (Utils.Data.MoveZip && File.Exists(this.ZipPath))
             {
                 File.Delete(this.ZipPath);
                 Console.WriteLine($"Removed file {this.ZipPath}");
             }
+            if (!success)
+                return;
             string brushesPath = Path.Combine(this.BuildPath, "brushes");
-            if (_ugly && Directory.Exists(brushesPath))
+            if (Directory.Exists(brushesPath))
             {
                 Directory.Delete(brushesPath, true);
                 Console.WriteLine($"Removed folder {brushesPath}");
