@@ -38,7 +38,7 @@ namespace BBbuilder
             else
             {
                 bool success = Commands[arguments[0]].HandleCommand(arguments);
-                Commands[arguments[0]].CleanUp();
+                Commands[arguments[0]].CleanUp(success);
                 watch.Stop();
                 Console.WriteLine($"Total Execution Time: {watch.ElapsedMilliseconds} ms");
                 return success? 0 : 1;

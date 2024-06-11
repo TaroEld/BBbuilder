@@ -67,6 +67,6 @@ namespace BBbuilder
             PrintCommands();
         }
 
-        public void CleanUp() { }
+        virtual public void CleanUp(bool _ugly = false) { }
     }
 }
