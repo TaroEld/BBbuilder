@@ -73,7 +73,14 @@ namespace BBbuilder
             CreateExtraDirectories();
             WriteProjectFiles();
             if (Utils.IsGitInstalled())
-                InitGitRepo();
+            {
+                if (Directory.Exists(Path.Combine(this.ModPath, ".git"))) {
+                    Console.WriteLine("Git folder already exists, skipping...");
+                } else { 
+                    InitGitRepo(); 
+                }
+            }
+                
             if (this.Template && this.Template.PositionalValue == "blank")
                 File.Delete(Path.Combine(this.ModPath, "dummydel")); // VS doesn't copy the folder if it doesn't have a file in it...
             Process.Start("explorer.exe", this.ModPath);
