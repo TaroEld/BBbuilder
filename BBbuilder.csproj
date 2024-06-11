@@ -31,12 +31,14 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-	<ItemGroup>
-		<None Include="tools\**" CopyToOutputDirectory="Always"/>
-		<None Include="Templates\**" CopyToOutputDirectory="Always" />
-		<None Include="babel.config.json" CopyToOutputDirectory="Always"/>
-		<None Include="package.json" CopyToOutputDirectory="Always"/>
-		<Folder Include="Templates\default\readme\" />
-		<Folder Include="Templates\ui\readme\" />
-	</ItemGroup>
+    <ItemGroup>
+	    <None Include="tools\**" CopyToOutputDirectory="Always" />
+	    <None Include="babel.config.json" CopyToOutputDirectory="Always" />
+	    <None Include="package.json" CopyToOutputDirectory="Always" />
+		<Content Include="Templates\**">
+			<Link>Templates\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+			<TargetPath>Templates\%(RecursiveDir)\%(Filename)%(Extension)</TargetPath>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+    </ItemGroup>
 </Project>
