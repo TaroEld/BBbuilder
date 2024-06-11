@@ -89,6 +89,14 @@ namespace BBbuilder
             {
                 return false;
             }
+            string[] sameZipNameInData = Directory.GetFiles(Utils.Data.GamePath, "*.zip")
+                .Where(f => Path.GetFileName(f) != this.ZipName && Path.GetFileName(f).StartsWith(this.ModName)).ToArray();
+            if (sameZipNameInData.Length > 0)
+            {
+                Console.Error.WriteLine("Found other .zip files in data that seem to be the same mod!");
+                foreach (string s in sameZipNameInData) { Console.Error.WriteLine(s); }
+                return false;
+            }
             if (this.Diff)
             {
                 if (!Utils.IsGitInstalled())
