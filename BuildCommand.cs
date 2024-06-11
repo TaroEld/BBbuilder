@@ -139,6 +139,11 @@ namespace BBbuilder
                 Console.Error.WriteLine("Failed while packing brush files");
                 return false;
             }
+            FileEditDatesInFolder = new();
+            FilesWhichChanged = new();
+            ReadFileDataFromFolder();
+            UpdateFilesWhichChanged(FileEditDatesInFolder);
+
             if (!ZipFiles())
             {
                 Console.Error.WriteLine("Failed while zipping files");
@@ -221,34 +226,6 @@ namespace BBbuilder
                 DateTime lastModified = reader.GetDateTime(1);
                 this.FileEditDatesInDB.Add(filePath, lastModified);
             }
-        }
-
-        private void UpdateFileTimeDateEntry(string _filePath)
-        {
-            string relPath = Path.GetRelativePath(this.BuildPath, _filePath);
-            DateTime lastWriteTime = File.GetLastWriteTime(Path.Combine(this.BuildPath, _filePath));
-            
-            if (this.FileEditDatesInFolder.ContainsKey(relPath))
-            {
-                // if the file was already in the folder, update the write time if it's different
-                if (this.FileEditDatesInFolder[relPath] != lastWriteTime) {
-                    this.FileEditDatesInFolder[relPath] = lastWriteTime;
-                }
-                else return;
-            }
-            else
-            {
-                this.FileEditDatesInFolder.Add(relPath, lastWriteTime);
-            }   
-
-            if (this.FilesWhichChanged.ContainsKey(relPath))
-            {
-                this.FilesWhichChanged[relPath] = lastWriteTime;
-            }
-            else
-            {
-                this.FilesWhichChanged.Add(relPath, lastWriteTime);
-            }    
         }
 
         private void UpdateFilesWhichChanged(Dictionary<string, DateTime> dict)
@@ -475,18 +452,6 @@ namespace BBbuilder
                 Console.WriteLine("Successfully packed brush files!");
             if (!packedBrushes)
                 Console.WriteLine("No brush files to pack!");
-            else
-            {
-                Dictionary<string, DateTime> changedPotentially = new();
-                foreach (string file in Directory.GetFiles(Path.Combine(this.BuildPath, brushesPath)))
-                {
-                    UpdateFileTimeDateEntry(file);
-                }
-                foreach (string file in Directory.GetFiles(Path.Combine(this.BuildPath, "gfx")))
-                {
-                    UpdateFileTimeDateEntry(file);
-                }
-            }
             return noCompileErrors;
         }
 
