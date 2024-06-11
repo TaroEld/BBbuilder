@@ -75,8 +75,6 @@ namespace BBbuilder
             this.ZipName = this.ModName + ".zip";
             if (this.Diff)
                 this.ZipName = this.ModName + "_patch.zip";
-            if (this.Debug)
-                this.ZipName = this.ModName + "_debug.zip";
             this.ZipPath = Path.Combine(this.BuildPath, this.ZipName);
             return true;
         }
