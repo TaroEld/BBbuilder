@@ -49,7 +49,7 @@ namespace BBbuilder
         }
         private bool ParseCommand(List<string> _args)
         {
-            this.ParseFlags(_args);
+            ParseFlags(_args);
 
             if (!Directory.Exists(_args[1]))
             {
@@ -105,7 +105,7 @@ namespace BBbuilder
                     return false;
                 }
                 string feature_branch_name = this.Diff.PositionalValue.Split(",")[1];
-                string current_branch = this.GetCurrentGitBranch();
+                string current_branch = GetCurrentGitBranch();
                 if (feature_branch_name != current_branch)
                 {
                     Console.Error.WriteLine($"Tried to use diff mode with feature branch {feature_branch_name} but {current_branch} is checked out! Make sure to check out the feature branch.");
@@ -123,10 +123,15 @@ namespace BBbuilder
             }
             if (this.Diff)
                 File.Delete(this.ZipPath);
-            ReadFileDataFromFolder();
+
+            // Create and/or read the DB filepath : datetime dict, this only needs to be done once
             SetupFileDateDB();
             ReadFileDataFromDB();
+
+            // Create the folder filepath : datetime dict and check for differences between this and the DB one to know what files to build, this will be repeated later
+            ReadFileDataFromFolder();
             UpdateFilesWhichChanged(this.FileEditDatesInFolder);
+
             Console.WriteLine($"Attempting to build {this.ModPath}");
 
             if (!CompileFiles())
@@ -134,7 +139,7 @@ namespace BBbuilder
                 Console.Error.WriteLine("Failed while compiling files");
                 return false;
             }
-            if (this.Transpile && !this.TranspileToES3())
+            if (this.Transpile && !TranspileToES3())
             {
                 Console.Error.WriteLine("Failed while transpiling to ES3!");
                 return false;
@@ -145,10 +150,12 @@ namespace BBbuilder
                 Console.Error.WriteLine("Failed while packing brush files");
                 return false;
             }
-            FileEditDatesInFolder = new();
-            FilesWhichChanged = new();
+
+            // re-init the folder filepath : datetime dict to make sure we don't miss something that changed in the meanwhile
+            this.FileEditDatesInFolder = new();
+            this.FilesWhichChanged = new();
             ReadFileDataFromFolder();
-            UpdateFilesWhichChanged(FileEditDatesInFolder);
+            UpdateFilesWhichChanged(this.FileEditDatesInFolder);
 
             if (!ZipFiles())
             {
@@ -164,7 +171,8 @@ namespace BBbuilder
             {
                 Utils.KillAndStartBB();
             }
-            this.InsertFileData();
+            InsertFileData();
+            
             return true;
         }
 
@@ -279,6 +287,7 @@ namespace BBbuilder
                 }
             }
         }
+
         private bool CompileFiles()
         {
             //get this script directory
@@ -580,7 +589,7 @@ namespace BBbuilder
             List<string> files;
             if (this.Diff)
             {
-                files = this.GetDiffFiles();
+                files = GetDiffFiles();
                 List<string> brushesFiles = files.Where(f => f.Contains("unpacked_brushes")).ToList();
                 List<string> brushesFolders = new();
                 // add brushes folders as they are not tracked by git
@@ -595,7 +604,7 @@ namespace BBbuilder
             }
             else files = this.FileEditDatesInFolder.Keys.Select(f => Path.Combine(this.BuildPath, f)).ToList();
             files = files.Where(f => this.FilesWhichChanged.ContainsKey(Path.GetRelativePath(this.BuildPath, f))).ToList();
-            files = this.RemoveExcludedFolderFiles(files);
+            files = RemoveExcludedFolderFiles(files);
             return files;
         }
 
