@@ -109,7 +109,7 @@ namespace BBbuilder
             if (Utils.Data.MoveZip && !this.Diff && File.Exists(Path.Combine(Utils.Data.GamePath, this.ZipName)) && !File.Exists(this.ZipPath))
             {
                 Console.WriteLine("Copying zip from Data");
-                File.Copy(Path.Combine(Utils.Data.GamePath, this.ZipName), this.ZipPath);
+                File.Move(Path.Combine(Utils.Data.GamePath, this.ZipName), this.ZipPath);
             }
             if (this.Rebuild)
             {
