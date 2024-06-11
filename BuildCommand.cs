@@ -453,8 +453,7 @@ namespace BBbuilder
                     else
                     {
                         Console.WriteLine($"Packed Brush {brushName}");
-                        File.Copy(Path.Combine(this.BuildPath, brushName), Path.Combine(brushesPath, brushName));
-                        File.Delete(Path.Combine(this.BuildPath, brushName));
+                        File.Move(Path.Combine(this.BuildPath, brushName), Path.Combine(brushesPath, brushName));
                     }
                 }
             });
@@ -545,8 +544,6 @@ namespace BBbuilder
             return output.Split("\n")[0];
         }
 
-
-
         private List<string> RemoveExcludedFolderFiles(List<string> _filesToZip)
         {
             foreach (string folderName in this.ExcludedZipFolders)
@@ -562,8 +559,6 @@ namespace BBbuilder
             string tempPath = Path.Combine(Path.GetTempPath(), "BBBuilder");
             Dictionary<string, string> debugFiles = new();
             Directory.CreateDirectory(tempPath);
-            var watch = new Stopwatch();
-            watch.Start();
             var files = Directory.EnumerateFiles(this.BuildPath, "*.nut", SearchOption.AllDirectories);
             if (!this.Debug && !this.Rebuild)
                 files = files.Where(f => HasFileChanged(f)).ToList();
@@ -606,9 +601,6 @@ namespace BBbuilder
                     break;
                 }
             }
-            watch.Stop();
-
-            Console.WriteLine($"Total debug Time: {watch.ElapsedMilliseconds} ms");
             return debugFiles;
         }
 
@@ -815,8 +807,7 @@ namespace BBbuilder
             {
                 ret.AddRange(Directory.GetFiles(folderPath, "*.nut", SearchOption.AllDirectories));
             }
-            String[] retArray = ret.ToArray();
-            return retArray;
+            return ret.ToArray();
         }
     }
 }
