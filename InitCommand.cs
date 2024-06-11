@@ -191,9 +191,10 @@ namespace BBbuilder
             string nameSpaceName = GetNameSpaceName(upperCaseName);
             foreach (string directory in templateDirectories)
             {
-                string newDirectory = directory.Replace("$Name", nameSpaceName);
-                newDirectory = newDirectory.Replace("$name", this.ModName);
-                if (directory != newDirectory) Directory.Move(directory, newDirectory);
+                if (!Directory.Exists(directory)) continue;  // already renamed it previously
+                string newDirectory = directory.Replace("$name", nameSpaceName);
+                newDirectory = newDirectory.Replace("$Space", this.ModName);
+                if (directory != newDirectory && !Directory.Exists(newDirectory)) Directory.Move(directory, newDirectory);
             }
             string[] templateFiles = Directory.GetFiles(_path, "*.*", SearchOption.AllDirectories);
             foreach (string fileName in templateFiles)
