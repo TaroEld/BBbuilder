@@ -673,10 +673,7 @@ namespace BBbuilder
             {
                 File.Delete(dataZipPath);
             }
-            if (Utils.Data.MoveZip)
-                File.Move(this.ZipPath, dataZipPath);
-            else
-                File.Copy(this.ZipPath, dataZipPath);
+            File.Copy(this.ZipPath, dataZipPath);
             return true;
         }
 
