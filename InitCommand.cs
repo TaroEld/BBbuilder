@@ -186,27 +186,50 @@ namespace BBbuilder
 
         private void InitTemplateFiles(string _path, bool overwrite = false)
         {
-            string[] templateDirectories = Directory.GetDirectories(_path, "*.*", SearchOption.AllDirectories);
+            // this is an embarassing function but it more or less works now so I cba
             string upperCaseName = this.ModName[0].ToString().ToUpper() + this.ModName[1..];
             string nameSpaceName = GetNameSpaceName(upperCaseName);
+            string replaceNames(string _string)
+            {
+                _string = _string.Replace("$namespace", nameSpaceName);
+                _string = _string.Replace("$modname", this.ModName);
+                _string = _string.Replace("$uppercase", upperCaseName);
+                return _string;
+            }
+
+            string[] templateDirectories = Directory.GetDirectories(_path, "*.*", SearchOption.AllDirectories);
+            Array.Sort(templateDirectories);
+            string[] templateFiles = Directory.GetFiles(_path, "*.*", SearchOption.AllDirectories);
+            Array.Sort(templateFiles);
+            Array.Reverse(templateFiles);
+            List<string> toRemove = new();
+
             foreach (string directory in templateDirectories)
             {
                 if (!Directory.Exists(directory)) continue;  // already renamed it previously
-                string newDirectory = directory.Replace("$name", nameSpaceName);
-                newDirectory = newDirectory.Replace("$Space", this.ModName);
-                if (directory != newDirectory && !Directory.Exists(newDirectory)) Directory.Move(directory, newDirectory);
+                string newDirectory = replaceNames(directory);
+                if (directory != newDirectory && !Directory.Exists(newDirectory))
+                {
+                    Directory.CreateDirectory(newDirectory);
+                    toRemove.Add(directory);    
+                }
             }
-            string[] templateFiles = Directory.GetFiles(_path, "*.*", SearchOption.AllDirectories);
+
             foreach (string fileName in templateFiles)
             {
-                string newFileName = fileName.Replace("$Name", upperCaseName);
-                newFileName = newFileName.Replace("$name", this.ModName);
-                if (fileName != newFileName) File.Move(fileName, newFileName, overwrite);
+                string newFileName = replaceNames(fileName);
+                if (fileName != newFileName)
+                {
+                    File.Move(fileName, newFileName, overwrite);
+                }
                 string text = File.ReadAllText(newFileName);
-                text = text.Replace("$Name", upperCaseName);
-                text = text.Replace("$Space", nameSpaceName);
-                text = text.Replace("$name", this.ModName);
+                text = replaceNames(text);
                 File.WriteAllText(newFileName, text);
+            }
+
+            foreach(string dir in toRemove) {
+                if (!Directory.Exists(dir)) continue;
+                Directory.Delete(dir, true);
             }
         }
 

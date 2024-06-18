@@ -19,7 +19,7 @@ It can be useful to add the program folder to the environment variables, to be a
 If you wish to use ES3 transpiling, you will need to install node.js and have it available in your %PATH% environment. Download link: https://nodejs.org/en/download  
 Some optional features can only be used if you have git installed (so, available in your PATH / accessible from the command line). You can get it here: https://git-scm.com/downloads  . You should be using it when developing mods, anyways.  
 
-## How to use  
+## How to use
 This is a command line tool / CLI. This means that the program will be called over a cool looking black hacker terminal, while passing it [commands](#commands) and other values.   
 As that is often not very convenient, the tool will generate editor files for you, specifically for VSCode and Sublime Text. See here: [Editor config files](#editor-config-files) This will allow you to "build" your mod, as in create a new zip, copy it to data and relaunch the game, in one keybind press.
 Also, jump to [here](#example-usage) to get an idea of how that looks like.  
@@ -51,9 +51,9 @@ The template defines what files and folders will be created in the new mod direc
 The default templates are found in the [Templates](Templates) folder within the .zip. 
 You can customize these templates by either editing the existing ones, or adding new folders.  	
 Within the files and filenames, certain template strings are replaced: 
-	- "$name" -> <modname>
-	- "$Name" -> Upper-case-modname
-	- "$Space" -> CamelCase modname, where underscores are removed and the following letter capitalised. Example: "mod_new_thing" -> "ModNewThing"
+	- "$modname" -> <modname>
+	- "$uppercase" -> Upper-case-modname
+	- "$namespace" -> CamelCase modname, where underscores are removed and the following letter capitalised. Example: "mod_new_thing" -> "ModNewThing"
 
 Example usage: `bbbuilder init mod_my_first_mod -template ui -replace`
 

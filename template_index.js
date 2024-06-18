@@ -1,11 +1,11 @@
-class $Name {
+class $modname {
     sqHandle = null
-    static id = "$name";
+    static id = "$modname";
 
     onConnection(sqHandle) {
         this.sqHandle = sqHandle;
-        console.log("$name connected")
+        console.log("$modname connected")
     }
 }
 
-registerScreen($Name.id, new $Name());
+registerScreen($modname.id, new $modname());

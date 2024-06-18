@@ -1,5 +1,5 @@
 ::RENAME <- {
-	ID = "$name",
+	ID = "$modname",
 	Name = "RENAME",
 	Version = "1.0.0"
 }
