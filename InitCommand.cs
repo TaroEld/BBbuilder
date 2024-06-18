@@ -238,8 +238,16 @@ namespace BBbuilder
             var options = new JsonSerializerOptions { WriteIndented = true };
             string sublimeJsonString = JsonSerializer.Serialize(sublimeProjectObject, options);
             string vscodeJsonString = JsonSerializer.Serialize(vsCodeProjectObject, options);
-            File.WriteAllText(Path.Combine(this.ModPath, this.ModName + ".sublime-project"), sublimeJsonString);
-            File.WriteAllText(Path.Combine(this.ModPath, ".vscode", this.ModName + ".code-workspace"), vscodeJsonString);
+            if (Directory.GetFiles(this.ModPath, "*.sublime-project", SearchOption.AllDirectories).Length == 0) {
+                File.WriteAllText(Path.Combine(this.ModPath, this.ModName + ".sublime-project"), sublimeJsonString);
+            } else {
+                Console.WriteLine("Found sublime-project file in template, skipping creation.");
+            }
+            if (Directory.GetFiles(this.ModPath, "*.code-workspace", SearchOption.AllDirectories).Length == 0) {
+                File.WriteAllText(Path.Combine(this.ModPath, ".vscode", this.ModName + ".code-workspace"), vscodeJsonString);
+            } else {
+                Console.WriteLine("Found code-workspace file in template, skipping creation.");
+            }
             return true;
         }
     }
