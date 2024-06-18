@@ -122,7 +122,7 @@ namespace BBbuilder
 
         private bool DecompileFiles()
         {
-            string[] allCnutFilesAsPath = Directory.GetFiles(Path.Combine(this.ModPath, "scripts"), "*.cnut", SearchOption.AllDirectories);
+            string[] allCnutFilesAsPath = Directory.GetFiles(this.ModPath, "*.cnut", SearchOption.AllDirectories);
             string decompileOutput = "";
             if (allCnutFilesAsPath.Length == 0)
             {
