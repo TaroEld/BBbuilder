@@ -23,6 +23,9 @@ namespace BBbuilder
             };
             var config = (ConfigCommand)Commands["config"];
             config.SetupConfig();
+            // exit early instead of printing the whole config
+            if (Utils.UpdatePathVariable())
+                return 1;
 
             string[] arguments = args;
             if (arguments == null || arguments.Length == 0)
