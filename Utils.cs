@@ -16,7 +16,7 @@ namespace BBbuilder
         public static string BBRUSHERPATH = Path.Combine(EXECUTINGFOLDER, "tools", "bbrusher.exe");
         public static string BBSQPATH = Path.Combine(EXECUTINGFOLDER, "tools", "bbsq.exe");
         public static string NUTCRACKERPATH = Path.Combine(EXECUTINGFOLDER, "tools", "nutcracker.exe");
-        public static string CONFIGPATH = Path.Combine(Utils.EXECUTINGFOLDER, "tools", "config.json");
+        public static string CONFIGPATH = Path.Combine(EXECUTINGFOLDER, "tools", "config.json");
         public static ConfigData Data { get; set; }
 
 
@@ -28,11 +28,11 @@ namespace BBbuilder
                 Console.WriteLine("Stopping BattleBrothers.exe...");
                 instance.Kill();
             }
-            string bbFolder = Directory.GetParent(Utils.Data.GamePath).ToString();
+            string bbFolder = Directory.GetParent(Data.GamePath).ToString();
             string bbExe = Path.Combine(bbFolder, "win32", "BattleBrothers.exe");
             if (!File.Exists(bbExe))
             {
-                Console.Error.WriteLine($"Battle Brothers Exe not found under path {bbExe}! Check your data path! Current path:({Utils.Data.GamePath})");
+                Console.Error.WriteLine($"Battle Brothers Exe not found under path {bbExe}! Check your data path! Current path:({Data.GamePath})");
                 return false;
             }
             Console.WriteLine($"Starting Battle Brothers ({bbExe})");
@@ -103,25 +103,26 @@ namespace BBbuilder
             Console.WriteLine($"BBBUILDER PATH HAS BEEN UPDATED - RESTART YOUR EDITOR / TERMINAL!");
             return true; // has changed
         }
+
         public static void CreateJSON()
         {
-            Utils.Data = new ConfigData();
-            Utils.WriteJSON(Utils.Data);
+            Data = new ConfigData();
+            WriteJSON(Data);
         }
 
         public static void WriteJSON(ConfigData _configData)
         {
             string jsonString = JsonSerializer.Serialize(_configData);
-            File.WriteAllText(Utils.CONFIGPATH, jsonString);
+            File.WriteAllText(CONFIGPATH, jsonString);
         }
 
         public static void GetJsonData()
         {
-            if (!File.Exists(Utils.CONFIGPATH))
+            if (!File.Exists(CONFIGPATH))
             {
-                Utils.CreateJSON();
+                CreateJSON();
             }
-            Utils.Data = JsonSerializer.Deserialize<ConfigData>(File.ReadAllText(Utils.CONFIGPATH))!;
+            Data = JsonSerializer.Deserialize<ConfigData>(File.ReadAllText(CONFIGPATH))!;
         }
 
         public static string ReadFile(string _path)
