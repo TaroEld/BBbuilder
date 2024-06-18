@@ -68,10 +68,8 @@ namespace BBbuilder
             if (envPaths.Length != 0)
             {
                 currentBBBPath = envPaths[0];
-                Console.WriteLine("Current Path : " + currentBBBPath);
                 if (currentBBBPath + "\\" == EXECUTINGFOLDER)
                 {
-                    Console.WriteLine($"{currentBBBPath} == {EXECUTINGFOLDER}");
                     return false;
                 }
             }
