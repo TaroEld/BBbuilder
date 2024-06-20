@@ -90,59 +90,47 @@ namespace BBbuilder
 
         public static bool UpdatePathVariable()
         {
-            var processStartInfo = new ProcessStartInfo
-            {
-                FileName = "where",
-                Arguments = "bbbuilder",
-                RedirectStandardOutput = true,
-                RedirectStandardError = false,
-                UseShellExecute = false,
-                WorkingDirectory = Path.GetTempPath()
-
-            };
-            string output;
-            using (var process = Process.Start(processStartInfo))
-            {
-                process.WaitForExit();
-                output = process.StandardOutput.ReadToEnd();
-            }
-            string[] envPaths = output.Split("\r\n").Where(l => l != "").Select(l => new FileInfo(l).Directory.FullName).ToArray();
-            string currentBBBPath = "";
-            if (envPaths.Length != 0)
-            {
-                currentBBBPath = envPaths[0];
-                if (currentBBBPath + "\\" == EXECUTINGFOLDER)
-                {
-                    return false;
-                }
-            }
-
             // get user path environment
             var scope = EnvironmentVariableTarget.User;
             string oldPath = Environment.GetEnvironmentVariable("PATH", scope);
-            // can be null, so init it
-            if (oldPath == null)
-            {
-                oldPath = "";
-            }
+            string[] allFolders = oldPath.Split(";");
+            List<string> newFolders = new List<string>();   
+            bool hasChanged = false;
+            bool hasFolder = false;
 
-            string newPath;
-            // path has changed; update with new path
-            if (currentBBBPath != "" && oldPath != "" && oldPath.Contains(currentBBBPath))
+            foreach (string folder in allFolders)
             {
-                Console.WriteLine($"Replacing old BBBuilder user %PATH% folder with new folder: {currentBBBPath} -> {EXECUTINGFOLDER}, please wait...");
-                newPath = oldPath.Replace(currentBBBPath, EXECUTINGFOLDER);
+                if (File.Exists(Path.Combine(folder, "BBbuilder.exe")))
+                {
+                    if (folder != EXECUTINGFOLDER)
+                    {
+                        Console.WriteLine($"Removing folder from %PATH%: {folder}");
+                        hasChanged = true;
+                        continue; 
+                    }
+                    else
+                    {
+                        hasFolder = true;
+                    }
 
+                }
+                newFolders.Add(folder);
             }
-            // path wasn't in PATH, add path instead
-            else
+            
+            if (!hasFolder)
             {
-                Console.WriteLine($"Adding BBBuilder folder to user %PATH%: {EXECUTINGFOLDER}, please wait...");
-                newPath = oldPath + ";" + EXECUTINGFOLDER;
+                Console.WriteLine($"Adding BBBuilder folder to user %PATH%: {EXECUTINGFOLDER}");
+                newFolders.Add(EXECUTINGFOLDER);
+                hasChanged = true;
             }
-            Environment.SetEnvironmentVariable("PATH", newPath, scope);
-            Console.WriteLine($"BBBUILDER PATH HAS BEEN UPDATED - RESTART YOUR EDITOR / TERMINAL!");
-            return true; // has changed
+            if (hasChanged)
+            {
+                Console.WriteLine($"Updating PATH environment variable, please wait...");
+                string newPath = String.Join(";", newFolders.ToArray()); 
+                Environment.SetEnvironmentVariable("PATH", newPath, scope);
+                Console.WriteLine($"BBBUILDER PATH HAS BEEN UPDATED - RESTART YOUR EDITOR / TERMINAL!");
+            }
+            return hasChanged;
         }
 
         public static void CreateJSON()
