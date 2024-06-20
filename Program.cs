@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace BBbuilder
 {
@@ -7,7 +8,6 @@ namespace BBbuilder
     {
         static int Main(string[] args)
         {
-           
             var watch = new System.Diagnostics.Stopwatch();
             watch.Start();
 
