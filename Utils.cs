@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Text.Json;
+using Microsoft.Win32;
 
 namespace BBbuilder
 {
@@ -17,10 +19,24 @@ namespace BBbuilder
         public static string BBSQPATH = Path.Combine(EXECUTINGFOLDER, "tools", "bbsq.exe");
         public static string NUTCRACKERPATH = Path.Combine(EXECUTINGFOLDER, "tools", "nutcracker.exe");
         public static string CONFIGPATH = Path.Combine(EXECUTINGFOLDER, "tools", "config.json");
+        public static string BBSTEAMID = "365360";
         public static ConfigData Data { get; set; }
 
 
         public static bool KillAndStartBB()
+        {
+            KillBB();
+            if (Data.UseSteam && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return StartFromSteam();
+            }
+            else
+            {
+                return StartFromExe();
+            }
+        }
+
+        static void KillBB()
         {
             Process[] activeBBInstances = Process.GetProcessesByName("BattleBrothers");
             foreach (Process instance in activeBBInstances)
@@ -28,6 +44,33 @@ namespace BBbuilder
                 Console.WriteLine("Stopping BattleBrothers.exe...");
                 instance.Kill();
             }
+        }
+
+        [SupportedOSPlatform("windows")]
+        static bool StartFromSteam()
+        {
+            RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\WOW6432Node\\Valve\\Steam", false);
+            var folder = key.GetValue("InstallPath");
+            if (folder == null)
+            {
+                Console.Error.WriteLine("Could not start via Steam: steam folder not found in registry!");
+                return false;
+            }
+                  
+            var exe = key.GetValue("InstallPath") + "\\steam.exe";
+            Console.WriteLine(exe);
+            using (Process startGame = new())
+            {
+                startGame.StartInfo.UseShellExecute = true;
+                startGame.StartInfo.FileName = exe;
+                startGame.StartInfo.Arguments = $"steam://rungameid/{BBSTEAMID}";
+                startGame.Start();
+            }
+            return true;
+        }
+
+        static bool StartFromExe()
+        {
             string bbFolder = Directory.GetParent(Data.GamePath).ToString();
             string bbExe = Path.Combine(bbFolder, "win32", "BattleBrothers.exe");
             if (!File.Exists(bbExe))

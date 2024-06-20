@@ -16,6 +16,8 @@ namespace BBbuilder
                     "\n    A new mod created through init or extract is automatically added to its own workspace, so no need to specify it.");
         readonly OptionFlag MoveZip = new("-movezip <true|false>", "Whether you'd like to delete the zip after building the mod and copying it to `datapath`." +
                     "\n    Example: 'bbbuilder config -movezip true'");
+        readonly OptionFlag UseSteam = new("-usesteam <true|false>", "Whether you'd like to start the game via Steam instead of the exe in the datapath. Needed for a patched .exe usinfg the MSU launcher. Requires Windows for now." +
+            "\n    Example: 'bbbuilder config -usesteam true'");
 
         readonly OptionFlag Clear = new("-clear", "Clears all settings.");
         public ConfigCommand()
@@ -24,7 +26,7 @@ namespace BBbuilder
             this.Description = "Configure the settings that are used to create and build mods";
             this.Flags = new OptionFlag[]
             {
-              this.DataPath, this.ModsPath, this.Folders, this.MoveZip, this.Clear
+              this.DataPath, this.ModsPath, this.Folders, this.MoveZip, this.UseSteam, this.Clear
             };
         }
 
@@ -85,6 +87,7 @@ namespace BBbuilder
             {
                 Console.WriteLine(line);
             }
+            Console.WriteLine($"Use Steam: {Utils.Data.UseSteam}");
             Console.WriteLine($"Move Zip: {Utils.Data.MoveZip}");
         }
 
@@ -125,6 +128,10 @@ namespace BBbuilder
             if (this.MoveZip)
             {
                 HandleMoveZipCommand(this.MoveZip);
+            }
+            if (this.UseSteam)
+            {
+                HandleUseSteamCommand(this.UseSteam);
             }
             PrintConfig();
             Utils.WriteJSON(Utils.Data);
@@ -187,6 +194,17 @@ namespace BBbuilder
             }
             Utils.Data.MoveZip = Convert.ToBoolean(_flag.PositionalValue);
             Console.WriteLine($"Set MoveZip to {Convert.ToBoolean(_flag.PositionalValue)}.");
+        }
+
+        private void HandleUseSteamCommand(OptionFlag _flag)
+        {
+            if (_flag.PositionalValue != "true" && _flag.PositionalValue != "false")
+            {
+                Console.WriteLine("You need to pass either 'true' or 'false' to -usesteam !");
+                return;
+            }
+            Utils.Data.UseSteam = Convert.ToBoolean(_flag.PositionalValue);
+            Console.WriteLine($"Set UseSteam to {Convert.ToBoolean(_flag.PositionalValue)}.");
         }
 
         private void HandleClearCommand()
