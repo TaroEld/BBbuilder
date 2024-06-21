@@ -210,26 +210,43 @@ namespace BBbuilder
 
         public static bool IsGitInstalled()
         {
+            string fileName;
+            string arguments;
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                fileName = "cmd.exe";
+                arguments = "/c where git";
+            }
+            else
+            {
+                fileName = "/bin/sh";
+                arguments = "-c \"command -v git\"";
+            }
+
             try
             {
-                var processStartInfo = new ProcessStartInfo
+                using (var process = new Process())
                 {
-                    FileName = "where",
-                    Arguments = "git",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                };
+                    process.StartInfo = new ProcessStartInfo
+                    {
+                        FileName = fileName,
+                        Arguments = arguments,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
 
-                using (var process = Process.Start(processStartInfo))
-                {
-                    StreamReader sr = process.StandardError;
-                    string output = sr.ReadToEnd();
+                    process.Start();
+                    string output = process.StandardOutput.ReadToEnd();
+                    string error = process.StandardError.ReadToEnd();
                     process.WaitForExit();
-                    return output.Length == 0;
+
+                    return process.ExitCode == 0 && !string.IsNullOrWhiteSpace(output);
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }
