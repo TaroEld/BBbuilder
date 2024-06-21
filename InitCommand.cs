@@ -220,42 +220,43 @@ namespace BBbuilder
 
         private bool WriteProjectFiles()
         {
-            var sublimeProjectObject = new SublimeProject
-            {
-                build_systems = Array.Empty<string>(),
-                folders = new List<Folder>()
-            };
-            var vsCodeProjectObject = new VSCodeProject
-            {
-                settings = Array.Empty<string>(),
-                folders = new List<Folder>()
-            };
-            // For vscode, the mod folder must come first
-            vsCodeProjectObject.folders.Add(new Folder { path = ".." });
-            if (Utils.Data.FoldersArray != null)
-            {
-                foreach (string line in Utils.Data.FoldersArray)
-                {
-                    sublimeProjectObject.folders.Add(new Folder { path = line });
-                    vsCodeProjectObject.folders.Add(new Folder { path = line });
-                }
-            }
-            // Add mod folder too
-            sublimeProjectObject.folders.Add(new Folder { path = "." });
-
+            bool hasSublime = Directory.GetFiles(this.ModPath, "*.sublime-project", SearchOption.AllDirectories).Length == 0;
+            bool hasVS = Directory.GetFiles(this.ModPath, "*.code-workspace", SearchOption.AllDirectories).Length == 0;
+            var foldersList = (Utils.Data.FoldersArray?.Select(line => new Folder { path = line }) ?? Enumerable.Empty<Folder>()).ToList();
+            if (hasSublime && hasVS)
+                return true;
             var options = new JsonSerializerOptions { WriteIndented = true };
-            string sublimeJsonString = JsonSerializer.Serialize(sublimeProjectObject, options);
-            string vscodeJsonString = JsonSerializer.Serialize(vsCodeProjectObject, options);
-            if (Directory.GetFiles(this.ModPath, "*.sublime-project", SearchOption.AllDirectories).Length == 0) {
-                File.WriteAllText(Path.Combine(this.ModPath, this.ModName + ".sublime-project"), sublimeJsonString);
-            } else {
+            if (!hasSublime)
+            {
+                var sublimeProjectObject = new SublimeProject
+                {
+                    build_systems = Array.Empty<string>(),
+                    folders = new List<Folder>(foldersList) { new Folder { path = "." } }
+                };
+                File.WriteAllText(Path.Combine(this.ModPath, this.ModName + ".sublime-project"), JsonSerializer.Serialize(sublimeProjectObject, options));
+            } 
+            else
+            {
                 Console.WriteLine("Found sublime-project file in template, skipping creation.");
             }
-            if (Directory.GetFiles(this.ModPath, "*.code-workspace", SearchOption.AllDirectories).Length == 0) {
-                File.WriteAllText(Path.Combine(this.ModPath, ".vscode", this.ModName + ".code-workspace"), vscodeJsonString);
-            } else {
-                Console.WriteLine("Found code-workspace file in template, skipping creation.");
+
+            if (!hasVS)
+            {
+                var vsCodeProjectObject = new VSCodeProject
+                {
+                    settings = Array.Empty<string>(),
+                    folders = new List<Folder> { new Folder { path = ".." } }
+                };
+                // For vscode, the mod folder must come first
+                vsCodeProjectObject.folders.AddRange(foldersList);
+
+                File.WriteAllText(Path.Combine(this.ModPath, ".vscode", this.ModName + ".code-workspace"), JsonSerializer.Serialize(vsCodeProjectObject, options));
             }
+            else
+            {
+                Console.WriteLine("Found sublime-project file in template, skipping creation.");
+            }
+
             return true;
         }
     }
