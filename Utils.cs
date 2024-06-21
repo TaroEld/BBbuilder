@@ -25,7 +25,12 @@ namespace BBbuilder
 
         public static bool KillAndStartBB()
         {
-            KillBB();
+            if (!KillBB())
+            {
+                Console.WriteLine("Failed to stop Battle Brothers. Please close it manually and try again.");
+                return false;
+            }
+
             if (Data.UseSteam && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 return StartFromSteam();
@@ -36,37 +41,72 @@ namespace BBbuilder
             }
         }
 
-        static void KillBB()
+        static bool KillBB()
         {
             Process[] activeBBInstances = Process.GetProcessesByName("BattleBrothers");
             foreach (Process instance in activeBBInstances)
             {
                 Console.WriteLine("Stopping BattleBrothers.exe...");
-                instance.Kill();
+                try
+                {
+                    instance.Kill();
+                    if (!instance.WaitForExit(5000))  // Wait up to 5 seconds
+                    {
+                        Console.WriteLine("Process did not exit in time.");
+                        return false;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error stopping process: {ex.Message}");
+                    return false;
+                }
             }
+            return true;
         }
 
         [SupportedOSPlatform("windows")]
         static bool StartFromSteam()
         {
-            RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\WOW6432Node\\Valve\\Steam", false);
-            var folder = key.GetValue("InstallPath");
-            if (folder == null)
+            using (var key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\WOW6432Node\\Valve\\Steam", false))
             {
-                Console.Error.WriteLine("Could not start via Steam: steam folder not found in registry!");
-                return false;
+                if (key == null)
+                {
+                    Console.Error.WriteLine("Could not start via Steam: Steam registry key not found!");
+                    return false;
+                }
+
+                var folder = key.GetValue("InstallPath") as string;
+                if (string.IsNullOrEmpty(folder))
+                {
+                    Console.Error.WriteLine("Could not start via Steam: Steam installation folder not found in registry!");
+                    return false;
+                }
+
+                var exe = Path.Combine(folder, "steam.exe");
+                if (!File.Exists(exe))
+                {
+                    Console.Error.WriteLine($"Could not start via Steam: {exe} not found!");
+                    return false;
+                }
+
+                try
+                {
+                    using (Process startGame = new Process())
+                    {
+                        startGame.StartInfo.UseShellExecute = true;
+                        startGame.StartInfo.FileName = exe;
+                        startGame.StartInfo.Arguments = $"steam://rungameid/{BBSTEAMID}";
+                        startGame.Start();
+                    }
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"Error starting Steam: {ex.Message}");
+                    return false;
+                }
             }
-                  
-            var exe = key.GetValue("InstallPath") + "\\steam.exe";
-            Console.WriteLine(exe);
-            using (Process startGame = new())
-            {
-                startGame.StartInfo.UseShellExecute = true;
-                startGame.StartInfo.FileName = exe;
-                startGame.StartInfo.Arguments = $"steam://rungameid/{BBSTEAMID}";
-                startGame.Start();
-            }
-            return true;
         }
 
         static bool StartFromExe()
@@ -90,46 +130,38 @@ namespace BBbuilder
 
         public static bool UpdatePathVariable()
         {
-            // get user path environment
             var scope = EnvironmentVariableTarget.User;
-            string oldPath = Environment.GetEnvironmentVariable("PATH", scope);
-            string[] allFolders = oldPath.Split(";");
-            List<string> newFolders = new List<string>();   
+            var oldPath = Environment.GetEnvironmentVariable("PATH", scope);
+            var folders = new HashSet<string>(oldPath.Split(';', StringSplitOptions.RemoveEmptyEntries));
+
             bool hasChanged = false;
-            bool hasFolder = false;
+            bool hasExecutingFolder = folders.Contains(EXECUTINGFOLDER);
 
-            foreach (string folder in allFolders)
+            folders.RemoveWhere(folder =>
             {
-                if (File.Exists(Path.Combine(folder, "BBbuilder.exe")))
+                if (folder != EXECUTINGFOLDER && File.Exists(Path.Combine(folder, "BBbuilder.exe")))
                 {
-                    if (folder != EXECUTINGFOLDER)
-                    {
-                        Console.WriteLine($"Removing folder from %PATH%: {folder}");
-                        hasChanged = true;
-                        continue; 
-                    }
-                    else
-                    {
-                        hasFolder = true;
-                    }
-
+                    Console.WriteLine($"Removing folder from %PATH%: {folder}");
+                    hasChanged = true;
+                    return true;
                 }
-                newFolders.Add(folder);
-            }
-            
-            if (!hasFolder)
+                return false;
+            });
+
+            if (!hasExecutingFolder)
             {
                 Console.WriteLine($"Adding BBBuilder folder to user %PATH%: {EXECUTINGFOLDER}");
-                newFolders.Add(EXECUTINGFOLDER);
+                folders.Add(EXECUTINGFOLDER);
                 hasChanged = true;
             }
+
             if (hasChanged)
             {
-                Console.WriteLine($"Updating PATH environment variable, please wait...");
-                string newPath = String.Join(";", newFolders.ToArray()); 
-                Environment.SetEnvironmentVariable("PATH", newPath, scope);
-                Console.WriteLine($"BBBUILDER PATH HAS BEEN UPDATED - RESTART YOUR EDITOR / TERMINAL!");
+                Console.WriteLine("Updating PATH environment variable, please wait...");
+                Environment.SetEnvironmentVariable("PATH", string.Join(';', folders), scope);
+                Console.WriteLine("BBBUILDER PATH HAS BEEN UPDATED - RESTART YOUR EDITOR / TERMINAL!");
             }
+
             return hasChanged;
         }
 
