@@ -179,32 +179,23 @@ namespace BBbuilder
         {
             string tempPath = this.ModPath + "_bbb_temp";
             Utils.Copy(this.TemplatePath, tempPath);
-            InitTemplateFiles(tempPath, true);
+            InitTemplateFiles(tempPath);
             Utils.Copy(tempPath, this.ModPath);
             Directory.Delete(tempPath, true);
         }
 
-        private void InitTemplateFiles(string _path, bool overwrite = false)
+        private void InitTemplateFiles(string _path)
         {
-            // this is an embarassing function but it more or less works now so I cba
             string upperCaseName = this.ModName[0].ToString().ToUpper() + this.ModName[1..];
             string nameSpaceName = GetNameSpaceName(upperCaseName);
-            string replaceNames(string _string)
-            {
-                _string = _string.Replace("$namespace", nameSpaceName);
-                _string = _string.Replace("$modname", this.ModName);
-                _string = _string.Replace("$uppercase", upperCaseName);
-                return _string;
-            }
+            string replaceNames(string input) => input
+                .Replace("$namespace", nameSpaceName)
+                .Replace("$modname", ModName)
+                .Replace("$uppercase", upperCaseName);
 
-            string[] templateDirectories = Directory.GetDirectories(_path, "*.*", SearchOption.AllDirectories);
-            Array.Sort(templateDirectories);
-            string[] templateFiles = Directory.GetFiles(_path, "*.*", SearchOption.AllDirectories);
-            Array.Sort(templateFiles);
-            Array.Reverse(templateFiles);
             List<string> toRemove = new();
 
-            foreach (string directory in templateDirectories)
+            foreach (string directory in Directory.GetDirectories(_path, "*.*", SearchOption.AllDirectories).OrderBy(d => d))
             {
                 if (!Directory.Exists(directory)) continue;  // already renamed it previously
                 string newDirectory = replaceNames(directory);
@@ -215,19 +206,13 @@ namespace BBbuilder
                 }
             }
 
-            foreach (string fileName in templateFiles)
+            foreach (string fileName in Directory.GetFiles(_path, "*", SearchOption.AllDirectories).OrderByDescending(f => f))
             {
-                string newFileName = replaceNames(fileName);
-                if (fileName != newFileName)
-                {
-                    File.Move(fileName, newFileName, overwrite);
-                }
-                string text = File.ReadAllText(newFileName);
-                text = replaceNames(text);
-                File.WriteAllText(newFileName, text);
+                File.WriteAllText(fileName, replaceNames(File.ReadAllText(fileName)));
+                File.Move(fileName, replaceNames(fileName), true);
             }
 
-            foreach(string dir in toRemove) {
+            foreach (string dir in toRemove) {
                 if (!Directory.Exists(dir)) continue;
                 Directory.Delete(dir, true);
             }
