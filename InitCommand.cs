@@ -12,8 +12,8 @@ namespace BBbuilder
         string ModName;
         string ModPath;
         string TemplatePath;
-        readonly OptionFlag Replace = new("-replace", "Overwrite the files in an existing folder. Keeps other files in the existing folder.");
-        readonly OptionFlag AltPath = new("-altpath <path>", "Specify another folder to place the new mod. " +
+        readonly OptionFlag Replace = new("-overwrite", "Overwrite the files in an existing folder. Keeps other files in the existing folder.");
+        readonly OptionFlag AltPath = new("-directory <path>", "Specify another folder to place the new mod. " +
             "\n    Example: `init mod_my_first_mod altpath \"C:\\BB Modding\\My_Mods\\\"` ");
         readonly OptionFlag Template = new("-template <templatename>", " Specify which template to use. The template defines what files and folders will be created in the new mod directory. " +
             "\nThe default templates are found in the `Templates` folder within the .zip. You can customize these templates by either editing the existing ones, or adding new folders." +
@@ -42,7 +42,7 @@ namespace BBbuilder
             }
             if (Directory.Exists(this.ModPath) && !this.Replace)
             {
-                Console.WriteLine($"Directory '{this.ModPath}' already exists! Use flag '-replace' to overwrite existing folder. Exiting to avoid mistakes...");
+                Console.WriteLine($"Directory '{this.ModPath}' already exists! Use flag '-overwrite' to overwrite existing folder. Exiting to avoid mistakes...");
                 return false;
             }
 

@@ -34,6 +34,7 @@ A number of config options are available to be added and changed with `config`. 
 - `-modpath <path>`: Set the path to the directory of your mods folder, where newly initialised or extracted mods will be placed by default.
 - `-folders <folder1,[folder2],[...]>`: Comma-separated list **without spaces inbetween** of folders to be included in the editor config files (for example, adding the vanilla game files folder).
 - `-movezip <true|false>`: Whether you'd like to delete the zip after building the mod and copying it to `datapath`. You will need to pass either `true` or `false`. Default is `false`.  
+- `-usesteam <true|false>`: Whether BB should start via Steam. If this is set to true, the program will find the steam install location using the registry, and start the game using the steam API. Requires Windows. Primarly intended to be used with the BB launcher program.  
 
 ### init \<modname\>
 Create a new mod with the name `<modname>`. A folder structure is created, providing a light scaffold of folders and files. This speeds up the generation of new mods and provides consistency between your creations.  
@@ -41,10 +42,10 @@ By default, the mod will be initialised into the folder specified in the `modpat
 The generated folders and files depend on the template used, see [Templates](#templates)
 If `git` is available (in PATH), a git repository will be initialised.  
 #### Flags
-- `-altpath <path>`: Specify another folder to place the new mod. Example: `init mod_my_first_mod -altpath "C:\BB Modding\My_Mods\"` 
+- `-directory <path>`: Specify another folder to place the new mod. Example: `init mod_my_first_mod -directory "C:\BB Modding\My_Mods\"` 
 - `-template <templatename>`: Specify which template to use. 
 \n Example: `bbbuilder init my_cool_mod -template ui`
-- `-replace`: Indicate that you'd like to replace the files in an existing folder. Only files that exist in the template will be overwritten in the target folder. If this flag is not specified, the program will show you an error message if you specify a folder that already exists.
+- `-overwrite`: Indicate that you'd like to replace the files in an existing folder. Only files that exist in the template will be overwritten in the target folder. If this flag is not specified, the program will show you an error message if you specify a folder that already exists.
 
 #### Templates
 The template defines what files and folders will be created in the new mod directory. 
@@ -55,16 +56,16 @@ Within the files and filenames, certain template strings are replaced:
 	- "$uppercase" -> Upper-case-modname
 	- "$namespace" -> CamelCase modname, where underscores are removed and the following letter capitalised. Example: "mod_new_thing" -> "ModNewThing"
 
-Example usage: `bbbuilder init mod_my_first_mod -template ui -replace`
+Example usage: `bbbuilder init mod_my_first_mod -template ui -overwrite`
 
 ### extract \<zipPath\>
 Equal to the init command, but extracts existing mods instead, decompiling files if necessary. This is useful if you downloaded a mod from someone else, and would like to take a look. The other `init` flags can also be used here.
 *** <zipPath>: Specify path of mod to extract. The file will be put in your specified 'mods' directory. (Example: bbuilder extract C:/Users/user/Desktop/mod_test.zip)
 #### Flags
-- '-replace ': Replace the files in an existing folder.
-- '-rename <newname>': Renames the extracted mod.
-- '-altpath <path>': Specify alternative path to extract the mod to.
-Example usage: `bbbuilder extract "C:\Users\Taro\Downloads\mod_cool_things.zip" -altpath "C:\BB Modding\Other_peoples_mods\"`
+- '-overwrite ': Replace the files in an existing folder.
+- '-name <newname>': Renames the extracted mod.
+- '-directory <path>': Specify alternative path to extract the mod to.
+Example usage: `bbbuilder extract "C:\Users\Taro\Downloads\mod_cool_things.zip" -directory "C:\BB Modding\Other_peoples_mods\"`
 
 ### build \<modname\>
 The files of your mod are packed together to create a new zip. .nut files are compiled to test for syntax errors, and sprites are packed into brush files.  

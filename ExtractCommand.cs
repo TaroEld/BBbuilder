@@ -14,9 +14,9 @@ namespace BBbuilder
         string ModPath;
         string ModName;
         string ZipPath;
-        readonly OptionFlag Replace = new("-replace", "Replace the files in an existing folder.");
-        readonly OptionFlag Rename = new("-rename <newname>", "Renames the extracted mod.") { FlagAlias = "-n"};
-        readonly OptionFlag AltPath = new("-altpath <path>", "Specify alternative path to extract the mod to.");
+        readonly OptionFlag Replace = new("-overwrite", "Replace the files in an existing folder.");
+        readonly OptionFlag Rename = new("-name <newname>", "Renames the extracted mod.");
+        readonly OptionFlag AltPath = new("-directory <path>", "Specify alternative path to extract the mod to.");
         List<string> InitCommandArray;
         public ExtractCommand()
         {
@@ -94,7 +94,7 @@ namespace BBbuilder
                 this.InitCommandArray.Add(this.AltPath.PositionalValue);
             }
             if (this.Replace)
-                this.InitCommandArray.Add("-replace");
+                this.InitCommandArray.Add("-overwrite");
             this.InitCommandArray.Add("-template");
             this.InitCommandArray.Add("blank");
             return true;
