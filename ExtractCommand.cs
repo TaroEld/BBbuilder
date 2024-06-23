@@ -15,7 +15,7 @@ namespace BBbuilder
         string ModName;
         string ZipPath;
         readonly OptionFlag Replace = new("-replace", "Replace the files in an existing folder.");
-        readonly OptionFlag Rename = new("-rename <newname>", "Renames the extracted mod.");
+        readonly OptionFlag Rename = new("-rename <newname>", "Renames the extracted mod.") { FlagAlias = "-n"};
         readonly OptionFlag AltPath = new("-altpath <path>", "Specify alternative path to extract the mod to.");
         List<string> InitCommandArray;
         public ExtractCommand()

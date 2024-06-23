@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Xml.Linq;
 
 
 namespace BBbuilder
@@ -10,6 +11,7 @@ namespace BBbuilder
     {
         public bool Value;
         public string Flag;
+        public string FlagAlias;
         public readonly string Parameter;
         public readonly string Description;
         readonly bool Positional;
@@ -27,31 +29,38 @@ namespace BBbuilder
                 this.Flag = _flag;
                 this.Positional = false;
             }
+            this.FlagAlias = this.Flag.Substring(0, 2);
             this.Description = _description;
             this.Value = false;
-            
         }
         public void Validate(List<string> _args)
         {
             int idx = _args.IndexOf(this.Flag);
-            if (idx > -1)
+            if (idx == -1)
             {
-                _args.RemoveAt(idx);
-                this.Value = true;
-                if (this.Positional)
+                idx = _args.IndexOf(this.FlagAlias);
+            }
+            if (idx == -1)
+            {
+                this.Value = false;
+                return;
+            }
+            _args.RemoveAt(idx);
+            this.Value = true;
+            if (this.Positional)
+            {
+                if (_args.Count < idx)
                 {
-                    if (_args.Count < idx)
-                    {
-                        Console.WriteLine($"Passed positional flag {this.Flag} but no fitting argument found!");
-                        throw new Exception();
-                    }
-                    this.PositionalValue = _args[idx];
-                    _args.RemoveAt(idx);
+                    Console.WriteLine($"Passed positional flag {this.Flag} but no fitting argument found!");
+                    throw new Exception();
                 }
+                this.PositionalValue = _args[idx];
+                _args.RemoveAt(idx);
+                Console.WriteLine($"Value of {this.Flag}: {this.PositionalValue}");
             }
             else
             {
-                this.Value = false;
+                Console.WriteLine($"Value of {this.Flag}: {this.Value}");
             }
         }
 
