@@ -48,12 +48,11 @@ namespace BBbuilder
 
             if (!this.Template)
             {
-                Console.WriteLine("No template specified, using default.");
+                Console.WriteLine("No template specified, using 'default'.");
                 this.TemplatePath = Path.Combine(Utils.EXECUTINGFOLDER, "Templates", "default");
             }
             else
             {
-                Console.WriteLine($"Using template : '{this.Template.PositionalValue}'");
                 this.TemplatePath = Path.Combine(Utils.EXECUTINGFOLDER, "Templates", this.Template.PositionalValue);
             }   
             if (!Directory.Exists(this.TemplatePath))
