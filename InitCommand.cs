@@ -218,11 +218,11 @@ namespace BBbuilder
 
         private bool WriteProjectFiles()
         {
-            bool hasSublime = Directory.GetFiles(this.ModPath, "*.sublime-project", SearchOption.AllDirectories).Length == 0;
-            bool hasVS = Directory.GetFiles(this.ModPath, "*.code-workspace", SearchOption.AllDirectories).Length == 0;
-            var foldersList = (Utils.Data.FoldersArray?.Select(line => new Folder { path = line }) ?? Enumerable.Empty<Folder>()).ToList();
+            bool hasSublime = Directory.GetFiles(this.ModPath, "*.sublime-project", SearchOption.AllDirectories).Length != 0;
+            bool hasVS = Directory.GetFiles(this.ModPath, "*.code-workspace", SearchOption.AllDirectories).Length != 0;
             if (hasSublime && hasVS)
                 return true;
+            var foldersList = (Utils.Data.FoldersArray?.Select(line => new Folder { path = line }) ?? Enumerable.Empty<Folder>()).ToList();
             var options = new JsonSerializerOptions { WriteIndented = true };
             if (!hasSublime)
             {
