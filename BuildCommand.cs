@@ -42,7 +42,6 @@ namespace BBbuilder
             {
                 "<modPath>: Specify the path of the mod to be built. (Example: bbuilder build G:/Games/BB/Mods/WIP/mod_msu)",
             };
-            this.Flags = new OptionFlag[] {this.StartGame, this.Transpile, this.Rebuild, this.Diff, this.Debug};
             this.FileEditDatesInFolder = new();
             this.FileEditDatesInDB = new();
             this.FilesWhichChanged = new();

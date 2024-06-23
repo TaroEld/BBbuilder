@@ -24,10 +24,6 @@ namespace BBbuilder
         {
             this.Name = "config";
             this.Description = "Configure the settings that are used to create and build mods";
-            this.Flags = new OptionFlag[]
-            {
-              this.DataPath, this.ModsPath, this.Folders, this.MoveZip, this.UseSteam, this.Clear
-            };
         }
 
         public void SetupConfig()

@@ -27,7 +27,6 @@ namespace BBbuilder
                 "<zipPath>: Specify path of mod to extract. The file will be put in your specified 'mods' directory. (Example: bbuilder extract C:/Users/user/Desktop/mod_test.zip)"
             };
             this.InitCommandArray = new List<string>();
-            this.Flags = new OptionFlag[] { this.Replace, this.Rename, this.AltPath }; 
         }
 
         public override bool HandleCommand(string[] _args)

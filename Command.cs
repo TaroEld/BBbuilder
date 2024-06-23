@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -13,6 +14,21 @@ namespace BBbuilder
         public Dictionary<string, string> Commands = new();
         public String[] Arguments;
         public OptionFlag[] Flags;
+
+        protected Command()
+        {
+            Flags = GetOptionFlags();
+        }
+
+        private OptionFlag[] GetOptionFlags()
+        {
+            return this.GetType()
+                .GetFields(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                .Where(f => f.FieldType == typeof(OptionFlag))
+                .Select(f => (OptionFlag)f.GetValue(this))
+                .ToArray();
+        }
+
         virtual public bool HandleCommand(string[] _args)
         {
             if (_args.Length == 1)
@@ -26,12 +42,9 @@ namespace BBbuilder
 
         public void ParseFlags(List<string> _args)
         {
-            if (this.Flags != null && this.Flags.Length > 0)
+            foreach (OptionFlag flag in this.Flags)
             {
-                foreach (OptionFlag flag in this.Flags)
-                {
-                    flag.Validate(_args);
-                }
+                flag.Validate(_args);
             }
             if (_args.Count > 2)
             {
@@ -48,15 +61,15 @@ namespace BBbuilder
                 Console.WriteLine("List of arguments:");
                 foreach (string entry in this.Arguments)
                 {
-                    Console.WriteLine("*** " + entry);
+                    Console.WriteLine("** " + entry);
                 }
             }
-            if (this.Flags != null && this.Flags.Length > 0)
+            if (this.Flags.Length > 0)
             {
                 Console.WriteLine("List of flags:");
                 foreach (OptionFlag flag in this.Flags)
                 {
-                    Console.WriteLine($"** '{flag.Flag} {flag.Parameter}': {flag.Description}");
+                    Console.WriteLine($"** {flag}");
                 }
             }
         }

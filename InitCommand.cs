@@ -29,7 +29,6 @@ namespace BBbuilder
             {
                 "<modname>: Specify name of the new mod. The new mod will be created in your specified 'mods' directory. (Example: bbuilder init mod_test)"
             };
-            this.Flags = new OptionFlag[] { this.Replace, this.AltPath, this.Template };
         }
         public override bool HandleCommand(string[] _args)
         {
