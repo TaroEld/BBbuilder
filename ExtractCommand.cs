@@ -89,7 +89,7 @@ namespace BBbuilder
                     Console.WriteLine($"Passed alternative path {this.AltPath.PositionalValue} but this folder does not exist!");
                     return false;
                 }
-                this.ModPath = Path.Combine(this.AltPath.PositionalValue, this.ModName);
+                this.ModPath = Path.Combine(Utils.Norm(this.AltPath.PositionalValue), this.ModName);
                 this.InitCommandArray.Add(this.AltPath.Flag);
                 this.InitCommandArray.Add(this.AltPath.PositionalValue);
             }

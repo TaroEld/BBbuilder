@@ -137,7 +137,7 @@ namespace BBbuilder
 
         private void HandleFolderCommand(OptionFlag flag)
         {
-            string[] folders = flag.PositionalValue.Split(',');
+            string[] folders = flag.PositionalValue.Split(',').Select(f => Utils.Norm(f)).ToArray();
             if (folders.Length == 0)
             {
                 Utils.Data.FoldersArray = Array.Empty<string>();
@@ -169,13 +169,13 @@ namespace BBbuilder
                     Console.WriteLine($"Directory {_flag.PositionalValue} is not a data folder! Example path: G:/Games/SteamLibrary/steamapps/common/Battle Brothers/data");
                     return false;
                 }
-                Utils.Data.GamePath = _flag.PositionalValue;
-                Console.WriteLine($"Set datapath to {_flag.PositionalValue}");
+                Utils.Data.GamePath = Utils.Norm(_flag.PositionalValue);
+                Console.WriteLine($"Set datapath to {Utils.Data.GamePath}");
             }
             else
             {
-                Utils.Data.ModPath = _flag.PositionalValue;
-                Console.WriteLine($"Set modpath to {_flag.PositionalValue}");
+                Utils.Data.ModPath = Utils.Norm(_flag.PositionalValue);
+                Console.WriteLine($"Set modpath to {Utils.Data.ModPath}");
             }
             return true;
         }

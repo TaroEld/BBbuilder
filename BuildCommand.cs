@@ -55,7 +55,7 @@ namespace BBbuilder
                 Console.Error.WriteLine($"Passed mod path {_args[1]} does not exist!");
                 return false;
             }
-            this.ModPath = _args[1];
+            this.ModPath = Utils.Norm(_args[1]);
             this.BuildPath = this.ModPath;
             this.ModName = new DirectoryInfo(this.ModPath).Name;
             this.DB_path = Path.Combine(this.ModPath, ".bbbuilder", this.DBNAME);

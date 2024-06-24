@@ -252,6 +252,11 @@ namespace BBbuilder
             }
         }
 
+        public static string Norm(string _str)
+        {
+            return _str.Replace('/', Path.DirectorySeparatorChar);
+        }
+
 
         // copied from https://learn.microsoft.com/en-us/dotnet/api/system.io.directoryinfo?redirectedfrom=MSDN&view=net-6.0 
         public static void Copy(string sourceDirectory, string targetDirectory)
