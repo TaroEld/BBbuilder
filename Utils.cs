@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text.Json;
+using System.Threading;
 using Microsoft.Win32;
 
 namespace BBbuilder
@@ -41,27 +42,38 @@ namespace BBbuilder
             }
         }
 
+        static Process[] getBBProcesses()
+        {
+            return Process.GetProcessesByName("BattleBrothers");
+        }
+
         static bool KillBB()
         {
-            Process[] activeBBInstances = Process.GetProcessesByName("BattleBrothers");
-            foreach (Process instance in activeBBInstances)
+            do
             {
-                Console.WriteLine("Stopping BattleBrothers.exe...");
-                try
+                Process[] activeBBInstances = getBBProcesses();
+                foreach (Process instance in activeBBInstances)
                 {
-                    instance.Kill();
-                    if (!instance.WaitForExit(5000))  // Wait up to 5 seconds
+                    Console.WriteLine("Stopping BattleBrothers.exe...");
+                    try
                     {
-                        Console.WriteLine("Process did not exit in time.");
+                        instance.Kill();
+                        
+                        if (!instance.WaitForExit(5000))  // Wait up to 5 seconds
+                        {
+                            Console.WriteLine("Process did not exit in time.");
+                            return false;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error stopping process: {ex.Message}");
                         return false;
                     }
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error stopping process: {ex.Message}");
-                    return false;
-                }
-            }
+                Thread.Sleep(25);
+            } while (getBBProcesses().Length > 0);
+
             return true;
         }
 
