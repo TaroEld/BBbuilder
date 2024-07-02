@@ -26,6 +26,7 @@ Also, jump to [here](#example-usage) to get an idea of how that looks like.
 
 ## Commands
 Calling `bbbuilder.exe` without any other arguments will give you an overview of all the commands and arguments/flags. Calling `bbbuilder.exe <commandname>` will give you an overview of that command.  
+The flags/parameters can be used with aliases. For most it's just the first character, but some have abbreviations due to conflicting first characters. The overview will show you the alias.  
  
 ### config
 A number of config options are available to be added and changed with `config`. If you first start the program, it will prompt you to provide values for the `-datapath` and `-modpath` commands. Afterwards, it can be used to change values, or check the current configuration.
