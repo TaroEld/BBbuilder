@@ -104,6 +104,7 @@ See here: https://code.visualstudio.com/docs/editor/tasks#_user-level-tasks
 Like with Sublime Text, an editor project file will be created. This is placed in the `.vscode` folder.
 
 ## Example usage:
+### Step 1: Download and set up the config
 Download and extract the program in a folder, for example `C:\BB Modding\bbbuilder`.  
 Open a terminal in this folder. A convenient way is to click the adress bar of file explorer within that folder, and write `cmd` or `ps`. You can also search for `cmd` or `powershell` in the windows search. I probably don't have to tell Linux nerds how this works.  
 Write `bbbuilder.exe` into the terminal to launch the program.
@@ -119,13 +120,20 @@ For GoG users: Find your install location.
 In the next step, the game will ask for the mods folder, as in where your mods will be placed in the future. If you don't have one yet, create it, as it must be an existing folder. Example: `C:\BB_Modding\My_Mods`
 Also copypaste that path into the terminal.
 
-Now that we defined the basic paths, we can intialise our first mod. Write `bbbuilder.exe init mod_my_first_mod`. It will be created in the modpath folder that we defined in the previous step. The result will be opened in file explorer.  
+### Step 2: Initialize a mod
+Now that we set up the config, we can intialise our first mod. Write `bbbuilder.exe init mod_my_first_mod`. It will be created in the modpath folder that we defined in the previous step. The result will be opened in file explorer.  
 To open this project in VSCode or Sublime Text, doubleclick the `.vscode/mod_my_first_mod.code-workspace` or `mod_my_first_mod.sublime-project` file, respectively. I'll be going with the latter.  
 After doubleclicking the `mod_my_first_mod.sublime-project`, sublime will open up. On the left-hand sidebar, you can see the folders of this project. As 
-At this stage, the most interesting file is `/scripts/!mods_preload/mod_my_first_mod.nut`. A few things are to be adapted here:
-- The commented lines can be uncommented or deleted. The first two register User Interface files, which you'll likely not need at this time, so just delete them. The third line registers your mod as a MSU mod. This depends on what you want to do with it.
-
 At this point, you can work on your mod. I won't be writing a modding tutorial here, so head on to the modding discord or other places.
-After you have made some changes, you can build your mod.  
-Without an editor shortcut, we would use the command `bbbuilder.exe build C:\BB_Modding\My_Mods\mod_my_first_mod`, optionally adding `-restart` to (re)start BB.  
-In Sublime Text, this is done with ctrl+shift+b. If the config has been set up properly, you'll see multiple options. The most common one is `bb_build - Update Mod and launch`, which will create the new zip, copy it into data, and launch the game.
+To try out if you've set your tools up correctly, you can open the file `/scripts/!mods_preload/mod_my_first_mod.nut`, delete all the content, and write `::logInfo("Testing my_first_mod`.
+
+
+### Step 3: Building a mod
+When we talk of `Building`, we mean testing if it works (as much as possible without actually launching the game), creating a .zip of the file, copying it into the data folder, and optionally starting the game.
+There are two options to build the mod:
+#### Option 1: Manual command
+From the command line we used earlier, we can write the command `bbbuilder.exe build C:\BB_Modding\My_Mods\mod_my_first_mod -restart`.
+If everything goes right, you will see a few lines of details, and then the game should start.
+#### Option 2: Editor tools
+If you've set up the build commands in the [earlier step](#editor-config-files), you can also bring up the build options in your editor (ctrl+shift+b in sublime text).
+The option `bb_build - Update Mod and launch` replicates the manual command from above.
