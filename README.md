@@ -53,6 +53,7 @@ The template defines what files and folders will be created in the new mod direc
 The default templates are found in the [Templates](Templates) folder within the .zip. 
 You can customize these templates by either editing the existing ones, or adding new folders.  	
 Within the files and filenames, certain template strings are replaced: 
+
 	- "$modname" -> <modname>
 	- "$uppercase" -> Upper-case-modname
 	- "$namespace" -> CamelCase modname, where underscores are removed and the following letter capitalised. Example: "mod_new_thing" -> "ModNewThing"
@@ -63,15 +64,15 @@ Example usage: `bbbuilder init mod_my_first_mod -template ui -overwrite`
 Equal to the init command, but extracts existing mods instead, decompiling files if necessary. This is useful if you downloaded a mod from someone else, and would like to take a look. The other `init` flags can also be used here.
 *** <zipPath>: Specify path of mod to extract. The file will be put in your specified 'mods' directory. (Example: bbuilder extract C:/Users/user/Desktop/mod_test.zip)
 #### Flags
-- '-overwrite ': Replace the files in an existing folder.
-- '-name <newname>': Renames the extracted mod.
-- '-directory <path>': Specify alternative path to extract the mod to.
+- `-overwrite`: Replace the files in an existing folder.
+- `-name <newname>`: Renames the extracted mod.
+- `-directory <path>`: Specify alternative path to extract the mod to.
 Example usage: `bbbuilder extract "C:\Users\Taro\Downloads\mod_cool_things.zip" -directory "C:\BB Modding\Other_peoples_mods\"`
 
 ### build \<modname\>
 The files of your mod are packed together to create a new zip. .nut files are compiled to test for syntax errors, and sprites are packed into brush files.  
 To speed things up, the game will compare the last modified date of the file(s) and only treat those that have been modified since the last time you packed a zip.  
-To keep track of these last modified times, a little database file is kept in the .bbbuilder folder of your mod. It will also go through an existing .zip (either in the mod folder, or that in /data if the `movezip` config is set to `true`) and check if files were removed, in which case the existing zip will be deleted and rebuild.
+To keep track of these last modified times, a little SQLITE database file is kept in the .bbbuilder folder of your mod. It will also go through an existing .zip (either in the mod folder, or that in /data if the `movezip` config is set to `true`) and check if files were removed.
 You can force a complete rebuild of the mod with the `-rebuild` flag.  
 
 #### Flags
