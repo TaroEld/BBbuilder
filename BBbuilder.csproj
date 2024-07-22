@@ -21,8 +21,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Crc32.NET" Version="1.2.0" />
     <PackageReference Include="DotNetZip" Version="1.16.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="6.0.0" />
   </ItemGroup>
 
@@ -30,11 +32,29 @@
     <None Update="README.md">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Templates\default\.gitignore">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Templates\default\scripts\!mods_preload\%24modname.nut">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Templates\ui\.gitignore">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Templates\ui\scripts\!mods_preload\%24modname.nut">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Templates\ui\ui\mods\%24modname.css">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Templates\ui\ui\mods\%24modname.js">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
     <ItemGroup>
-	    <None Include="tools\**" CopyToOutputDirectory="Always" />
-	    <None Include="babel.config.json" CopyToOutputDirectory="Always" />
-	    <None Include="package.json" CopyToOutputDirectory="Always" />
+		<Content Include="tools\**" CopyToOutputDirectory="Always" />
+		<Content Include="babel.config.json" CopyToOutputDirectory="Always" />
+		<Content Include="package.json" CopyToOutputDirectory="Always" />
 		<Content Include="Templates\**">
 			<Link>Templates\%(RecursiveDir)\%(Filename)%(Extension)</Link>
 			<TargetPath>Templates\%(RecursiveDir)\%(Filename)%(Extension)</TargetPath>
