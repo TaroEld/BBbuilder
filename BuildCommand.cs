@@ -666,15 +666,15 @@ namespace BBbuilder
                         changedFiles++;
                     } 
                 }
-                foreach (string file in debugToZip.Keys)
-                {
-                    {
-                        var relPath = debugToZip[file];
-                        Console.WriteLine("Updating debug in zip: " + Path.Combine(relPath, Path.GetFileName(file)));
-                        zip.UpdateFile(file, relPath);
-                        changedFiles++;
-                    }
-                }
+                //foreach (string file in debugToZip.Keys)
+                //{
+                //    {
+                //        var relPath = debugToZip[file];
+                //        Console.WriteLine("Updating debug in zip: " + Path.Combine(relPath, Path.GetFileName(file)));
+                //        zip.UpdateFile(file, relPath);
+                //        changedFiles++;
+                //    }
+                //}
                 zip.Save();
             }
             Console.WriteLine($"Successfully zipped {this.ModPath} ({this.ZipPath} | Added or changed files: {changedFiles}, removed files: {removedFiles})!");
