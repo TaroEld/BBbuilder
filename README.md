@@ -26,6 +26,7 @@ Also, jump to [here](#example-usage) to get an idea of how that looks like.
 
 ## Commands
 Calling `bbbuilder.exe` without any other arguments will give you an overview of all the commands and arguments/flags. Calling `bbbuilder.exe <commandname>` will give you an overview of that command.  
+The flags/parameters can be used with aliases. For most it's just the first character, but some have abbreviations due to conflicting first characters. The overview will show you the alias.  
  
 ### config
 A number of config options are available to be added and changed with `config`. If you first start the program, it will prompt you to provide values for the `-datapath` and `-modpath` commands. Afterwards, it can be used to change values, or check the current configuration.
@@ -52,6 +53,7 @@ The template defines what files and folders will be created in the new mod direc
 The default templates are found in the [Templates](Templates) folder within the .zip. 
 You can customize these templates by either editing the existing ones, or adding new folders.  	
 Within the files and filenames, certain template strings are replaced: 
+
 	- "$modname" -> <modname>
 	- "$uppercase" -> Upper-case-modname
 	- "$namespace" -> CamelCase modname, where underscores are removed and the following letter capitalised. Example: "mod_new_thing" -> "ModNewThing"
@@ -62,15 +64,15 @@ Example usage: `bbbuilder init mod_my_first_mod -template ui -overwrite`
 Equal to the init command, but extracts existing mods instead, decompiling files if necessary. This is useful if you downloaded a mod from someone else, and would like to take a look. The other `init` flags can also be used here.
 *** <zipPath>: Specify path of mod to extract. The file will be put in your specified 'mods' directory. (Example: bbuilder extract C:/Users/user/Desktop/mod_test.zip)
 #### Flags
-- '-overwrite ': Replace the files in an existing folder.
-- '-name <newname>': Renames the extracted mod.
-- '-directory <path>': Specify alternative path to extract the mod to.
+- `-overwrite`: Replace the files in an existing folder.
+- `-name <newname>`: Renames the extracted mod.
+- `-directory <path>`: Specify alternative path to extract the mod to.
 Example usage: `bbbuilder extract "C:\Users\Taro\Downloads\mod_cool_things.zip" -directory "C:\BB Modding\Other_peoples_mods\"`
 
 ### build \<modname\>
 The files of your mod are packed together to create a new zip. .nut files are compiled to test for syntax errors, and sprites are packed into brush files.  
 To speed things up, the game will compare the last modified date of the file(s) and only treat those that have been modified since the last time you packed a zip.  
-To keep track of these last modified times, a little database file is kept in the .bbbuilder folder of your mod. It will also go through an existing .zip (either in the mod folder, or that in /data if the `movezip` config is set to `true`) and check if files were removed, in which case the existing zip will be deleted and rebuild.
+To keep track of these last modified times, a little SQLITE database file is kept in the .bbbuilder folder of your mod. It will also go through an existing .zip (either in the mod folder, or that in /data if the `movezip` config is set to `true`) and check if files were removed.
 You can force a complete rebuild of the mod with the `-rebuild` flag.  
 
 #### Flags
@@ -103,6 +105,7 @@ See here: https://code.visualstudio.com/docs/editor/tasks#_user-level-tasks
 Like with Sublime Text, an editor project file will be created. This is placed in the `.vscode` folder.
 
 ## Example usage:
+### Step 1: Download and set up the config
 Download and extract the program in a folder, for example `C:\BB Modding\bbbuilder`.  
 Open a terminal in this folder. A convenient way is to click the adress bar of file explorer within that folder, and write `cmd` or `ps`. You can also search for `cmd` or `powershell` in the windows search. I probably don't have to tell Linux nerds how this works.  
 Write `bbbuilder.exe` into the terminal to launch the program.
@@ -118,13 +121,20 @@ For GoG users: Find your install location.
 In the next step, the game will ask for the mods folder, as in where your mods will be placed in the future. If you don't have one yet, create it, as it must be an existing folder. Example: `C:\BB_Modding\My_Mods`
 Also copypaste that path into the terminal.
 
-Now that we defined the basic paths, we can intialise our first mod. Write `bbbuilder.exe init mod_my_first_mod`. It will be created in the modpath folder that we defined in the previous step. The result will be opened in file explorer.  
+### Step 2: Initialize a mod
+Now that we set up the config, we can intialise our first mod. Write `bbbuilder.exe init mod_my_first_mod`. It will be created in the modpath folder that we defined in the previous step. The result will be opened in file explorer.  
 To open this project in VSCode or Sublime Text, doubleclick the `.vscode/mod_my_first_mod.code-workspace` or `mod_my_first_mod.sublime-project` file, respectively. I'll be going with the latter.  
 After doubleclicking the `mod_my_first_mod.sublime-project`, sublime will open up. On the left-hand sidebar, you can see the folders of this project. As 
-At this stage, the most interesting file is `/scripts/!mods_preload/mod_my_first_mod.nut`. A few things are to be adapted here:
-- The commented lines can be uncommented or deleted. The first two register User Interface files, which you'll likely not need at this time, so just delete them. The third line registers your mod as a MSU mod. This depends on what you want to do with it.
-
 At this point, you can work on your mod. I won't be writing a modding tutorial here, so head on to the modding discord or other places.
-After you have made some changes, you can build your mod.  
-Without an editor shortcut, we would use the command `bbbuilder.exe build C:\BB_Modding\My_Mods\mod_my_first_mod`, optionally adding `-restart` to (re)start BB.  
-In Sublime Text, this is done with ctrl+shift+b. If the config has been set up properly, you'll see multiple options. The most common one is `bb_build - Update Mod and launch`, which will create the new zip, copy it into data, and launch the game.
+To try out if you've set your tools up correctly, you can open the file `/scripts/!mods_preload/mod_my_first_mod.nut`, delete all the content, and write `::logInfo("Testing my_first_mod`.
+
+
+### Step 3: Building a mod
+When we talk of `Building`, we mean testing if it works (as much as possible without actually launching the game), creating a .zip of the file, copying it into the data folder, and optionally starting the game.
+There are two options to build the mod:
+#### Option 1: Manual command
+From the command line we used earlier, we can write the command `bbbuilder.exe build C:\BB_Modding\My_Mods\mod_my_first_mod -restart`.
+If everything goes right, you will see a few lines of details, and then the game should start.
+#### Option 2: Editor tools
+If you've set up the build commands in the [earlier step](#editor-config-files), you can also bring up the build options in your editor (ctrl+shift+b in sublime text).
+The option `bb_build - Update Mod and launch` replicates the manual command from above.
