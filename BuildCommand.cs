@@ -364,40 +364,81 @@ namespace BBbuilder
 
             return true;
         }
-        private bool PackBrushFiles()
+
+        private void DeleteBrushAndGfxFiles()
         {
             string brushesPath = Path.Combine(this.BuildPath, "brushes");
-            string folderPath = Path.Combine(this.BuildPath, "unpacked_brushes");
+            string gfxPath = Path.Combine(this.BuildPath, "gfx");
+            if (Directory.Exists(brushesPath)) { Directory.Delete(brushesPath); }
+            foreach (var item in Directory.GetFiles(gfxPath))
+            {
+                File.Delete(item);
+            }
+        }
+        private bool PackBrushFiles()
+        {
+            string unpackedBrushesPath = Path.Combine(this.BuildPath, "unpacked_brushes");
+            if (!Directory.Exists(unpackedBrushesPath) || Directory.GetDirectories(unpackedBrushesPath).Length == 0)
+            {
+                Console.WriteLine("No brush files to pack!");
+                DeleteBrushAndGfxFiles();
+                return true;
+            }
+
+            string brushesPath = Path.Combine(this.BuildPath, "brushes");
+            string gfxPath = Path.Combine(this.BuildPath, "gfx");
+            string[] existingBrushes = Directory.GetFiles(brushesPath).Select(Path.GetFileName).ToArray();
+            string[] existingGfx = Directory.GetFiles(gfxPath).Select(Path.GetFileName).ToArray();
+            string[] subFolders = Directory.GetDirectories(unpackedBrushesPath);
+            string[] subFoldersNameOnly = subFolders.Select(Path.GetFileName).ToArray();
+
+            // delete brushes and gfx that dont exist anymore
+            foreach (string brushFile in existingBrushes.Select(Path.GetFileNameWithoutExtension))
+            {
+                if (!subFoldersNameOnly.Contains(brushFile))
+                {
+                    Console.WriteLine("Deleting file " + brushFile + ".brush");
+                    File.Delete(Path.Combine(brushesPath, brushFile + ".brush"));
+
+                }
+            }
+            foreach (string gfxFile in existingGfx.Select(Path.GetFileNameWithoutExtension))
+            {
+                if (!subFoldersNameOnly.Contains(gfxFile))
+                {
+                    Console.WriteLine("Deleting file " + gfxFile + ".png");
+                    File.Delete(Path.Combine(gfxPath, gfxFile + ".png"));
+                }
+            }
+
             bool noCompileErrors = true;
             bool packedBrushes = false;
             List<string> outputBuffer = new();
-            if (!Directory.Exists(folderPath) || Directory.GetDirectories(folderPath).Length == 0)
-            {
-                Console.WriteLine("No brush files to pack!");
-                return true;
-            }
-            string[] subFolders = Directory.GetDirectories(folderPath);
+            
             if (!Directory.Exists(brushesPath))
             {
                 Directory.CreateDirectory(brushesPath);
             }
+
+
             Parallel.For(0, subFolders.Length, (i, state) =>
             {
                 string subFolder = subFolders[i];
+                string nameOnly = Path.GetFileName(subFolder);
+                bool hasBrush = existingBrushes.Contains(nameOnly + ".brush");
+                bool hasGfx = existingGfx.Contains(nameOnly + ".png");
                 string[] changedFiles = Directory.GetFiles(subFolder, "*", SearchOption.AllDirectories).Where(f => HasFileChanged(f)).ToArray();
-                if (changedFiles.Length == 0) {
+                if (changedFiles.Length == 0 && hasBrush && hasGfx) {
                     return;
                 }
+                File.Delete(Path.Combine(brushesPath, nameOnly + ".brush"));
+                File.Delete(Path.Combine(gfxPath, nameOnly + ".png"));
+
                 packedBrushes = true;
 
-                string folderName = new DirectoryInfo(subFolder).Name;
-                string brushName = $"{folderName}.brush";
-                string command = $"pack \"{brushName}\" \"{subFolder}\"";
+                string brushName = $"{nameOnly}.brush";
+                string command = $"pack \"brushes/{brushName}\" \"{subFolder}\"";
 
-                if (File.Exists(Path.Combine(brushesPath, brushName)))
-                {
-                    File.Delete(Path.Combine(brushesPath, brushName));
-                }
                 using (Process packBrush = new())
                 {
                     packBrush.StartInfo.UseShellExecute = false;
@@ -417,7 +458,6 @@ namespace BBbuilder
                     else
                     {
                         Console.WriteLine($"Packed Brush {brushName}");
-                        File.Move(Path.Combine(this.BuildPath, brushName), Path.Combine(brushesPath, brushName));
                     }
                 }
             });
@@ -425,7 +465,7 @@ namespace BBbuilder
             DirectoryInfo wipFolder = Directory.GetParent(this.BuildPath);
             if (Directory.Exists(Path.Combine(wipFolder.ToString(), "gfx")))
             {
-                Utils.Copy(Path.Combine(wipFolder.ToString(), "gfx"), Path.Combine(this.BuildPath, "gfx"));
+                Utils.Copy(Path.Combine(wipFolder.ToString(), "gfx"), gfxPath);
                 Directory.Delete(Path.Combine(wipFolder.ToString(), "gfx"), true);
             }
             if (!noCompileErrors)
@@ -438,7 +478,7 @@ namespace BBbuilder
             if (noCompileErrors && packedBrushes)
                 Console.WriteLine("Successfully packed brush files!");
             if (!packedBrushes)
-                Console.WriteLine("No brush files to pack!");
+                Console.WriteLine("Brush files didn't change!");
             return noCompileErrors;
         }
 
@@ -574,7 +614,7 @@ namespace BBbuilder
                 }
                 files.AddRange(brushesFolders.Distinct().ToList());    
             }
-            else files = this.FileEditDatesInFolder.Keys.Select(f => Path.Combine(this.BuildPath, f)).ToList();
+            else files = this.FilesHashesInFolder.Keys.Select(f => Path.Combine(this.BuildPath, f)).ToList();
             files = files.Where(f => this.FilesWhichChanged.ContainsKey(Path.GetRelativePath(this.BuildPath, f))).ToList();
             files = RemoveExcludedFolderFiles(files);
             return files;
@@ -583,29 +623,35 @@ namespace BBbuilder
         private bool ZipFiles()
         {
             if (!File.Exists(this.ZipPath))
-                RebuildZipAndDB();
+            {
+                DeleteZipAndDB();
+                SetupFileDateDB();
+            }
             List<string> toZip = GetFilesToZip();
-            Dictionary<string, string> debugToZip = ReplaceDebugStatements(toZip);
+            //Dictionary<string, string> debugToZip = ReplaceDebugStatements(toZip);
             int changedFiles = 0;
             int removedFiles = 0;
             if (File.Exists(this.ZipPath))
             {
                 using (var zip = ZipFile.Read(this.ZipPath))
                 {
-                    foreach (ZipEntry entry in zip)
+                    var entries = zip.Entries.ToArray();
+                    Parallel.For(0, zip.Count, (i, state) =>
                     {
-                        if (entry.IsDirectory) continue;
+                        ZipEntry entry = entries[i];
+                        if (entry.IsDirectory) return;
                         string name = entry.FileName.Replace("/", @"\");
-                        if (!this.FileEditDatesInFolder.ContainsKey(name))
+                        if (!this.FilesHashesInFolder.ContainsKey(name))
                         {
                             zip.RemoveEntry(entry);
                             removedFiles++;
                         }
-                    }
+                    });
                     if (removedFiles > 0)
                         zip.Save();
                 }
             }
+
             using (var zip = new ZipFile(this.ZipPath))
             {
                 foreach (string file in toZip)
