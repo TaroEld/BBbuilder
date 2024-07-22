@@ -159,8 +159,6 @@ namespace BBbuilder
                 return false;
             }
 
-            // re-init the folder filepath : datetime dict to make sure we don't miss something that changed in the meanwhile
-            this.FileEditDatesInFolder = new();
             Utils.DebugPrint($"10: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
             // re-init the folder filepath : datetime dict to make sure we don't miss something that changed in the meanwhile#
             this.FilesWhichChanged = new();
