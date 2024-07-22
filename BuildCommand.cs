@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using System.Reflection;
 using Microsoft.Data.Sqlite;
 using Ionic.Zip;
+using Force.Crc32;
+using System.Text.Json;
 
 namespace BBbuilder
 {
@@ -21,7 +23,7 @@ namespace BBbuilder
         readonly OptionFlag Diff = new("-diff <referencebranch>,<wipbranch>", "Create the zip based on the diff between <referencebranch> and <wipbranch> Pass them comma-separated WITHOUT SPACE INBETWEEN.");
         readonly OptionFlag Debug = new("-debug", "TODO.") { FlagAlias = "-debug" };
 
-        string DBNAME = "dates.sqlite";
+        string DBNAME = "hashes.sqlite";
         string DEBUG_START = "BBBUILDER_DEBUG_START";
         string DEBUG_STOP = "BBBUILDER_DEBUG_STOP";
         string ModPath;
@@ -31,9 +33,9 @@ namespace BBbuilder
         string BuildPath;
         string DB_path;
         string ConnectionString;
-        Dictionary<string, DateTime> FileEditDatesInFolder;
-        Dictionary<string, DateTime> FileEditDatesInDB;
-        Dictionary<string, DateTime> FilesWhichChanged;
+        Dictionary<string, Int64> FilesHashesInFolder;
+        Dictionary<string, Int64> FileHashesInDB;
+        Dictionary<string, Int64> FilesWhichChanged;
         public BuildCommand()
         {
             this.Name = "build";
@@ -42,8 +44,8 @@ namespace BBbuilder
             {
                 "<modPath>: Specify the path of the mod to be built. (Example: bbuilder build G:/Games/BB/Mods/WIP/mod_msu)",
             };
-            this.FileEditDatesInFolder = new();
-            this.FileEditDatesInDB = new();
+            this.FilesHashesInFolder = new();
+            this.FileHashesInDB = new();
             this.FilesWhichChanged = new();
         }
         private bool ParseCommand(List<string> _args)
@@ -111,28 +113,33 @@ namespace BBbuilder
                     return false;
                 }
             }
+            Utils.DebugPrint($"2: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
             if (Utils.Data.MoveZip && !this.Diff && File.Exists(Path.Combine(Utils.Data.GamePath, this.ZipName)) && !File.Exists(this.ZipPath))
             {
                 Console.WriteLine("Copying zip from Data");
                 File.Copy(Path.Combine(Utils.Data.GamePath, this.ZipName), this.ZipPath);
             }
+            Utils.DebugPrint($"3: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
             if (this.Rebuild)
             {
-                RebuildZipAndDB();
+                DeleteZipAndDB();
+                DeleteBrushAndGfxFiles();
             }
+            Utils.DebugPrint($"4: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
             if (this.Diff)
                 File.Delete(this.ZipPath);
-
-            // Create and/or read the DB filepath : datetime dict, this only needs to be done once
-            SetupFileDateDB();
+            Utils.DebugPrint($"5: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
+            // Create and/or read the DB filepath : hash dict, this only needs to be done once
             ReadFileDataFromDB();
 
-            // Create the folder filepath : datetime dict and check for differences between this and the DB one to know what files to build, this will be repeated later
-            ReadFileDataFromFolder();
-            UpdateFilesWhichChanged(this.FileEditDatesInFolder);
+            Utils.DebugPrint($"6: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
+            // Create the folder filepath : hash dict and check for differences between this and the DB one to know what files to build, this will be repeated later
+            this.FilesHashesInFolder = ReadFileDataFromFolder(GetAllFoldersExcept(this.NotIndexedFolders));
+            Utils.DebugPrint($"7: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
+            UpdateFilesWhichChanged(this.FilesHashesInFolder);
 
+            Utils.DebugPrint($"8: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
             Console.WriteLine($"Attempting to build {this.ModPath}");
-
             if (!CompileFiles())
             {
                 Console.Error.WriteLine("Failed while compiling files");
@@ -152,10 +159,20 @@ namespace BBbuilder
 
             // re-init the folder filepath : datetime dict to make sure we don't miss something that changed in the meanwhile
             this.FileEditDatesInFolder = new();
+            Utils.DebugPrint($"10: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
+            // re-init the folder filepath : datetime dict to make sure we don't miss something that changed in the meanwhile#
             this.FilesWhichChanged = new();
-            ReadFileDataFromFolder();
-            UpdateFilesWhichChanged(this.FileEditDatesInFolder);
-
+            var extendedNotIndexedFolders = this.NotIndexedFolders.Concat(new[] { "scripts", this.ModName, "unpacked_brushes", "gfx"}).ToArray();
+            var changes = ReadFileDataFromFolder(GetAllFoldersExcept(extendedNotIndexedFolders));
+            foreach (var kvp in changes)
+            {
+                if (!this.FilesHashesInFolder.ContainsKey(kvp.Key) || this.FilesHashesInFolder[kvp.Key] != changes[kvp.Key])
+                {
+                    Console.WriteLine("Changing " + kvp.Key);
+                }
+                this.FilesHashesInFolder[kvp.Key] = kvp.Value;
+            }
+            UpdateFilesWhichChanged(this.FilesHashesInFolder);
             if (!ZipFiles())
             {
                 Console.Error.WriteLine("Failed while zipping files");
@@ -170,82 +187,62 @@ namespace BBbuilder
             {
                 Utils.KillAndStartBB();
             }
-            InsertFileData();
-            
+            WriteFileDataToDB();
             return true;
         }
 
-        public void RebuildZipAndDB()
+        public void DeleteZipAndDB()
         {
             if (File.Exists(this.DB_path))
             {
                 SqliteConnection.ClearAllPools();
                 File.Delete(this.DB_path);
-                SetupFileDateDB();
             } 
             if (File.Exists(this.ZipPath))
                 File.Delete(this.ZipPath);
+            if (File.Exists(Path.Combine(Utils.Data.GamePath, this.ZipName)))
+                File.Delete(Path.Combine(Utils.Data.GamePath, this.ZipName));
             Console.WriteLine("Rebuilding: Deleted .zip and database");
         }
 
-        private void SetupFileDateDB()
+        private Dictionary<string, Int64> ReadFileDataFromFolder(string[] folders)
         {
-            if (!Directory.Exists(Path.Combine(this.ModPath, ".bbbuilder")))
-            {
-                Directory.CreateDirectory(Path.Combine(this.ModPath, ".bbbuilder"));
-            }
-            using var connection = new SqliteConnection(this.ConnectionString);
-            connection.Open();
-            bool use;
-            using (var command = connection.CreateCommand())
-            {
-                command.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name='FileData';";
-                use = command.ExecuteScalar() == null;
-            }
-            if (use)
-            {
-                using var command = connection.CreateCommand();
-                command.CommandText = @"
-                        CREATE TABLE FileData (
-                            FilePath TEXT PRIMARY KEY,
-                            LastModified DATETIME NOT NULL
-                        );";
-                command.ExecuteNonQuery();
-            }
-        }
-
-        private void ReadFileDataFromFolder()
-        {
-            foreach (var folder in GetAllFoldersExcept(this.NotIndexedFolders))
+            Dictionary<string, Int64> ret = new();
+            foreach (var folder in folders)
             {
                 foreach(var file in Directory.EnumerateFiles(folder, "*.*", SearchOption.AllDirectories))
                 {
-                    this.FileEditDatesInFolder.Add(Path.GetRelativePath(this.BuildPath, file), File.GetLastWriteTime(file));
+                    ret.Add(Path.GetRelativePath(this.BuildPath, file), CalculateChecksum(file));
                 }
             }
+            return ret;
+        }
+
+        static Int64 CalculateChecksum(string filePath)
+        {
+            return Crc32Algorithm.Compute(File.ReadAllBytes(filePath));
         }
 
         private void ReadFileDataFromDB()
         {
-            using var connection = new SqliteConnection(this.ConnectionString);
-            connection.Open();
-            using var command = connection.CreateCommand();
-            command.CommandText = "SELECT FilePath, LastModified FROM FileData;";
-
-            using var reader = command.ExecuteReader();
-            while (reader.Read())
-            {
-                string filePath = reader.GetString(0);
-                DateTime lastModified = reader.GetDateTime(1);
-                this.FileEditDatesInDB.Add(filePath, lastModified);
-            }
+            var jsonPath = Path.Combine(this.ModPath, ".bbbuilder", "hash.json");
+            if (!File.Exists(jsonPath))
+                return;
+            this.FileHashesInDB = JsonSerializer.Deserialize<Dictionary<string, Int64>>(File.ReadAllText(jsonPath));
         }
 
-        private void UpdateFilesWhichChanged(Dictionary<string, DateTime> dict)
+        private void WriteFileDataToDB()
+        {
+            var jsonPath = Path.Combine(this.ModPath, ".bbbuilder", "hash.json");
+            string jsonString = JsonSerializer.Serialize(this.FilesHashesInFolder);
+            File.WriteAllText(jsonPath, jsonString);
+        }
+
+        private void UpdateFilesWhichChanged(Dictionary<string, Int64> dict)
         {
             foreach (var entry in dict)
             {
-                if (!(this.FileEditDatesInDB.ContainsKey(entry.Key)) || this.FileEditDatesInDB[entry.Key] != entry.Value)
+                if (!(this.FileHashesInDB.ContainsKey(entry.Key)) || this.FileHashesInDB[entry.Key] != entry.Value)
                     this.FilesWhichChanged.Add(entry.Key, entry.Value);
             }
         }
@@ -253,38 +250,6 @@ namespace BBbuilder
         private bool HasFileChanged(string filePath)
         {
             return this.FilesWhichChanged.ContainsKey(Path.GetRelativePath(this.BuildPath, filePath));
-        }
-
-        private void InsertFileData()
-        {
-            if (this.FilesWhichChanged.Count == 0) return;
-            using (var connection = new SqliteConnection(this.ConnectionString))
-            {
-                connection.Open();
-                using (var transaction = connection.BeginTransaction())
-                {
-                    using (var command = connection.CreateCommand())
-                    {
-                        command.CommandText =
-                        @"
-                            INSERT OR REPLACE INTO FileData (FilePath, LastModified) VALUES ($FilePath, $LastModified);
-                        ";
-                        var path_p = command.CreateParameter();
-                        path_p.ParameterName = "$FilePath";
-                        command.Parameters.Add(path_p);
-                        var mod_p = command.CreateParameter();
-                        mod_p.ParameterName = "$LastModified";
-                        command.Parameters.Add(mod_p);
-                        foreach (var pathtime in this.FilesWhichChanged)
-                        {
-                            path_p.Value = pathtime.Key;
-                            mod_p.Value = pathtime.Value;
-                            command.ExecuteNonQuery();
-                        }
-                        transaction.Commit();
-                    }
-                }
-            }
         }
 
         private bool CompileFiles()
