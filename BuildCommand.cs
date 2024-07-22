@@ -90,6 +90,7 @@ namespace BBbuilder
             {
                 return false;
             }
+            Stopwatch stopwatch = Stopwatch.StartNew();
             string[] sameZipNameInData = Directory.GetFiles(Utils.Data.GamePath, "*.zip")
                 .Where(f => Path.GetFileName(f) != this.ZipName && Path.GetFileName(f).StartsWith(this.ModName)).ToArray();
             if (sameZipNameInData.Length > 0)
@@ -98,6 +99,7 @@ namespace BBbuilder
                 foreach (string s in sameZipNameInData) { Console.Error.WriteLine(s); }
                 return false;
             }
+            Console.WriteLine($"1: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
             if (this.Diff)
             {
                 if (!Utils.IsGitInstalled())
@@ -150,7 +152,7 @@ namespace BBbuilder
                 Console.Error.WriteLine("Failed while transpiling to ES3!");
                 return false;
             }
-
+            Utils.DebugPrint($"9: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
             if (!PackBrushFiles())
             {
                 Console.Error.WriteLine("Failed while packing brush files");
@@ -172,22 +174,28 @@ namespace BBbuilder
                 }
                 this.FilesHashesInFolder[kvp.Key] = kvp.Value;
             }
+            Utils.DebugPrint($"11a: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
             UpdateFilesWhichChanged(this.FilesHashesInFolder);
+            Utils.DebugPrint($"11b: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
             if (!ZipFiles())
             {
                 Console.Error.WriteLine("Failed while zipping files");
                 return false;
             }
+            Utils.DebugPrint($"12: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
             if (!CopyZipToData())
             {
                 Console.Error.WriteLine("Failed while copying new zip to data!");
                 return false;
             }
+            Utils.DebugPrint($"13: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
             if (this.StartGame)
             {
                 Utils.KillAndStartBB();
             }
             WriteFileDataToDB();
+            Utils.DebugPrint($"14: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
+
             return true;
         }
 
@@ -316,7 +324,7 @@ namespace BBbuilder
             es3Watch.Start();
             Console.WriteLine("-- Check npm dependencies...");
             if (!CheckNpmDependencies(dependencies, localWorkingDirectory)) return false;
-            Console.WriteLine($"-- Check npm dependencies took {es3Watch.Elapsed.TotalSeconds} s");
+            Utils.DebugPrint($"-- Check npm dependencies took {es3Watch.Elapsed.TotalSeconds} s");
             string babelLoc = Path.Combine(localWorkingDirectory, "node_modules", ".bin", "babel");
             string browserifyLoc = Path.Combine(localWorkingDirectory, "node_modules", ".bin", "browserify");
 
@@ -331,7 +339,7 @@ namespace BBbuilder
                 compiling.Start();
                 compiling.WaitForExit();
             }
-            Console.WriteLine($"-- Transpile from modern JS to old JS took {es3Watch.Elapsed.TotalSeconds} s");
+            Utils.DebugPrint($"-- Transpile from modern JS to old JS took {es3Watch.Elapsed.TotalSeconds} s");
 
             Console.WriteLine("-- Browserify the transpilation result...");
             es3Watch.Restart();
@@ -344,7 +352,7 @@ namespace BBbuilder
                 compiling.Start();
                 compiling.WaitForExit();
             }
-            Console.WriteLine($"-- Browserify the transpilation result took {es3Watch.Elapsed.TotalSeconds} s");
+            Utils.DebugPrint($"-- Browserify the transpilation result took {es3Watch.Elapsed.TotalSeconds} s");
 
             if(Directory.Exists(Path.Combine(BuildPath, "node_modules"))){
                 es3Watch.Restart();

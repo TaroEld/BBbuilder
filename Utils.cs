@@ -21,8 +21,14 @@ namespace BBbuilder
         public static string NUTCRACKERPATH = Path.Combine(EXECUTINGFOLDER, "tools", "nutcracker.exe");
         public static string CONFIGPATH = Path.Combine(EXECUTINGFOLDER, "tools", "config.json");
         public static string BBSTEAMID = "365360";
+        private static bool DEBUG = false;
         public static ConfigData Data { get; set; }
 
+        public static void debugPrint(string msg)
+        {
+            if (DEBUG)
+                Console.WriteLine(msg);
+        }
 
         public static bool KillAndStartBB()
         {
