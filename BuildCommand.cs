@@ -700,22 +700,6 @@ namespace BBbuilder
                 File.Delete(this.ZipPath);
                 Console.WriteLine($"Removed file {this.ZipPath}");
             }
-            // not sure why I had this... 
-            //if (!success)
-            //    return;
-            //string brushesPath = Path.Combine(this.BuildPath, "brushes");
-            //if (Directory.Exists(brushesPath))
-            //{
-            //    Directory.Delete(brushesPath, true);
-            //    Console.WriteLine($"Removed folder {brushesPath}");
-            //}
-            //DirectoryInfo wipFolder = Directory.GetParent(this.BuildPath);
-            //string wipGfxPath = Path.Combine(wipFolder.ToString(), "gfx");
-            //if (Directory.Exists(wipGfxPath))
-            //{
-            //    Directory.Delete(wipGfxPath, true);
-            //    Console.WriteLine($"Removed folder {wipGfxPath}");
-            //}
         }
 
         private static void InstallNpmDependency(String npmPackageToInstall, string installationPath)
