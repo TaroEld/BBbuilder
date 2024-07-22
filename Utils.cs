@@ -24,7 +24,7 @@ namespace BBbuilder
         private static bool DEBUG = false;
         public static ConfigData Data { get; set; }
 
-        public static void debugPrint(string msg)
+        public static void DebugPrint(string msg)
         {
             if (DEBUG)
                 Console.WriteLine(msg);

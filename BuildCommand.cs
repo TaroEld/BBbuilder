@@ -5,7 +5,6 @@ using System.Linq;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Reflection;
-using Microsoft.Data.Sqlite;
 using Ionic.Zip;
 using Force.Crc32;
 using System.Text.Json;
@@ -23,7 +22,6 @@ namespace BBbuilder
         readonly OptionFlag Diff = new("-diff <referencebranch>,<wipbranch>", "Create the zip based on the diff between <referencebranch> and <wipbranch> Pass them comma-separated WITHOUT SPACE INBETWEEN.");
         readonly OptionFlag Debug = new("-debug", "TODO.") { FlagAlias = "-debug" };
 
-        string DBNAME = "hashes.sqlite";
         string DEBUG_START = "BBBUILDER_DEBUG_START";
         string DEBUG_STOP = "BBBUILDER_DEBUG_STOP";
         string ModPath;
@@ -31,8 +29,6 @@ namespace BBbuilder
         string ZipName;
         string ZipPath;
         string BuildPath;
-        string DB_path;
-        string ConnectionString;
         Dictionary<string, Int64> FilesHashesInFolder;
         Dictionary<string, Int64> FileHashesInDB;
         Dictionary<string, Int64> FilesWhichChanged;
@@ -60,8 +56,6 @@ namespace BBbuilder
             this.ModPath = Utils.Norm(_args[1]);
             this.BuildPath = this.ModPath;
             this.ModName = new DirectoryInfo(this.ModPath).Name;
-            this.DB_path = Path.Combine(this.ModPath, ".bbbuilder", this.DBNAME);
-            this.ConnectionString = $"Data Source={this.DB_path}";
 
             if (this.Transpile)
             {
@@ -99,7 +93,7 @@ namespace BBbuilder
                 foreach (string s in sameZipNameInData) { Console.Error.WriteLine(s); }
                 return false;
             }
-            Console.WriteLine($"1: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
+            Utils.DebugPrint($"1: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
             if (this.Diff)
             {
                 if (!Utils.IsGitInstalled())
@@ -166,10 +160,6 @@ namespace BBbuilder
             var changes = ReadFileDataFromFolder(GetAllFoldersExcept(extendedNotIndexedFolders));
             foreach (var kvp in changes)
             {
-                if (!this.FilesHashesInFolder.ContainsKey(kvp.Key) || this.FilesHashesInFolder[kvp.Key] != changes[kvp.Key])
-                {
-                    Console.WriteLine("Changing " + kvp.Key);
-                }
                 this.FilesHashesInFolder[kvp.Key] = kvp.Value;
             }
             Utils.DebugPrint($"11a: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
@@ -199,11 +189,6 @@ namespace BBbuilder
 
         public void DeleteZipAndDB()
         {
-            if (File.Exists(this.DB_path))
-            {
-                SqliteConnection.ClearAllPools();
-                File.Delete(this.DB_path);
-            } 
             if (File.Exists(this.ZipPath))
                 File.Delete(this.ZipPath);
             if (File.Exists(Path.Combine(Utils.Data.GamePath, this.ZipName)))
@@ -623,7 +608,6 @@ namespace BBbuilder
             if (!File.Exists(this.ZipPath))
             {
                 DeleteZipAndDB();
-                SetupFileDateDB();
             }
             List<string> toZip = GetFilesToZip();
             //Dictionary<string, string> debugToZip = ReplaceDebugStatements(toZip);
