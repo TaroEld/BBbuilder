@@ -488,7 +488,7 @@ namespace BBbuilder
                     process.WaitForExit();
                 }
                 var ret = output.Split("\n")[0..^1].ToList();
-                return ret.Select(f => Path.Combine(this.BuildPath, f.Replace("/", @"\"))).ToList();
+                return ret.Select(f => Path.Combine(this.BuildPath, Utils.Norm(f))).ToList();
             }
             catch (Exception ex)
             {
@@ -622,7 +622,7 @@ namespace BBbuilder
                     {
                         ZipEntry entry = entries[i];
                         if (entry.IsDirectory) return;
-                        string name = entry.FileName.Replace("/", @"\");
+                        string name = Utils.Norm(entry.FileName);
                         if (!this.FilesHashesInFolder.ContainsKey(name))
                         {
                             zip.RemoveEntry(entry);
