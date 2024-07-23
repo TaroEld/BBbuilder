@@ -8,7 +8,7 @@ namespace BBbuilder
     {
         static int Main(string[] args)
         {
-            var watch = new System.Diagnostics.Stopwatch();
+            var version = "1.4";
             watch.Start();
 
             Utils.GetJsonData();
@@ -28,12 +28,16 @@ namespace BBbuilder
                 if (Utils.UpdatePathVariable())
                     return 1;
             }
-
+            bool success = false;
             string[] arguments = args;
             if (arguments == null || arguments.Length == 0)
             {
                 Console.WriteLine($"No command passed, printing possible commands.\n");
                 Utils.PrintHelp(Commands);
+            }
+            else if (arguments[0] == "version")
+            {
+                Console.WriteLine($"BBBuilder version: {version}");
             }
             else if (!(Commands.ContainsKey(arguments[0])))
             {
@@ -42,14 +46,12 @@ namespace BBbuilder
             }
             else
             {
-                bool success = Commands[arguments[0]].HandleCommand(arguments);
+                success = Commands[arguments[0]].HandleCommand(arguments);
                 Commands[arguments[0]].CleanUp(success);
-                watch.Stop();
-                Console.WriteLine($"Total Execution Time: {watch.ElapsedMilliseconds} ms");
-                return success? 0 : 1;
             }
             watch.Stop();
-            return 1;
+            Console.WriteLine($"Total Execution Time: {watch.ElapsedMilliseconds} ms");
+            return success ? 0 : 1;
         }
 
     }
