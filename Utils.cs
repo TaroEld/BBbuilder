@@ -220,8 +220,9 @@ namespace BBbuilder
         {
             foreach (KeyValuePair<string, Command> entry in _commands)
             {
+                Console.WriteLine("\n------------------------------------------------------------\n");
                 entry.Value.PrintHelp();
-                Console.WriteLine("\n");
+                
             }
             return;
         }

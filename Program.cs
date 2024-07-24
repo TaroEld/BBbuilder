@@ -9,7 +9,8 @@ namespace BBbuilder
         static int Main(string[] args)
         {
             var version = "1.4";
-            watch.Start();
+            Console.WriteLine($"BBBuilder version: {version}");
+            var watch = Stopwatch.StartNew();
 
             Utils.GetJsonData();
 
@@ -34,10 +35,6 @@ namespace BBbuilder
             {
                 Console.WriteLine($"No command passed, printing possible commands.\n");
                 Utils.PrintHelp(Commands);
-            }
-            else if (arguments[0] == "version")
-            {
-                Console.WriteLine($"BBBuilder version: {version}");
             }
             else if (!(Commands.ContainsKey(arguments[0])))
             {

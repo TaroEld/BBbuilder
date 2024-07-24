@@ -58,7 +58,7 @@ namespace BBbuilder
         {
             if (this.Arguments != null && this.Arguments.Length > 0)
             {
-                Console.WriteLine("List of arguments:");
+                Console.WriteLine("Arguments:");
                 foreach (string entry in this.Arguments)
                 {
                     Console.WriteLine("** " + entry);
@@ -66,7 +66,7 @@ namespace BBbuilder
             }
             if (this.Flags.Length > 0)
             {
-                Console.WriteLine("List of flags:");
+                Console.WriteLine("Flags:");
                 foreach (OptionFlag flag in this.Flags)
                 {
                     Console.WriteLine($"** {flag}");
@@ -75,8 +75,8 @@ namespace BBbuilder
         }
         public void PrintHelp()
         {
-            Console.WriteLine($"**** Printing help for command '{this.Name}'");
-            Console.WriteLine($"Description: {this.Description}\n");
+            Console.WriteLine($"**** Command '{this.Name}'");
+            Console.WriteLine($"{this.Description}");
             PrintCommands();
         }
 
