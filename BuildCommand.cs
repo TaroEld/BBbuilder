@@ -20,10 +20,7 @@ namespace BBbuilder
         readonly OptionFlag Transpile = new("-transpile", "Translate js file to es3. It allow you to use modern js syntax and features to create your mod.");
         readonly OptionFlag Rebuild = new("-rebuild", "Delete the database and the .zip to start from a clean slate.") { FlagAlias = "-rb" };
         readonly OptionFlag Diff = new("-diff <referencebranch>,<wipbranch>", "Create the zip based on the diff between <referencebranch> and <wipbranch> Pass them comma-separated WITHOUT SPACE INBETWEEN.");
-        readonly OptionFlag Debug = new("-debug", "TODO.") { FlagAlias = "-debug" };
 
-        string DEBUG_START = "BBBUILDER_DEBUG_START";
-        string DEBUG_STOP = "BBBUILDER_DEBUG_STOP";
         string ModPath;
         string ModName;
         string ZipName;
@@ -528,57 +525,6 @@ namespace BBbuilder
             }
             return _filesToZip;
         }
-
-        private Dictionary<string, string> ReplaceDebugStatements(List<string> _filesToZip)
-        {
-            string tempPath = Path.Combine(Path.GetTempPath(), "BBBuilder");
-            Dictionary<string, string> debugFiles = new();
-            Directory.CreateDirectory(tempPath);
-            var files = Directory.EnumerateFiles(this.BuildPath, "*.nut", SearchOption.AllDirectories);
-            if (!this.Debug && !this.Rebuild)
-                files = files.Where(f => HasFileChanged(f)).ToList();
-            foreach (string filePath in files)
-            {
-                bool debugFile = false;
-                bool debugCurrent = false;
-                string line;
-                string[] lines = File.ReadAllLines(filePath);
-                for (int i = 0; i < lines.Length; i++)
-                {
-                    line = lines[i];
-                    if (line.Length == 0)
-                        continue;
-                    if (line.Contains(DEBUG_START))
-                    {
-                        debugFile = true;
-                        debugCurrent = true;
-                        continue;
-                    }
-                    if (line.Contains(DEBUG_STOP))
-                    {
-                        debugCurrent = false;
-                        continue;
-                    }
-                    if (debugCurrent)
-                    {
-                        if (this.Debug && line.Length > 1 && line[0..2] == @"//")
-                            lines[i] = line[0..];
-                        else if (!this.Debug)
-                            lines[i] = @"//" + line; 
-                    }
-                }
-                if (debugFile)
-                {
-                    string tempfilePath = Path.Combine(tempPath, Path.GetFileName(filePath));
-                    File.WriteAllLines(tempfilePath, lines);
-                    debugFiles.Add(tempfilePath, Path.GetDirectoryName(Path.GetRelativePath(this.BuildPath, filePath)));
-                    _filesToZip.Remove(filePath);
-                    break;
-                }
-            }
-            return debugFiles;
-        }
-
         private List<string> GetFilesToZip()
         {
             List<string> files;
