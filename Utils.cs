@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
@@ -201,7 +202,32 @@ namespace BBbuilder
             {
                 CreateJSON();
             }
-            Data = JsonSerializer.Deserialize<ConfigData>(File.ReadAllText(CONFIGPATH))!;
+            // This saves 10 ms
+            // I am committed now
+            //Data = JsonSerializer.Deserialize<ConfigData>(File.ReadAllText(CONFIGPATH))!;
+            var text = File.ReadAllText(CONFIGPATH);
+
+            using (JsonDocument doc = JsonDocument.Parse(text))
+            {
+                var root = doc.RootElement;
+                Data = new ConfigData();
+                if (root.TryGetProperty("GamePath", out JsonElement gamePath))
+                    Data.GamePath = gamePath.GetString() ?? "";
+
+                if (root.TryGetProperty("ModPath", out JsonElement modPath))
+                    Data.ModPath = modPath.GetString() ?? "";
+
+                if (root.TryGetProperty("MoveZip", out JsonElement moveZip))
+                    Data.MoveZip = moveZip.GetBoolean();
+
+                if (root.TryGetProperty("UseSteam", out JsonElement useSteam))
+                    Data.UseSteam = useSteam.GetBoolean();
+
+                if (root.TryGetProperty("FoldersArray", out JsonElement foldersArray))
+                    Data.FoldersArray = foldersArray.EnumerateArray()
+                        .Select(x => x.GetString() ?? "")
+                        .ToArray();
+            }
         }
 
         public static string ReadFile(string _path)
