@@ -112,13 +112,12 @@ namespace BBbuilder
                 File.Copy(Path.Combine(Utils.Data.GamePath, this.ZipName), this.ZipPath);
                 Utils.LogTime($"BuildCommand: Moving zip");
             }
-            Utils.DebugPrint($"3: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
+            if (this.Rebuild || !File.Exists(this.ZipPath))
             {
                 DeleteZipAndDB();
                 DeleteBrushAndGfxFiles();
                 Utils.LogTime($"BuildCommand: Deleting zip and GFX folders");
             }
-            Utils.DebugPrint($"4: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
             if (this.Diff)
                 File.Delete(this.ZipPath);
             // Create and/or read the DB filepath : hash dict, this only needs to be done once
@@ -193,6 +192,8 @@ namespace BBbuilder
                 File.Delete(this.ZipPath);
             if (File.Exists(Path.Combine(Utils.Data.GamePath, this.ZipName)))
                 File.Delete(Path.Combine(Utils.Data.GamePath, this.ZipName));
+            if (File.Exists(Path.Combine(this.ModPath, ".bbbuilder", "hash.json")))
+                File.Delete(Path.Combine(this.ModPath, ".bbbuilder", "hash.json"));
             Console.WriteLine("Rebuilding: Deleted .zip and database");
         }
 
@@ -368,6 +369,8 @@ namespace BBbuilder
 
             string brushesPath = Path.Combine(this.BuildPath, "brushes");
             string gfxPath = Path.Combine(this.BuildPath, "gfx");
+            if (!Directory.Exists(brushesPath)) Directory.CreateDirectory(brushesPath);
+            if (!Directory.Exists(gfxPath)) Directory.CreateDirectory(gfxPath);
             string[] existingBrushes = Directory.GetFiles(brushesPath).Select(Path.GetFileName).ToArray();
             string[] existingGfx = Directory.GetFiles(gfxPath).Select(Path.GetFileName).ToArray();
             string[] subFolders = Directory.GetDirectories(unpackedBrushesPath);
@@ -552,10 +555,6 @@ namespace BBbuilder
 
         private bool ZipFiles()
         {
-            if (!File.Exists(this.ZipPath))
-            {
-                DeleteZipAndDB();
-            }
             List<string> toZip = GetFilesToZip();
             //Dictionary<string, string> debugToZip = ReplaceDebugStatements(toZip);
             int changedFiles = 0;
