@@ -10,9 +10,10 @@ namespace BBbuilder
         {
             var version = "1.4";
             Console.WriteLine($"BBBuilder version: {version}");
-            var watch = Stopwatch.StartNew();
+            Utils.Stopwatch.Start();
 
             Utils.GetJsonData();
+            Utils.LogTime($"Main: Getting JSON config data");
 
             Dictionary<string, Command> Commands = new()
             {
@@ -46,8 +47,7 @@ namespace BBbuilder
                 success = Commands[arguments[0]].HandleCommand(arguments);
                 Commands[arguments[0]].CleanUp(success);
             }
-            watch.Stop();
-            Console.WriteLine($"Total Execution Time: {watch.ElapsedMilliseconds} ms");
+            Console.WriteLine($"Total Execution Time: {Utils.Stopwatch.ElapsedMilliseconds} ms");
             return success ? 0 : 1;
         }
 

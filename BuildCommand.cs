@@ -81,7 +81,6 @@ namespace BBbuilder
             {
                 return false;
             }
-            Stopwatch stopwatch = Stopwatch.StartNew();
             string[] sameZipNameInData = Directory.GetFiles(Utils.Data.GamePath, "*.zip")
                 .Where(f => Path.GetFileName(f) != this.ZipName && Path.GetFileName(f).StartsWith(this.ModName)).ToArray();
             if (sameZipNameInData.Length > 0)
@@ -90,7 +89,7 @@ namespace BBbuilder
                 foreach (string s in sameZipNameInData) { Console.Error.WriteLine(s); }
                 return false;
             }
-            Utils.DebugPrint($"1: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
+            Utils.LogTime($"BuildCommand: Initital checks");
             if (this.Diff)
             {
                 if (!Utils.IsGitInstalled())
@@ -105,81 +104,85 @@ namespace BBbuilder
                     Console.Error.WriteLine($"Tried to use diff mode with feature branch {feature_branch_name} but {current_branch} is checked out! Make sure to check out the feature branch.");
                     return false;
                 }
+                Utils.LogTime($"BuildCommand: Diff checks");
             }
-            Utils.DebugPrint($"2: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
             if (Utils.Data.MoveZip && !this.Diff && File.Exists(Path.Combine(Utils.Data.GamePath, this.ZipName)) && !File.Exists(this.ZipPath))
             {
                 Console.WriteLine("Copying zip from Data");
                 File.Copy(Path.Combine(Utils.Data.GamePath, this.ZipName), this.ZipPath);
+                Utils.LogTime($"BuildCommand: Moving zip");
             }
             Utils.DebugPrint($"3: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
-            if (this.Rebuild)
             {
                 DeleteZipAndDB();
                 DeleteBrushAndGfxFiles();
+                Utils.LogTime($"BuildCommand: Deleting zip and GFX folders");
             }
             Utils.DebugPrint($"4: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
             if (this.Diff)
                 File.Delete(this.ZipPath);
-            Utils.DebugPrint($"5: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
             // Create and/or read the DB filepath : hash dict, this only needs to be done once
             ReadFileDataFromDB();
 
-            Utils.DebugPrint($"6: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
+            Utils.LogTime($"BuildCommand: Reading hashes from DB");
+
             // Create the folder filepath : hash dict and check for differences between this and the DB one to know what files to build, this will be repeated later
             this.FilesHashesInFolder = ReadFileDataFromFolder(GetAllFoldersExcept(this.NotIndexedFolders));
-            Utils.DebugPrint($"7: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
-            UpdateFilesWhichChanged(this.FilesHashesInFolder);
+            Utils.LogTime($"BuildCommand: Reading/Creating hashes from Folders");
 
-            Utils.DebugPrint($"8: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
+            UpdateFilesWhichChanged(this.FilesHashesInFolder);
+            Utils.LogTime($"BuildCommand: Creating changes dict");
+
             Console.WriteLine($"Attempting to build {this.ModPath}");
             if (!CompileFiles())
             {
                 Console.Error.WriteLine("Failed while compiling files");
                 return false;
             }
+            Utils.LogTime($"BuildCommand: Compiling files");
             if (this.Transpile && !TranspileToES3())
             {
                 Console.Error.WriteLine("Failed while transpiling to ES3!");
                 return false;
             }
-            Utils.DebugPrint($"9: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
             if (!PackBrushFiles())
             {
                 Console.Error.WriteLine("Failed while packing brush files");
                 return false;
             }
+            Utils.LogTime($"BuildCommand: Packing brush files");
 
-            Utils.DebugPrint($"10: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
             // re-init the folder filepath : datetime dict to make sure we don't miss something that changed in the meanwhile#
             this.FilesWhichChanged = new();
-            var extendedNotIndexedFolders = this.NotIndexedFolders.Concat(new[] { "scripts", this.ModName, "unpacked_brushes", "gfx"}).ToArray();
+            var extendedNotIndexedFolders = this.NotIndexedFolders.Concat(new[] { "scripts", this.ModName, "unpacked_brushes"}).ToArray();
             var changes = ReadFileDataFromFolder(GetAllFoldersExcept(extendedNotIndexedFolders));
             foreach (var kvp in changes)
             {
                 this.FilesHashesInFolder[kvp.Key] = kvp.Value;
             }
-            Utils.DebugPrint($"11a: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
             UpdateFilesWhichChanged(this.FilesHashesInFolder);
-            Utils.DebugPrint($"11b: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
+            Utils.LogTime($"BuildCommand: Checking for new changes");
+
+
             if (!ZipFiles())
             {
                 Console.Error.WriteLine("Failed while zipping files");
                 return false;
             }
-            Utils.DebugPrint($"12: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
+            Utils.LogTime($"BuildCommand: Zipping files");
             if (!CopyZipToData())
             {
                 Console.Error.WriteLine("Failed while copying new zip to data!");
                 return false;
             }
-            Utils.DebugPrint($"13: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
+
             if (this.StartGame)
             {
                 Utils.KillAndStartBB();
+                Utils.LogTime($"BuildCommand: Starting the game");
             }
             WriteFileDataToDB();
-            Utils.DebugPrint($"14: Function took an average of {stopwatch.Elapsed.TotalMilliseconds} ms");
+            Utils.LogTime($"BuildCommand: Writing hash DB");
 
             return true;
         }
@@ -275,7 +278,11 @@ namespace BBbuilder
                         outputBuffer.Add(myStreamReader.ReadLine());
                         noCompileErrors = false;
                     }
-                    else compiledFiles++;
+                    else
+                    {
+                        compiledFiles++;
+                        Utils.VerbosePrint("Successfully compiled file " + nutFilePath);
+                    }
                     //else Console.WriteLine("Successfully compiled file " + nutFilePath);
                 }
             });
@@ -300,16 +307,13 @@ namespace BBbuilder
 
             if (!CheckNpmPresence()) return false;
 
-            Stopwatch es3Watch = new();
-            es3Watch.Start();
             Console.WriteLine("-- Check npm dependencies...");
             if (!CheckNpmDependencies(dependencies, localWorkingDirectory)) return false;
-            Utils.DebugPrint($"-- Check npm dependencies took {es3Watch.Elapsed.TotalSeconds} s");
+            Utils.LogTime($"-- Check npm dependencies");
             string babelLoc = Path.Combine(localWorkingDirectory, "node_modules", ".bin", "babel");
             string browserifyLoc = Path.Combine(localWorkingDirectory, "node_modules", ".bin", "browserify");
 
             Console.WriteLine("-- Transpile from modern JS to old JS...");
-            es3Watch.Restart();
             using (Process compiling = new())
             {
                 compiling.StartInfo.UseShellExecute = true;
@@ -319,10 +323,9 @@ namespace BBbuilder
                 compiling.Start();
                 compiling.WaitForExit();
             }
-            Utils.DebugPrint($"-- Transpile from modern JS to old JS took {es3Watch.Elapsed.TotalSeconds} s");
+            Utils.LogTime($"-- Transpile from modern JS to old JS");
 
             Console.WriteLine("-- Browserify the transpilation result...");
-            es3Watch.Restart();
             using (Process compiling = new())
             {
                 compiling.StartInfo.UseShellExecute = true;
@@ -332,15 +335,13 @@ namespace BBbuilder
                 compiling.Start();
                 compiling.WaitForExit();
             }
-            Utils.DebugPrint($"-- Browserify the transpilation result took {es3Watch.Elapsed.TotalSeconds} s");
+            Utils.LogTime($"-- Browserify the transpilation result");
 
             if(Directory.Exists(Path.Combine(BuildPath, "node_modules"))){
-                es3Watch.Restart();
                 Console.WriteLine("-- Remove node_modules from buidPath...");
                 //Directory.Delete(Path.Combine(BuildPath, "node_modules"), true);
-                Console.WriteLine($"-- Remove node_modules took {es3Watch.Elapsed.TotalSeconds} s");
+                Console.WriteLine($"-- Remove node_modules");
             }
-            es3Watch.Stop();
 
             return true;
         }
@@ -349,7 +350,7 @@ namespace BBbuilder
         {
             string brushesPath = Path.Combine(this.BuildPath, "brushes");
             string gfxPath = Path.Combine(this.BuildPath, "gfx");
-            if (Directory.Exists(brushesPath)) { Directory.Delete(brushesPath); }
+            if (Directory.Exists(brushesPath)) { Directory.Delete(brushesPath, true); }
             foreach (var item in Directory.GetFiles(gfxPath))
             {
                 File.Delete(item);
@@ -571,6 +572,7 @@ namespace BBbuilder
                         string name = Utils.Norm(entry.FileName);
                         if (!this.FilesHashesInFolder.ContainsKey(name))
                         {
+                            Utils.VerbosePrint("Removing file in zip: " + name);
                             zip.RemoveEntry(entry);
                             removedFiles++;
                         }
@@ -591,7 +593,7 @@ namespace BBbuilder
                     }
                     else
                     {
-                        // Console.WriteLine("Updating file in zip: " + file);
+                        Utils.VerbosePrint("Updating file in zip: " + file);
                         zip.UpdateFile(file, relativePath);
                         changedFiles++;
                     } 

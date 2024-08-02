@@ -18,6 +18,10 @@ namespace BBbuilder
                     "\n    Example: 'bbbuilder config -movezip true'");
         readonly OptionFlag UseSteam = new("-usesteam <true|false>", "Whether you'd like to start the game via Steam instead of the exe in the datapath. Needed for a patched .exe usinfg the MSU launcher. Requires Windows for now." +
             "\n    Example: 'bbbuilder config -usesteam true'");
+        readonly OptionFlag Verbose = new("-verbose <true|false>", "Whether you'd like to print extra information" +
+            "\n    Example: 'bbbuilder config -verbose true'");
+        readonly OptionFlag LogTime = new("-logtime <true|false>", "Whether you'd like to print the time it takes the program to execute its different parts." +
+            "\n    Example: 'bbbuilder config -logtime true'");
 
         readonly OptionFlag Clear = new("-clear", "Clears all settings.");
         public ConfigCommand()
@@ -85,6 +89,8 @@ namespace BBbuilder
             }
             Console.WriteLine($"Use Steam: {Utils.Data.UseSteam}");
             Console.WriteLine($"Move Zip: {Utils.Data.MoveZip}");
+            Console.WriteLine($"Verbose: {Utils.Data.Verbose}");
+            Console.WriteLine($"Log Time: {Utils.Data.LogTime}");
         }
 
         public override bool HandleCommand(string[] _args)
@@ -123,11 +129,19 @@ namespace BBbuilder
             }
             if (this.MoveZip)
             {
-                HandleMoveZipCommand(this.MoveZip);
+                HandleBooleanCommand(this.MoveZip, value => Utils.Data.MoveZip = value);
             }
             if (this.UseSteam)
             {
-                HandleUseSteamCommand(this.UseSteam);
+                HandleBooleanCommand(this.UseSteam, value => Utils.Data.UseSteam = value);
+            }
+            if (this.Verbose)
+            {
+                HandleBooleanCommand(this.Verbose, value => Utils.Data.Verbose = value);
+            }
+            if (this.LogTime)
+            {
+                HandleBooleanCommand(this.LogTime, value => Utils.Data.LogTime = value);
             }
             PrintConfig();
             Utils.WriteJSON(Utils.Data);
@@ -180,27 +194,17 @@ namespace BBbuilder
             return true;
         }
 
-
-        private void HandleMoveZipCommand(OptionFlag _flag)
+        private void HandleBooleanCommand(OptionFlag flag, Action<bool> setter)
         {
-            if (_flag.PositionalValue != "true" &&  _flag.PositionalValue != "false")
+            if (flag.PositionalValue != "true" && flag.PositionalValue != "false")
             {
-                Console.WriteLine("You need to pass either 'true' or 'false' to -movezip !");
+                Console.WriteLine($"You need to pass either 'true' or 'false' to {flag.Flag} !");
                 return;
             }
-            Utils.Data.MoveZip = Convert.ToBoolean(_flag.PositionalValue);
-            Console.WriteLine($"Set MoveZip to {Convert.ToBoolean(_flag.PositionalValue)}.");
-        }
 
-        private void HandleUseSteamCommand(OptionFlag _flag)
-        {
-            if (_flag.PositionalValue != "true" && _flag.PositionalValue != "false")
-            {
-                Console.WriteLine("You need to pass either 'true' or 'false' to -usesteam !");
-                return;
-            }
-            Utils.Data.UseSteam = Convert.ToBoolean(_flag.PositionalValue);
-            Console.WriteLine($"Set UseSteam to {Convert.ToBoolean(_flag.PositionalValue)}.");
+            bool value = Convert.ToBoolean(flag.PositionalValue);
+            setter(value);
+            Console.WriteLine($"Set {flag.Flag} to {value}.");
         }
 
         private void HandleClearCommand()
