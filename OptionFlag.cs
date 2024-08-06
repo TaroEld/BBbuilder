@@ -7,7 +7,7 @@ namespace BBbuilder
 {
     // A simple class that allows for parsing of the passed arguments
     // Checks for the presence of a flag, sets a bool and removes the flag from the List
-    class OptionFlag
+    public class OptionFlag
     {
         public bool Value;
         public string Flag;

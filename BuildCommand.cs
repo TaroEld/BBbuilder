@@ -1,25 +1,26 @@
 ﻿using System;
 using System.IO;
+using System.IO.Compression;
 using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Reflection;
-using Ionic.Zip;
+//using Ionic.Zip;
 using Force.Crc32;
 using System.Text.Json;
 
 namespace BBbuilder
 {
-    class BuildCommand : Command
+    public class BuildCommand : Command
     {
         readonly string[] NotIndexedFolders = new string[] { ".bbbuilder", ".git", ".github", ".vscode", ".utils", "assets", "modtools", "node_modules" };
         readonly string[] ExcludedZipFolders = new string[] {"unpacked_brushes"};
         readonly string[] ExcludedScriptFolders = new string[] { "ui", ".git", ".github", "gfx", "preload", "brushes", "music", "sounds", "unpacked_brushes", "tempfolder", ".vscode", "nexus", ".utils", "assets" };
-        readonly OptionFlag StartGame = new("-restart", "Exit and then start BattleBrothers.exe after building the mod.") { FlagAlias = "-rs"};
-        readonly OptionFlag Transpile = new("-transpile", "Translate js file to es3. It allow you to use modern js syntax and features to create your mod.");
-        readonly OptionFlag Rebuild = new("-rebuild", "Delete the database and the .zip to start from a clean slate.") { FlagAlias = "-rb" };
-        readonly OptionFlag Diff = new("-diff <referencebranch>,<wipbranch>", "Create the zip based on the diff between <referencebranch> and <wipbranch> Pass them comma-separated WITHOUT SPACE INBETWEEN.");
+        public readonly OptionFlag StartGame = new("-restart", "Exit and then start BattleBrothers.exe after building the mod.") { FlagAlias = "-rs"};
+        public readonly OptionFlag Transpile = new("-transpile", "Translate js file to es3. It allow you to use modern js syntax and features to create your mod.");
+        public readonly OptionFlag Rebuild = new("-rebuild", "Delete the database and the .zip to start from a clean slate.") { FlagAlias = "-rb" };
+        public readonly OptionFlag Diff = new("-diff <referencebranch>,<wipbranch>", "Create the zip based on the diff between <referencebranch> and <wipbranch> Pass them comma-separated WITHOUT SPACE INBETWEEN.");
 
         string ModPath;
         string ModName;
@@ -32,7 +33,7 @@ namespace BBbuilder
         public BuildCommand()
         {
             this.Name = "build";
-            this.Description = "Builds your mod and creates a zip file that is copied to the data directory. Optionally can also simply compile the files.";
+            this.Description = "Builds your mod and creates a zip file that is copied to the data directory.";
             this.Arguments = new string[]
             {
                 "<modPath>: Specify the path of the mod to be built. (Example: bbuilder build G:/Games/BB/Mods/WIP/mod_msu)",
@@ -225,6 +226,8 @@ namespace BBbuilder
 
         private void WriteFileDataToDB()
         {
+            if (!Directory.Exists(Path.Combine(this.ModPath, ".bbbuilder")))
+                Directory.CreateDirectory(Path.Combine(this.ModPath, ".bbbuilder"));
             var jsonPath = Path.Combine(this.ModPath, ".bbbuilder", "hash.json");
             string jsonString = JsonSerializer.Serialize(this.FilesHashesInFolder);
             File.WriteAllText(jsonPath, jsonString);
@@ -252,6 +255,7 @@ namespace BBbuilder
             string[] changedNutFiles = allNutFilesAsPath.Where(f => HasFileChanged(f)).ToArray();
             int compiledFiles = 0;
             List<string> outputBuffer = new();
+            List<string> errorBuffer = new();
             if (changedNutFiles.Length == 0)
             {
                 Console.WriteLine("No files to compile!");
@@ -259,44 +263,38 @@ namespace BBbuilder
             }
 
             bool noCompileErrors = true;
-            Parallel.For(0, changedNutFiles.Length, (i, state) =>
+            using (Process compiling = new())
             {
-                string nutFilePath = changedNutFiles[i];
-                string sqCommand = String.Format("-o NUL -c \"{0}\"", nutFilePath);
-
-                using (Process compiling = new())
-                {
-                    compiling.StartInfo.UseShellExecute = false;
-                    compiling.StartInfo.RedirectStandardOutput = true;
-                    compiling.StartInfo.FileName = Utils.SQPATH;
-                    compiling.StartInfo.Arguments = sqCommand;
-                    compiling.Start();
-                    compiling.WaitForExit();
-                    if (compiling.ExitCode == -2)
-                    {
-                        StreamReader myStreamReader = compiling.StandardOutput;
-                        outputBuffer.Add(String.Format("Error compiling file {0}!", nutFilePath));
-                        outputBuffer.Add(myStreamReader.ReadLine());
-                        noCompileErrors = false;
-                    }
-                    else
-                    {
-                        compiledFiles++;
-                        Utils.VerbosePrint("Successfully compiled file " + nutFilePath);
-                    }
-                    //else Console.WriteLine("Successfully compiled file " + nutFilePath);
-                }
-            });
-            
-            if (noCompileErrors)
-                Console.WriteLine($"Successfully compiled {compiledFiles} files!");
-            else
-            {
-                Console.Error.WriteLine("Errors while compiling files!\n-------------------------------------");
+                compiling.StartInfo.UseShellExecute = false;
+                compiling.StartInfo.RedirectStandardOutput = true;
+                compiling.StartInfo.RedirectStandardError = true;
+                compiling.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                compiling.StartInfo.CreateNoWindow = true;
+                compiling.StartInfo.FileName = Utils.SQPATH;
+                compiling.StartInfo.Arguments = String.Join(" ", changedNutFiles);
+                compiling.OutputDataReceived += (o, e) => outputBuffer.Add(e.Data);
+                compiling.ErrorDataReceived += (o, e) => errorBuffer.Add(e.Data);
+                compiling.Start();
+                compiling.BeginOutputReadLine();
+                compiling.BeginErrorReadLine();
+                compiling.WaitForExit();
+                outputBuffer = outputBuffer.Where((e) => e != null && e.Length > 0).ToList();
+                errorBuffer = errorBuffer.Where((e) => e != null && e.Length > 0).ToList();
                 foreach (string line in outputBuffer)
-                    Console.Error.WriteLine(line);
-                Console.Error.WriteLine("-------------------------------------");
-            }
+                {
+                    Utils.VerbosePrint(line);
+                    compiledFiles++;
+                }
+                foreach (string line in errorBuffer)
+                {
+                    Utils.WriteRed(line);
+                }
+                if (compiledFiles > 0)
+                {
+                    Utils.WriteGreen($"Successfully compiled {compiledFiles} files.");
+                }
+                noCompileErrors = compiling.ExitCode != -2;
+            };
             return noCompileErrors;
         }
 
@@ -352,9 +350,12 @@ namespace BBbuilder
             string brushesPath = Path.Combine(this.BuildPath, "brushes");
             string gfxPath = Path.Combine(this.BuildPath, "gfx");
             if (Directory.Exists(brushesPath)) { Directory.Delete(brushesPath, true); }
-            foreach (var item in Directory.GetFiles(gfxPath))
+            if (Directory.Exists(gfxPath))
             {
-                File.Delete(item);
+                foreach (var item in Directory.GetFiles(gfxPath))
+                {
+                    File.Delete(item);
+                }
             }
         }
         private bool PackBrushFiles()
@@ -405,15 +406,16 @@ namespace BBbuilder
             }
 
 
-            Parallel.For(0, subFolders.Length, (i, state) =>
+            for (int i = 0; i < subFolders.Length; i++)
             {
                 string subFolder = subFolders[i];
                 string nameOnly = Path.GetFileName(subFolder);
                 bool hasBrush = existingBrushes.Contains(nameOnly + ".brush");
                 bool hasGfx = existingGfx.Contains(nameOnly + ".png");
                 string[] changedFiles = Directory.GetFiles(subFolder, "*", SearchOption.AllDirectories).Where(f => HasFileChanged(f)).ToArray();
-                if (changedFiles.Length == 0 && hasBrush && hasGfx) {
-                    return;
+                if (changedFiles.Length == 0 && hasBrush && hasGfx)
+                {
+                    continue;
                 }
                 File.Delete(Path.Combine(brushesPath, nameOnly + ".brush"));
                 File.Delete(Path.Combine(gfxPath, nameOnly + ".png"));
@@ -444,7 +446,7 @@ namespace BBbuilder
                         Console.WriteLine($"Packed Brush {brushName}");
                     }
                 }
-            });
+            };
 
             DirectoryInfo wipFolder = Directory.GetParent(this.BuildPath);
             if (Directory.Exists(Path.Combine(wipFolder.ToString(), "gfx")))
@@ -559,54 +561,45 @@ namespace BBbuilder
             //Dictionary<string, string> debugToZip = ReplaceDebugStatements(toZip);
             int changedFiles = 0;
             int removedFiles = 0;
+            ZipArchiveMode zipMode = ZipArchiveMode.Create;
             if (File.Exists(this.ZipPath))
             {
-                using (var zip = ZipFile.Read(this.ZipPath))
+                zipMode = ZipArchiveMode.Update;
+                using (ZipArchive zip = ZipFile.Open(this.ZipPath, zipMode))
                 {
-                    var entries = zip.Entries.ToArray();
-                    Parallel.For(0, zip.Count, (i, state) =>
+                    
+                    for (int i = zip.Entries.Count-1; i > -1; i--)
                     {
-                        ZipEntry entry = entries[i];
-                        if (entry.IsDirectory) return;
-                        string name = Utils.Norm(entry.FileName);
-                        if (!this.FilesHashesInFolder.ContainsKey(name))
+                        ZipArchiveEntry entry = zip.Entries[i];
+                        if (entry.Name == "") continue;
+                        string relativePath = entry.FullName;
+                        if (!this.FilesHashesInFolder.ContainsKey(relativePath))
                         {
-                            Utils.VerbosePrint("Removing file in zip: " + name);
-                            zip.RemoveEntry(entry);
+                            Utils.VerbosePrint("Removing file in zip: " + relativePath);
+                            entry.Delete();
                             removedFiles++;
                         }
-                    });
-                    if (removedFiles > 0)
-                        zip.Save();
+                    };
                 }
             }
 
-            using (var zip = new ZipFile(this.ZipPath))
+            using (ZipArchive zip = ZipFile.Open(this.ZipPath, zipMode))
             {
                 foreach (string file in toZip)
                 { 
-                    var relativePath = Path.GetDirectoryName(Path.GetRelativePath(this.BuildPath, file));
+                    var relativePath = Path.GetRelativePath(this.BuildPath, file);
                     if (this.Diff && !File.Exists(file))
                     {
                         Console.WriteLine("Skipping file in zip due to -diff: " + file);
                     }
                     else
                     {
-                        Utils.VerbosePrint("Updating file in zip: " + file);
-                        zip.UpdateFile(file, relativePath);
+                        Utils.VerbosePrint("Updating file in zip: " + file + "(" + relativePath + ")");
+                        if (zipMode == ZipArchiveMode.Update) zip.GetEntry(relativePath)?.Delete();
+                        zip.CreateEntryFromFile(file, relativePath);
                         changedFiles++;
                     } 
                 }
-                //foreach (string file in debugToZip.Keys)
-                //{
-                //    {
-                //        var relPath = debugToZip[file];
-                //        Console.WriteLine("Updating debug in zip: " + Path.Combine(relPath, Path.GetFileName(file)));
-                //        zip.UpdateFile(file, relPath);
-                //        changedFiles++;
-                //    }
-                //}
-                zip.Save();
             }
             Console.WriteLine($"Successfully zipped {this.ModPath} ({this.ZipPath} | Added or changed files: {changedFiles}, removed files: {removedFiles})!");
             return true;

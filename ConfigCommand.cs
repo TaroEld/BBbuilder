@@ -1,29 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
 namespace BBbuilder
 {
-    class ConfigCommand : Command
+    public class ConfigCommand : Command
     {
-        readonly OptionFlag DataPath = new("-datapath <path>", "Set path to the directory of the game to copy the .zip of the mod to and optionally (re)start the game." +
+        public readonly OptionFlag DataPath = new("-datapath <path>", "Set path to the directory of the game to copy the .zip of the mod to and optionally (re)start the game." +
                     "\n    Example: 'bbuilder config -datapath \"G:/Games/SteamLibrary/steamapps/common/Battle Brothers/data\"'");
-        readonly OptionFlag ModsPath = new("-modpath <path>", "Set the path to the directory of your mods folder, where newly initialised or extracted mods will be placed by default." +
+        public readonly OptionFlag ModsPath = new("-modpath <path>", "Set the path to the directory of your mods folder, where newly initialised or extracted mods will be placed by default." +
                     "\n    Example: 'bbuilder config -modpath \"C:/BB Modding/My Mods\"'");
-        readonly OptionFlag Folders = new("-folders <folderpath_1,folderpath_2 ...>", "Comma-separated list of folders to be included in the editor config files (for example, adding the vanilla game files folder)." +
-                    "\n    Replaces the current list of folders.nothing to remove folders." +
+        public readonly OptionFlag Folders = new("-folders <clear|folderpath_1,folderpath_2 ...>", "Comma-separated list of folders to be included in the editor config files (for example, adding the vanilla game files folder)." +
+                    "\n    Pass 'clear' to remove folders." +
                     "\n    A new mod created through init or extract is automatically added to its own workspace, so no need to specify it.");
-        readonly OptionFlag MoveZip = new("-movezip <true|false>", "Whether you'd like to delete the zip after building the mod and copying it to `datapath`." +
+        public readonly OptionFlag MoveZip = new("-movezip <true|false>", "Whether you'd like to delete the zip after building the mod and copying it to `datapath`." +
                     "\n    Example: 'bbbuilder config -movezip true'");
-        readonly OptionFlag UseSteam = new("-usesteam <true|false>", "Whether you'd like to start the game via Steam instead of the exe in the datapath. Needed for a patched .exe usinfg the MSU launcher. Requires Windows for now." +
+        public readonly OptionFlag UseSteam = new("-usesteam <true|false>", "Whether you'd like to start the game via Steam instead of the exe in the datapath. Needed for a patched .exe usinfg the MSU launcher. Requires Windows for now." +
             "\n    Example: 'bbbuilder config -usesteam true'");
-        readonly OptionFlag Verbose = new("-verbose <true|false>", "Whether you'd like to print extra information" +
+        public readonly OptionFlag Verbose = new("-verbose <true|false>", "Whether you'd like to print extra information" +
             "\n    Example: 'bbbuilder config -verbose true'");
-        readonly OptionFlag LogTime = new("-logtime <true|false>", "Whether you'd like to print the time it takes the program to execute its different parts." +
+        public readonly OptionFlag LogTime = new("-logtime <true|false>", "Whether you'd like to print the time it takes the program to execute its different parts." +
             "\n    Example: 'bbbuilder config -logtime true'");
 
-        readonly OptionFlag Clear = new("-clear", "Clears all settings.");
+        public readonly OptionFlag Clear = new("-clear", "Clears all settings.");
         public ConfigCommand()
         {
             this.Name = "config";
@@ -60,6 +61,8 @@ namespace BBbuilder
 
         private void UpdateBuildFiles()
         {
+            if (!Debugger.IsAttached)
+                return;
             string exeFile = Utils.EXEPATH.Replace("\\", "\\\\");
             string sqFile = Utils.SQPATH.Replace("\\", "\\\\");
             void setupFile(string _localPath, string _fileName, string _destinationPath)
@@ -152,7 +155,7 @@ namespace BBbuilder
         private void HandleFolderCommand(OptionFlag flag)
         {
             string[] folders = flag.PositionalValue.Split(',').Select(f => Utils.Norm(f)).ToArray();
-            if (folders.Length == 0)
+            if (folders[0] == "clear")
             {
                 Utils.Data.FoldersArray = Array.Empty<string>();
                 Console.WriteLine("Cleared folders.");
@@ -196,13 +199,13 @@ namespace BBbuilder
 
         private void HandleBooleanCommand(OptionFlag flag, Action<bool> setter)
         {
-            if (flag.PositionalValue != "true" && flag.PositionalValue != "false")
+            if (flag.PositionalValue.ToLower() != "true" && flag.PositionalValue.ToLower() != "false")
             {
                 Console.WriteLine($"You need to pass either 'true' or 'false' to {flag.Flag} !");
                 return;
             }
 
-            bool value = Convert.ToBoolean(flag.PositionalValue);
+            bool value = Convert.ToBoolean(flag.PositionalValue.ToLower());
             setter(value);
             Console.WriteLine($"Set {flag.Flag} to {value}.");
         }

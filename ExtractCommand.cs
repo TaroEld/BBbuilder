@@ -9,14 +9,14 @@ using System.Threading.Tasks;
 
 namespace BBbuilder
 {
-    class ExtractCommand : Command
+    public class ExtractCommand : Command
     {
         string ModPath;
         string ModName;
         string ZipPath;
-        readonly OptionFlag Replace = new("-overwrite", "Replace the files in an existing folder.");
-        readonly OptionFlag Rename = new("-name <newname>", "Renames the extracted mod.");
-        readonly OptionFlag AltPath = new("-directory <path>", "Specify alternative path to extract the mod to.");
+        public readonly OptionFlag Replace = new("-overwrite", "Replace the files in an existing folder.");
+        public readonly OptionFlag Rename = new("-name <newname>", "Renames the extracted mod.");
+        public readonly OptionFlag AltPath = new("-directory <path>", "Specify alternative path to extract the mod to.");
         List<string> InitCommandArray;
         public ExtractCommand()
         {
@@ -31,6 +31,7 @@ namespace BBbuilder
 
         public override bool HandleCommand(string[] _args)
         {
+            this.InitCommandArray = new List<string>();
             if (!base.HandleCommand(_args))
             {
                 return false;

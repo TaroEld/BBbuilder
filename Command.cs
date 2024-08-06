@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace BBbuilder
 {
-    abstract class Command
+    public abstract class Command
     {
         public string Name { get; set; }
         public string Description { get; set; }
@@ -23,7 +23,7 @@ namespace BBbuilder
         private OptionFlag[] GetOptionFlags()
         {
             return this.GetType()
-                .GetFields(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                .GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
                 .Where(f => f.FieldType == typeof(OptionFlag))
                 .Select(f => (OptionFlag)f.GetValue(this))
                 .ToArray();

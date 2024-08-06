@@ -12,17 +12,17 @@ using Microsoft.Win32;
 
 namespace BBbuilder
 {
-    class Utils
+    public class Utils
     {
-        public static string EXECUTINGFOLDER = AppDomain.CurrentDomain.BaseDirectory;
-        public static string EXEPATH = Path.Combine(EXECUTINGFOLDER, "BBbuilder.exe");
-        public static string SQPATH = Path.Combine(EXECUTINGFOLDER, "tools", "sq.exe");
-        public static string BBRUSHERPATH = Path.Combine(EXECUTINGFOLDER, "tools", "bbrusher.exe");
-        public static string BBSQPATH = Path.Combine(EXECUTINGFOLDER, "tools", "bbsq.exe");
-        public static string NUTCRACKERPATH = Path.Combine(EXECUTINGFOLDER, "tools", "nutcracker.exe");
-        public static string CONFIGPATH = Path.Combine(EXECUTINGFOLDER, "tools", "config.json");
-        public static string BBSTEAMID = "365360";
-        private static bool DEBUG = false;
+        public static readonly string EXECUTINGFOLDER = AppDomain.CurrentDomain.BaseDirectory;
+        public static readonly string EXEPATH = Path.Combine(EXECUTINGFOLDER, "BBbuilder.exe");
+        public static readonly string SQPATH = Path.Combine(EXECUTINGFOLDER, "tools", "sq_taro.exe");
+        public static readonly string BBRUSHERPATH = Path.Combine(EXECUTINGFOLDER, "tools", "bbrusher.exe");
+        public static readonly string BBSQPATH = Path.Combine(EXECUTINGFOLDER, "tools", "bbsq.exe");
+        public static readonly string NUTCRACKERPATH = Path.Combine(EXECUTINGFOLDER, "tools", "nutcracker.exe");
+        public static readonly string CONFIGPATH = Path.Combine(EXECUTINGFOLDER, "tools", "config.json");
+        public static readonly string BBSTEAMID = "365360";
+        public static readonly bool DEBUG = false;
         public static ConfigData Data { get; set; }
         public static Stopwatch Stopwatch = new Stopwatch();
         public static TimeSpan LastTime;
@@ -61,12 +61,12 @@ namespace BBbuilder
             }
         }
 
-        static Process[] getBBProcesses()
+        public static Process[] getBBProcesses()
         {
             return Process.GetProcessesByName("BattleBrothers");
         }
 
-        static bool KillBB()
+        public static bool KillBB()
         {
             do
             {
@@ -97,7 +97,7 @@ namespace BBbuilder
         }
 
         [SupportedOSPlatform("windows")]
-        static bool StartFromSteam()
+        public static bool StartFromSteam()
         {
             using (var key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\WOW6432Node\\Valve\\Steam", false))
             {
@@ -140,7 +140,7 @@ namespace BBbuilder
             }
         }
 
-        static bool StartFromExe()
+        public static bool StartFromExe()
         {
             string bbFolder = Directory.GetParent(Data.GamePath).ToString();
             string bbExe = Path.Combine(bbFolder, "win32", "BattleBrothers.exe");
@@ -227,17 +227,6 @@ namespace BBbuilder
                 fileAsString = reader.ReadToEnd();
             }
             return fileAsString;
-        }
-
-        public static void PrintHelp(Dictionary<string, Command> _commands)
-        {
-            foreach (KeyValuePair<string, Command> entry in _commands)
-            {
-                Console.WriteLine("\n------------------------------------------------------------\n");
-                entry.Value.PrintHelp();
-                
-            }
-            return;
         }
 
         public static bool IsGitInstalled()

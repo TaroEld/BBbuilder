@@ -7,15 +7,15 @@ using System.Diagnostics;
 
 namespace BBbuilder
 {
-    class InitCommand : Command
+    public class InitCommand : Command
     {
         string ModName;
         string ModPath;
         string TemplatePath;
-        readonly OptionFlag Replace = new("-overwrite", "Overwrite the files in an existing folder. Keeps other files in the existing folder.");
-        readonly OptionFlag AltPath = new("-directory <path>", "Specify another folder to place the new mod. " +
+        public readonly OptionFlag Replace = new("-overwrite", "Overwrite the files in an existing folder. Keeps other files in the existing folder.");
+        public readonly OptionFlag AltPath = new("-directory <path>", "Specify another folder to place the new mod. " +
             "\n    Example: `init mod_my_first_mod altpath \"C:\\BB Modding\\My_Mods\\\"` ");
-        readonly OptionFlag Template = new("-template <templatename>", " Specify which template to use. The template defines what files and folders will be created in the new mod directory. " +
+        public readonly OptionFlag Template = new("-template <templatename>", " Specify which template to use. The template defines what files and folders will be created in the new mod directory. " +
             "\nThe default templates are found in the `Templates` folder within the .zip. You can customize these templates by either editing the existing ones, or adding new folders." +
             "\n    Example: 'bbbuilder init my_cool_mod -template ui");
         public InitCommand()

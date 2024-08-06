@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-
 namespace BBbuilder
 {
     class Program
     {
-        static int Main(string[] args)
+        public static int Main(string[] args)
         {
             var version = "1.4";
             Console.WriteLine($"BBBuilder version: {version}");
@@ -35,12 +34,12 @@ namespace BBbuilder
             if (arguments == null || arguments.Length == 0)
             {
                 Console.WriteLine($"No command passed, printing possible commands.\n");
-                Utils.PrintHelp(Commands);
+                UtilsHelpers.PrintHelp(Commands);
             }
             else if (!(Commands.ContainsKey(arguments[0])))
             {
                 Console.WriteLine($"Command {arguments[0]} is not recognized! Printing possible commands.\n");
-                Utils.PrintHelp(Commands);
+                UtilsHelpers.PrintHelp(Commands);
             }
             else
             {
