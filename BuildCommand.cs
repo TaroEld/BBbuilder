@@ -48,7 +48,7 @@ namespace BBbuilder
 
             if (!Directory.Exists(_args[1]))
             {
-                Console.Error.WriteLine($"Passed mod path {_args[1]} does not exist!");
+                Utils.WriteRed($"Passed mod path {_args[1]} does not exist!");
                 return false;
             }
             this.ModPath = Utils.Norm(_args[1]);
@@ -86,8 +86,8 @@ namespace BBbuilder
                 .Where(f => Path.GetFileName(f) != this.ZipName && Path.GetFileName(f).StartsWith(this.ModName)).ToArray();
             if (sameZipNameInData.Length > 0)
             {
-                Console.Error.WriteLine("Found other .zip files in data that seem to be the same mod!");
-                foreach (string s in sameZipNameInData) { Console.Error.WriteLine(s); }
+                Utils.WriteRed("Found other .zip files in data that seem to be the same mod!");
+                foreach (string s in sameZipNameInData) { Utils.WriteRed(s); }
                 return false;
             }
             Utils.LogTime($"BuildCommand: Initital checks");
@@ -95,14 +95,14 @@ namespace BBbuilder
             {
                 if (!Utils.IsGitInstalled())
                 {
-                    Console.Error.WriteLine("Tried to use diff mode but git does not seem to be installed or accessible via PATH!");
+                    Utils.WriteRed("Tried to use diff mode but git does not seem to be installed or accessible via PATH!");
                     return false;
                 }
                 string feature_branch_name = this.Diff.PositionalValue.Split(",")[1];
                 string current_branch = GetCurrentGitBranch();
                 if (feature_branch_name != current_branch)
                 {
-                    Console.Error.WriteLine($"Tried to use diff mode with feature branch {feature_branch_name} but {current_branch} is checked out! Make sure to check out the feature branch.");
+                    Utils.WriteRed($"Tried to use diff mode with feature branch {feature_branch_name} but {current_branch} is checked out! Make sure to check out the feature branch.");
                     return false;
                 }
                 Utils.LogTime($"BuildCommand: Diff checks");
@@ -136,18 +136,18 @@ namespace BBbuilder
             Console.WriteLine($"Attempting to build {this.ModPath}");
             if (!CompileFiles())
             {
-                Console.Error.WriteLine("Failed while compiling files");
+                Utils.WriteRed("Failed while compiling files");
                 return false;
             }
             Utils.LogTime($"BuildCommand: Compiling files");
             if (this.Transpile && !TranspileToES3())
             {
-                Console.Error.WriteLine("Failed while transpiling to ES3!");
+                Utils.WriteRed("Failed while transpiling to ES3!");
                 return false;
             }
             if (!PackBrushFiles())
             {
-                Console.Error.WriteLine("Failed while packing brush files");
+                Utils.WriteRed("Failed while packing brush files");
                 return false;
             }
             Utils.LogTime($"BuildCommand: Packing brush files");
@@ -166,13 +166,13 @@ namespace BBbuilder
 
             if (!ZipFiles())
             {
-                Console.Error.WriteLine("Failed while zipping files");
+                Utils.WriteRed("Failed while zipping files");
                 return false;
             }
             Utils.LogTime($"BuildCommand: Zipping files");
             if (!CopyZipToData())
             {
-                Console.Error.WriteLine("Failed while copying new zip to data!");
+                Utils.WriteRed("Failed while copying new zip to data!");
                 return false;
             }
 
@@ -456,10 +456,10 @@ namespace BBbuilder
             }
             if (!noCompileErrors)
             {
-                Console.Error.WriteLine("Errors while packing brushes!\n-------------------------------------");
+                Utils.WriteRed("Errors while packing brushes!\n-------------------------------------");
                 foreach (string line in outputBuffer)
-                    Console.Error.WriteLine(line);
-                Console.Error.WriteLine("-------------------------------------");
+                    Utils.WriteRed(line);
+                Utils.WriteRed("-------------------------------------");
             }
             if (noCompileErrors && packedBrushes)
                 Console.WriteLine("Successfully packed brush files!");
@@ -495,7 +495,7 @@ namespace BBbuilder
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine(ex);
+                Utils.WriteRed(ex.ToString());
             }
             return new List<string>();
         }

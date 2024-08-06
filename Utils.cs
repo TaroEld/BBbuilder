@@ -43,6 +43,21 @@ namespace BBbuilder
                 Console.WriteLine(msg);
         }
 
+        public static void WriteRed(string msg)
+        {
+            //Console.BackgroundColor = ConsoleColor.Red;
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.Error.WriteLine(msg);
+            Console.ResetColor();
+        }
+
+        public static void WriteGreen(string msg)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine(msg);
+            Console.ResetColor();
+        }
+
         public static bool KillAndStartBB()
         {
             if (!KillBB())
