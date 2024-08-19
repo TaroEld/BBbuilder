@@ -24,16 +24,17 @@ namespace BBbuilder
         public static readonly string BBSTEAMID = "365360";
         public static readonly bool DEBUG = false;
         public static ConfigData Data { get; set; }
-        public static Stopwatch Stopwatch = new Stopwatch();
-        public static TimeSpan LastTime;
+        public static Stopwatch Stopwatch = Stopwatch.StartNew();
+        public static long LastTime = 0;
 
         public static void LogTime(string msg)
         {
             if (Data.LogTime)
             {
-                string delta = LastTime != TimeSpan.MinValue ? (Stopwatch.Elapsed - LastTime).Milliseconds.ToString() : "";
-                Console.WriteLine($"TIME::{msg} {Stopwatch.Elapsed.Milliseconds} ms (d {delta})");
-                LastTime = Stopwatch.Elapsed;
+                long new_time = Stopwatch.ElapsedMilliseconds;
+                long delta = Stopwatch.ElapsedMilliseconds - LastTime;
+                Console.WriteLine($"TIME::{msg} : {new_time}ms (d {delta}ms)");
+                LastTime = new_time;
             }
         }
 
