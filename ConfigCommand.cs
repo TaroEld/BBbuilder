@@ -61,7 +61,7 @@ namespace BBbuilder
 
         private void UpdateBuildFiles()
         {
-            if (!Debugger.IsAttached)
+            if (Debugger.IsAttached)
                 return;
             string exeFile = Utils.EXEPATH.Replace("\\", "\\\\");
             string sqFile = Utils.SQPATH.Replace("\\", "\\\\");
