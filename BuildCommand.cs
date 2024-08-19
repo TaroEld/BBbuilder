@@ -267,6 +267,15 @@ namespace BBbuilder
             }
 
             bool noCompileErrors = true;
+            string argument = String.Join(" ", changedNutFiles);
+            bool args_too_long = argument.Length > 32650;
+            // max argument len is 32699... So we write to file and tell sq to read from file
+            if (args_too_long) {
+                string file_path = Path.Combine(Utils.EXECUTINGFOLDER, "tools", "argument.txt");
+                File.WriteAllLines(file_path, changedNutFiles);
+                argument = $"-f {file_path}";
+                Console.WriteLine($"Amount of files exceeded parameter limit, writing to file {file_path}");
+            }
             using (Process compiling = new())
             {
                 compiling.StartInfo.UseShellExecute = false;
@@ -275,30 +284,31 @@ namespace BBbuilder
                 compiling.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
                 compiling.StartInfo.CreateNoWindow = true;
                 compiling.StartInfo.FileName = Utils.SQPATH;
-                compiling.StartInfo.Arguments = String.Join(" ", changedNutFiles);
+                compiling.StartInfo.Arguments = argument;
                 compiling.OutputDataReceived += (o, e) => outputBuffer.Add(e.Data);
                 compiling.ErrorDataReceived += (o, e) => errorBuffer.Add(e.Data);
                 compiling.Start();
                 compiling.BeginOutputReadLine();
                 compiling.BeginErrorReadLine();
                 compiling.WaitForExit();
-                outputBuffer = outputBuffer.Where((e) => e != null && e.Length > 0).ToList();
-                errorBuffer = errorBuffer.Where((e) => e != null && e.Length > 0).ToList();
-                foreach (string line in outputBuffer)
-                {
-                    Utils.VerbosePrint(line);
-                    compiledFiles++;
-                }
-                foreach (string line in errorBuffer)
-                {
-                    Utils.WriteRed(line);
-                }
-                if (compiledFiles > 0)
-                {
-                    Utils.WriteGreen($"Successfully compiled {compiledFiles} files.");
-                }
-                noCompileErrors = compiling.ExitCode != -2;
+                noCompileErrors = noCompileErrors && compiling.ExitCode != -2;
             };
+            outputBuffer = outputBuffer.Where((e) => e != null && e.Length > 0).ToList();
+            errorBuffer = errorBuffer.Where((e) => e != null && e.Length > 0).ToList();
+            foreach (string line in outputBuffer)
+            {
+                Utils.VerbosePrint(line);
+                compiledFiles++;
+            }
+            foreach (string line in errorBuffer)
+            {
+                Utils.WriteRed(line);
+            }
+            if (compiledFiles > 0)
+            {
+                Utils.WriteGreen($"Successfully compiled {compiledFiles} files.");
+            }
+
             return noCompileErrors;
         }
 
@@ -447,17 +457,11 @@ namespace BBbuilder
                     }
                     else
                     {
-                        Console.WriteLine($"Packed Brush {brushName}");
+                        outputBuffer.Add($"Packed Brush {brushName}");
                     }
                 }
-            };
+            });
 
-            DirectoryInfo wipFolder = Directory.GetParent(this.BuildPath);
-            if (Directory.Exists(Path.Combine(wipFolder.ToString(), "gfx")))
-            {
-                Utils.Copy(Path.Combine(wipFolder.ToString(), "gfx"), gfxPath);
-                Directory.Delete(Path.Combine(wipFolder.ToString(), "gfx"), true);
-            }
             if (!noCompileErrors)
             {
                 Utils.WriteRed("Errors while packing brushes!\n-------------------------------------");
