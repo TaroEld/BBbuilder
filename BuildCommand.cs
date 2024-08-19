@@ -27,6 +27,8 @@ namespace BBbuilder
         string ZipName;
         string ZipPath;
         string BuildPath;
+        string GfxPath;
+        string BrushesPath;
         Dictionary<string, Int64> FilesHashesInFolder;
         Dictionary<string, Int64> FileHashesInDB;
         Dictionary<string, Int64> FilesWhichChanged;
@@ -69,6 +71,8 @@ namespace BBbuilder
             if (this.Diff)
                 this.ZipName = this.ModName + "_patch.zip";
             this.ZipPath = Path.Combine(this.BuildPath, this.ZipName);
+            this.GfxPath = Path.Combine(this.BuildPath, "gfx");
+            this.BrushesPath = Path.Combine(this.BuildPath, "brushes");
             return true;
         }
 
@@ -347,12 +351,12 @@ namespace BBbuilder
 
         private void DeleteBrushAndGfxFiles()
         {
-            string brushesPath = Path.Combine(this.BuildPath, "brushes");
-            string gfxPath = Path.Combine(this.BuildPath, "gfx");
-            if (Directory.Exists(brushesPath)) { Directory.Delete(brushesPath, true); }
-            if (Directory.Exists(gfxPath))
+            if (Directory.Exists(this.BrushesPath)) { 
+                Directory.Delete(this.BrushesPath, true); 
+            }
+            if (Directory.Exists(this.GfxPath))
             {
-                foreach (var item in Directory.GetFiles(gfxPath))
+                foreach (var item in Directory.GetFiles(this.GfxPath))
                 {
                     File.Delete(item);
                 }
@@ -368,12 +372,10 @@ namespace BBbuilder
                 return true;
             }
 
-            string brushesPath = Path.Combine(this.BuildPath, "brushes");
-            string gfxPath = Path.Combine(this.BuildPath, "gfx");
-            if (!Directory.Exists(brushesPath)) Directory.CreateDirectory(brushesPath);
-            if (!Directory.Exists(gfxPath)) Directory.CreateDirectory(gfxPath);
-            string[] existingBrushes = Directory.GetFiles(brushesPath).Select(Path.GetFileName).ToArray();
-            string[] existingGfx = Directory.GetFiles(gfxPath).Select(Path.GetFileName).ToArray();
+            if (!Directory.Exists(this.BrushesPath)) Directory.CreateDirectory(this.BrushesPath);
+            if (!Directory.Exists(this.GfxPath)) Directory.CreateDirectory(this.GfxPath);
+            string[] existingBrushes = Directory.GetFiles(this.BrushesPath).Select(Path.GetFileName).ToArray();
+            string[] existingGfx = Directory.GetFiles(this.GfxPath).Select(Path.GetFileName).ToArray();
             string[] subFolders = Directory.GetDirectories(unpackedBrushesPath);
             string[] subFoldersNameOnly = subFolders.Select(Path.GetFileName).ToArray();
 
@@ -383,7 +385,7 @@ namespace BBbuilder
                 if (!subFoldersNameOnly.Contains(brushFile))
                 {
                     Console.WriteLine("Deleting file " + brushFile + ".brush");
-                    File.Delete(Path.Combine(brushesPath, brushFile + ".brush"));
+                    File.Delete(Path.Combine(this.BrushesPath, brushFile + ".brush"));
 
                 }
             }
@@ -392,7 +394,7 @@ namespace BBbuilder
                 if (!subFoldersNameOnly.Contains(gfxFile))
                 {
                     Console.WriteLine("Deleting file " + gfxFile + ".png");
-                    File.Delete(Path.Combine(gfxPath, gfxFile + ".png"));
+                    File.Delete(Path.Combine(this.GfxPath, gfxFile + ".png"));
                 }
             }
 
@@ -400,13 +402,13 @@ namespace BBbuilder
             bool packedBrushes = false;
             List<string> outputBuffer = new();
             
-            if (!Directory.Exists(brushesPath))
+            if (!Directory.Exists(this.BrushesPath))
             {
-                Directory.CreateDirectory(brushesPath);
+                Directory.CreateDirectory(this.BrushesPath);
             }
 
-
-            for (int i = 0; i < subFolders.Length; i++)
+            //(int i = 0; i < subFolders.Length; i++)
+            Parallel.For(0, subFolders.Length, (i) =>
             {
                 string subFolder = subFolders[i];
                 string nameOnly = Path.GetFileName(subFolder);
@@ -415,15 +417,15 @@ namespace BBbuilder
                 string[] changedFiles = Directory.GetFiles(subFolder, "*", SearchOption.AllDirectories).Where(f => HasFileChanged(f)).ToArray();
                 if (changedFiles.Length == 0 && hasBrush && hasGfx)
                 {
-                    continue;
+                    return;
                 }
-                File.Delete(Path.Combine(brushesPath, nameOnly + ".brush"));
-                File.Delete(Path.Combine(gfxPath, nameOnly + ".png"));
+                File.Delete(Path.Combine(this.BrushesPath, nameOnly + ".brush"));
+                File.Delete(Path.Combine(this.GfxPath, nameOnly + ".png"));
 
                 packedBrushes = true;
 
                 string brushName = $"{nameOnly}.brush";
-                string command = $"pack \"brushes/{brushName}\" \"{subFolder}\"";
+                string command = $"pack --gfxPath {this.BuildPath} \"brushes/{brushName}\" \"{subFolder}\"";
 
                 using (Process packBrush = new())
                 {
@@ -432,6 +434,8 @@ namespace BBbuilder
                     packBrush.StartInfo.FileName = Utils.BBRUSHERPATH;
                     packBrush.StartInfo.Arguments = command;
                     packBrush.StartInfo.WorkingDirectory = this.BuildPath;
+                    packBrush.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                    packBrush.StartInfo.CreateNoWindow = true;
                     packBrush.Start();
                     string output = packBrush.StandardOutput.ReadToEnd();
                     packBrush.WaitForExit();
@@ -544,7 +548,7 @@ namespace BBbuilder
                 {
                     string[] directories = file.Split(Path.DirectorySeparatorChar);
                     string brushesFileName = directories[Array.IndexOf(directories, "unpacked_brushes") + 1] + ".brush";
-                    string brushPath = Path.Combine(this.BuildPath, "brushes", brushesFileName);
+                    string brushPath = Path.Combine(this.BrushesPath, brushesFileName);
                     brushesFolders.Add(brushPath);
                 }
                 files.AddRange(brushesFolders.Distinct().ToList());    
