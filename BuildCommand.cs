@@ -399,38 +399,40 @@ namespace BBBuilder
         private bool PackBrushFiles()
         {
             string unpackedBrushesPath = Path.Combine(this.BuildPath, "unpacked_brushes");
-            if (!Directory.Exists(unpackedBrushesPath) || Directory.GetDirectories(unpackedBrushesPath).Length == 0)
-            {
-                Console.WriteLine("No brush files to pack!");
-                DeleteBrushAndGfxFiles();
-                return true;
-            }
+            string[] unpackedBrushesSubFolders = Directory.Exists(unpackedBrushesPath) ? Directory.GetDirectories(unpackedBrushesPath) : Array.Empty<string>();
+            string[] unpackedBrushesSubFoldersNameOnly = unpackedBrushesSubFolders.Select(Path.GetFileName).ToArray();
 
             if (!Directory.Exists(this.BrushesPath)) Directory.CreateDirectory(this.BrushesPath);
             if (!Directory.Exists(this.GfxPath)) Directory.CreateDirectory(this.GfxPath);
             string[] existingBrushes = Directory.GetFiles(this.BrushesPath).Select(Path.GetFileName).ToArray();
             string[] existingGfx = Directory.GetFiles(this.GfxPath).Select(Path.GetFileName).ToArray();
-            string[] subFolders = Directory.GetDirectories(unpackedBrushesPath);
-            string[] subFoldersNameOnly = subFolders.Select(Path.GetFileName).ToArray();
+
 
             // delete brushes and gfx that dont exist anymore
             foreach (string brushFile in existingBrushes.Select(Path.GetFileNameWithoutExtension))
             {
-                if (!subFoldersNameOnly.Contains(brushFile))
+                if (!unpackedBrushesSubFoldersNameOnly.Contains(brushFile))
                 {
-                    Console.WriteLine("Deleting file " + brushFile + ".brush");
+                    Console.WriteLine("Deleting file " + brushFile + ".brush as no corresponding unpacked_brushes folder was found.");
                     File.Delete(Path.Combine(this.BrushesPath, brushFile + ".brush"));
 
                 }
             }
             foreach (string gfxFile in existingGfx.Select(Path.GetFileNameWithoutExtension))
             {
-                if (!subFoldersNameOnly.Contains(gfxFile))
+                if (!unpackedBrushesSubFoldersNameOnly.Contains(gfxFile))
                 {
-                    Console.WriteLine("Deleting file " + gfxFile + ".png");
+                    Console.WriteLine("Deleting file " + gfxFile + ".png as no corresponding unpacked_brushes folder was found.");
                     File.Delete(Path.Combine(this.GfxPath, gfxFile + ".png"));
                 }
             }
+            if (unpackedBrushesSubFolders.Length == 0)
+            {
+                Console.WriteLine("No brush files to pack!");
+                DeleteBrushAndGfxFiles();
+                return true;
+            }
+
 
             bool noCompileErrors = true;
             bool packedBrushes = false;
@@ -442,9 +444,9 @@ namespace BBBuilder
             }
 
             //(int i = 0; i < subFolders.Length; i++)
-            Parallel.For(0, subFolders.Length, (i) =>
+            Parallel.For(0, unpackedBrushesSubFolders.Length, (i) =>
             {
-                string subFolder = subFolders[i];
+                string subFolder = unpackedBrushesSubFolders[i];
                 string nameOnly = Path.GetFileName(subFolder);
                 bool hasBrush = existingBrushes.Contains(nameOnly + ".brush");
                 bool hasGfx = existingGfx.Contains(nameOnly + ".png");
