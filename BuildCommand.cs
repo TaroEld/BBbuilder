@@ -134,7 +134,7 @@ namespace BBBuilder
             this.FilesHashesInFolder = ReadFileDataFromFolder(GetAllFoldersExcept(this.NotIndexedFolders));
             Utils.LogTime($"BuildCommand: Reading/Creating hashes from Folders");
 
-            UpdateFilesWhichChanged(this.FilesHashesInFolder);
+            this.FilesWhichChanged = CompareDictionaries(this.FileHashesInDB, this.FilesHashesInFolder);
             Utils.LogTime($"BuildCommand: Creating changes dict");
 
             Console.WriteLine($"Attempting to build {this.ModPath}");
@@ -149,22 +149,35 @@ namespace BBBuilder
                 Utils.WriteRed("Failed while transpiling to ES3!");
                 return false;
             }
+            var extendedNotIndexedFolders = this.NotIndexedFolders.Concat(new[] { "scripts", this.ModName, "unpacked_brushes" }).ToArray();
+            var folders = GetAllFoldersExcept(extendedNotIndexedFolders);
+            var beforeBrush = ReadFileDataFromFolder(folders);
             if (!PackBrushFiles())
             {
                 Utils.WriteRed("Failed while packing brush files");
                 return false;
             }
             Utils.LogTime($"BuildCommand: Packing brush files");
-
-            // re-init the folder filepath : datetime dict to make sure we don't miss something that changed in the meanwhile#
-            this.FilesWhichChanged = new();
-            var extendedNotIndexedFolders = this.NotIndexedFolders.Concat(new[] { "scripts", this.ModName, "unpacked_brushes"}).ToArray();
-            var changes = ReadFileDataFromFolder(GetAllFoldersExcept(extendedNotIndexedFolders));
-            foreach (var kvp in changes)
+            
+            folders = GetAllFoldersExcept(extendedNotIndexedFolders);
+            var afterBrush = ReadFileDataFromFolder(folders);
+            foreach (var kvp in afterBrush)
             {
                 this.FilesHashesInFolder[kvp.Key] = kvp.Value;
+                this.FileHashesInDB[kvp.Key] = kvp.Value;
+                if (!beforeBrush.ContainsKey(kvp.Key) || !beforeBrush[kvp.Key].Equals(kvp.Value))
+                {
+                    this.FilesWhichChanged[kvp.Key] = kvp.Value;
+                }
             }
-            UpdateFilesWhichChanged(this.FilesHashesInFolder);
+            foreach (var kvp in beforeBrush)
+            {
+                if (!afterBrush.ContainsKey(kvp.Key))
+                {
+                    if (this.FileHashesInDB.ContainsKey(kvp.Key)) this.FileHashesInDB.Remove(kvp.Key);
+                    if (this.FilesHashesInFolder.ContainsKey(kvp.Key)) this.FilesHashesInFolder.Remove(kvp.Key);
+                }
+            }
             Utils.LogTime($"BuildCommand: Checking for new changes");
 
 
@@ -237,13 +250,24 @@ namespace BBBuilder
             File.WriteAllText(jsonPath, jsonString);
         }
 
-        private void UpdateFilesWhichChanged(Dictionary<string, Int64> dict)
+        private Dictionary<string, Int64> CompareDictionaries(Dictionary<string, Int64> dict1, Dictionary<string, Int64> dict2)
         {
-            foreach (var entry in dict)
+            Dictionary<string, Int64> changes = new();
+            foreach (var entry in dict1)
             {
-                if (!(this.FileHashesInDB.ContainsKey(entry.Key)) || this.FileHashesInDB[entry.Key] != entry.Value)
-                    this.FilesWhichChanged.Add(entry.Key, entry.Value);
+                if (!dict2.ContainsKey(entry.Key) || !dict2[entry.Key].Equals(entry.Value))
+                {
+                    changes.Add(entry.Key, entry.Value);
+                }
             }
+            foreach (var entry in dict2)
+            {
+                if (!dict1.ContainsKey(entry.Key))
+                {
+                    changes.Add(entry.Key, entry.Value);
+                }
+            }
+            return changes;
         }
 
         private bool HasFileChanged(string filePath)
