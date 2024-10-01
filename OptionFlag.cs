@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Xml.Linq;
 
 
-namespace BBbuilder
+namespace BBBuilder
 {
     // A simple class that allows for parsing of the passed arguments
     // Checks for the presence of a flag, sets a bool and removes the flag from the List

@@ -1,4 +1,4 @@
-﻿namespace BBbuilder
+﻿namespace BBBuilder
 {
     public class ConfigData
     {

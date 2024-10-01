@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Diagnostics;
 
-namespace BBbuilder
+namespace BBBuilder
 {
     public class InitCommand : Command
     {

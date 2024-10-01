@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BBbuilder
+namespace BBBuilder
 {
-    class StartCommand : Command
+    public class StartCommand : Command
     {
         public StartCommand()
         {

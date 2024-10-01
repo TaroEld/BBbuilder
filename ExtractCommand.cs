@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BBbuilder
+namespace BBBuilder
 {
     public class ExtractCommand : Command
     {

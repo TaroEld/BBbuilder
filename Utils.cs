@@ -10,12 +10,12 @@ using System.Text.Json;
 using System.Threading;
 using Microsoft.Win32;
 
-namespace BBbuilder
+namespace BBBuilder
 {
     public class Utils
     {
         public static readonly string EXECUTINGFOLDER = AppDomain.CurrentDomain.BaseDirectory;
-        public static readonly string EXEPATH = Path.Combine(EXECUTINGFOLDER, "BBbuilder.exe");
+        public static string EXEPATH = Path.Combine(EXECUTINGFOLDER, "BBBuilder.exe");
         public static readonly string SQPATH = Path.Combine(EXECUTINGFOLDER, "tools", "sq_taro.exe");
         public static readonly string BBRUSHERPATH = Path.Combine(EXECUTINGFOLDER, "tools", "bbrusher.exe");
         public static readonly string BBSQPATH = Path.Combine(EXECUTINGFOLDER, "tools", "bbsq.exe");
@@ -186,7 +186,7 @@ namespace BBbuilder
 
             folders.RemoveWhere(folder =>
             {
-                if (folder != EXECUTINGFOLDER && File.Exists(Path.Combine(folder, "BBbuilder.exe")))
+                if (folder != EXECUTINGFOLDER && File.Exists(Path.Combine(folder, "BBBuilder.exe")))
                 {
                     Console.WriteLine($"Removing folder from %PATH%: {folder}");
                     hasChanged = true;

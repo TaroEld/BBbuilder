@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
-namespace BBbuilder
+namespace BBBuilder
 {
     public class ConfigCommand : Command
     {

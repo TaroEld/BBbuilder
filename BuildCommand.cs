@@ -10,7 +10,7 @@ using System.Reflection;
 using Force.Crc32;
 using System.Text.Json;
 
-namespace BBbuilder
+namespace BBBuilder
 {
     public class BuildCommand : Command
     {
