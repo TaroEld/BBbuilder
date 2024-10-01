@@ -1,0 +1,3 @@
+<brush name="gfx/test_brush.png" version="17" b1="2" b5="0">
+	 <sprite id="test_png" img="test_png.png" />
+</brush>

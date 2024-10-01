@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-namespace BBbuilder
+namespace BBBuilder
 {
     class Program
     {
@@ -25,7 +25,8 @@ namespace BBbuilder
             var config = (ConfigCommand)Commands["config"];
             config.SetupConfig();
             // exit early instead of printing the whole config
-            if (!Debugger.IsAttached) {
+            if (!Debugger.IsAttached)
+            {
                 if (Utils.UpdatePathVariable())
                     return 1;
             }

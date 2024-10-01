@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net7.0-windows</TargetFramework>
+	 <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>BBBuilder_gui</RootNamespace>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon>assets\armor_parts.ico</ApplicationIcon>
+	  <Description>GUI companion for the build tools for Battle Brothers</Description>
+	  <BaseOutputPath>$(SolutionDir)out</BaseOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="assets\armor_parts.ico" />
+    <None Remove="assets\generic_background_large_border.png" />
+    <None Remove="assets\msu_button_default.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="assets\armor_parts.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="assets\generic_background_large_border.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="assets\msu_button_default.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BBBuilder.Core\BBBuilder.Core.csproj" />
+  </ItemGroup>
+
+</Project>

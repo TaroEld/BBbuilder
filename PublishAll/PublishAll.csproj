@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net7.0-windows</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<UseWPF>true</UseWPF>
+		<Description>Dummy publish project</Description>
+	</PropertyGroup>
+
+	<ItemGroup>
+	</ItemGroup>
+
+  <Target Name="PublishAll" AfterTargets="Build">
+    <PropertyGroup>
+      <PublishDir>$(SolutionDir)Publish</PublishDir>
+    </PropertyGroup>
+	  <MSBuild Projects="..\BBBuilder.Core\BBBuilder.Core.csproj" Targets="Publish" Properties="Configuration=$(Configuration);PublishDir=$(PublishDir)" />
+    <MSBuild Projects="..\BBBuilder.cli\BBBuilder.cli.csproj" Targets="Publish" Properties="Configuration=$(Configuration);PublishDir=$(PublishDir)" />
+    <MSBuild Projects="..\BBBuilder.gui\BBBuilder.gui.csproj" Targets="Publish" Properties="Configuration=$(Configuration);PublishDir=$(PublishDir)" />
+  </Target>
+
+</Project>

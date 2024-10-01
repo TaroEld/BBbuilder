@@ -14,14 +14,14 @@ namespace BBBuilder
 {
     public class Utils
     {
-        public static readonly string EXECUTINGFOLDER = AppDomain.CurrentDomain.BaseDirectory;
+        public static string EXECUTINGFOLDER = AppDomain.CurrentDomain.BaseDirectory;
         public static string EXEPATH = Path.Combine(EXECUTINGFOLDER, "BBBuilder.exe");
-        public static readonly string SQPATH = Path.Combine(EXECUTINGFOLDER, "tools", "sq_taro.exe");
-        public static readonly string BBRUSHERPATH = Path.Combine(EXECUTINGFOLDER, "tools", "bbrusher.exe");
-        public static readonly string BBSQPATH = Path.Combine(EXECUTINGFOLDER, "tools", "bbsq.exe");
-        public static readonly string NUTCRACKERPATH = Path.Combine(EXECUTINGFOLDER, "tools", "nutcracker.exe");
-        public static readonly string CONFIGPATH = Path.Combine(EXECUTINGFOLDER, "tools", "config.json");
-        public static readonly string BBSTEAMID = "365360";
+        public static string SQPATH = Path.Combine(EXECUTINGFOLDER, "tools", "sq_taro.exe");
+        public static string BBRUSHERPATH = Path.Combine(EXECUTINGFOLDER, "tools", "bbrusher.exe");
+        public static string BBSQPATH = Path.Combine(EXECUTINGFOLDER, "tools", "bbsq.exe");
+        public static string NUTCRACKERPATH = Path.Combine(EXECUTINGFOLDER, "tools", "nutcracker.exe");
+        public static string CONFIGPATH = Path.Combine(EXECUTINGFOLDER, "tools", "config.json");
+        public static string BBSTEAMID = "365360";
         public static readonly bool DEBUG = false;
         public static ConfigData Data { get; set; }
         public static Stopwatch Stopwatch = Stopwatch.StartNew();

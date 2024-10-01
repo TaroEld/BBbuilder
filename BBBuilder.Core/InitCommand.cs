@@ -157,6 +157,7 @@ namespace BBBuilder
 
         private string GetNameSpaceName(string _name)
         {
+            _name = _name[0].ToString().ToUpper() + _name[1..];
             while (_name.Contains("_"))
             {
                 int idx = _name.IndexOf("_");

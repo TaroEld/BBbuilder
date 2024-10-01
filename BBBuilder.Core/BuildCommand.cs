@@ -25,13 +25,13 @@ namespace BBBuilder
         string ModPath;
         string ModName;
         string ZipName;
-        string ZipPath;
+        public string ZipPath;
         string BuildPath;
         string GfxPath;
         string BrushesPath;
-        Dictionary<string, Int64> FilesHashesInFolder;
-        Dictionary<string, Int64> FileHashesInDB;
-        Dictionary<string, Int64> FilesWhichChanged;
+        public Dictionary<string, Int64> FilesHashesInFolder;
+        public Dictionary<string, Int64> FileHashesInDB;
+        public Dictionary<string, Int64> FilesWhichChanged;
         public BuildCommand()
         {
             this.Name = "build";
@@ -291,7 +291,7 @@ namespace BBBuilder
             }
 
             bool noCompileErrors = true;
-            string argument = String.Join(" ", changedNutFiles);
+            string argument = String.Join(" ", changedNutFiles.Select(s => "\"" + s + "\"").ToArray());
             bool args_too_long = argument.Length > 32650;
             // max argument len is 32699... So we write to file and tell sq to read from file
             if (args_too_long) {
@@ -607,7 +607,7 @@ namespace BBBuilder
                         ZipArchiveEntry entry = zip.Entries[i];
                         if (entry.Name == "") continue;
                         string relativePath = entry.FullName;
-                        if (!this.FilesHashesInFolder.ContainsKey(relativePath))
+                        if (!this.FilesHashesInFolder.ContainsKey(relativePath.Replace(@"/", @"\")))
                         {
                             Utils.VerbosePrint("Removing file in zip: " + relativePath);
                             entry.Delete();
@@ -621,7 +621,7 @@ namespace BBBuilder
             {
                 foreach (string file in toZip)
                 { 
-                    var relativePath = Path.GetRelativePath(this.BuildPath, file);
+                    var relativePath = Path.GetRelativePath(this.BuildPath, file).Replace(@"\\", @"/").Replace(@"\", @"/");
                     if (this.Diff && !File.Exists(file))
                     {
                         Console.WriteLine("Skipping file in zip due to -diff: " + file);

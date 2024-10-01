@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-internal static class UtilsHelpers
+public static class UtilsHelpers
 {
 
     public static void PrintHelp(Dictionary<string, Command> _commands)

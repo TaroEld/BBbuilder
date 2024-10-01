@@ -1,11 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
+	<OutputType>Library</OutputType>
+    <TargetFramework>net7.0-windows</TargetFramework>
     <Authors>TaroEld</Authors>
-    <Company>BBbuilder</Company>
+    <Company>BBBuilder</Company>
     <Description>Build tools for Battle Brothers</Description>
+    <BaseOutputPath>$(SolutionDir)\BBBuilder\out</BaseOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,9 +22,6 @@
 
   <ItemGroup>
     <PackageReference Include="Crc32.NET" Version="1.2.0" />
-    <PackageReference Include="DotNetZip" Version="1.16.0" />
-    <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
-    <PackageReference Include="System.Configuration.ConfigurationManager" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>

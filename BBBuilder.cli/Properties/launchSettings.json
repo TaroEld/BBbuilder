@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "BBBuilder": {
+      "commandName": "Project",
+      "commandLineArgs": "build G:\\Games\\BB\\Mods\\WIP\\mod_msu"
+    }
+  }
+}
