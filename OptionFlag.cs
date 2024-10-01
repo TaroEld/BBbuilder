@@ -49,7 +49,7 @@ namespace BBBuilder
             this.Value = true;
             if (this.Positional)
             {
-                if (_args.Count < idx)
+                if (_args.Count < idx || _args.Count  == 0)
                 {
                     Console.WriteLine($"Passed positional flag {this.Flag} but no fitting argument found!");
                     throw new Exception();
