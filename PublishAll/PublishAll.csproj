@@ -14,9 +14,9 @@
     <PropertyGroup>
       <PublishDir>$(SolutionDir)Publish</PublishDir>
     </PropertyGroup>
-	  <MSBuild Projects="..\BBBuilder.Core\BBBuilder.Core.csproj" Targets="Publish" Properties="Configuration=$(Configuration);PublishDir=$(PublishDir)" />
-    <MSBuild Projects="..\BBBuilder.cli\BBBuilder.cli.csproj" Targets="Publish" Properties="Configuration=$(Configuration);PublishDir=$(PublishDir)" />
-    <MSBuild Projects="..\BBBuilder.gui\BBBuilder.gui.csproj" Targets="Publish" Properties="Configuration=$(Configuration);PublishDir=$(PublishDir)" />
+	    <MSBuild Projects="..\BBBuilder.Core\BBBuilder.Core.csproj" Targets="Publish" Properties="Configuration=$(Configuration);PublishDir=$(PublishDir)" />
+		<MSBuild Projects="..\BBBuilder.cli\BBBuilder.csproj" Targets="Publish" Properties="Configuration=$(Configuration);PublishDir=$(PublishDir)" />
+	  <MSBuild Projects="..\BBBuilder.gui\BBBuilder.gui.csproj" Targets="Publish" Properties="Configuration=$(Configuration);PublishDir=$(PublishDir)" />
   </Target>
 
 </Project>

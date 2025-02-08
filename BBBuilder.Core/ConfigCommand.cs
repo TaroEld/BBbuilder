@@ -67,7 +67,7 @@ namespace BBBuilder
             string sqFile = Utils.SQPATH.Replace("\\", "\\\\");
             void setupFile(string _localPath, string _fileName, string _destinationPath)
             {
-                string template = Utils.ReadFile("BBbuilder.Core." + _localPath);
+                string template = Utils.ReadFile("BBBuilder.Core." + _localPath);
                 template = template.Replace("$bbbuild_path", exeFile);
                 template = template.Replace("$sq_path", sqFile);
                 File.WriteAllText(Path.Combine(Utils.EXECUTINGFOLDER, "tools", _fileName), template);

@@ -32,7 +32,7 @@ namespace BBBuilder.Tests
             Utils.Data.FoldersArray = new[] { "folder1", "folder2" };
 
             // Set Utils.EXECUTINGFOLDER
-            Utils.EXECUTINGFOLDER = "G:\\Programming\\Csharp\\BBBuilder\\BBbuilder.Core";
+            Utils.EXECUTINGFOLDER = "G:\\Programming\\Csharp\\BBBuilder\\BBBuilder.Core";
             Assert.True(Directory.Exists(Utils.EXECUTINGFOLDER));
             Utils.EXEPATH = Path.Combine(Utils.EXECUTINGFOLDER, "BBBuilder.exe");
             Utils.SQPATH = Path.Combine(Utils.EXECUTINGFOLDER, "tools", "sq_taro.exe");
