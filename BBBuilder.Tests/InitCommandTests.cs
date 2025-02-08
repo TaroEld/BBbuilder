@@ -32,7 +32,7 @@ namespace BBBuilder.Tests
             Utils.Data.FoldersArray = new[] { "folder1", "folder2" };
 
             // Set Utils.EXECUTINGFOLDER
-            Utils.EXECUTINGFOLDER = "G:\\Programming\\Csharp\\BBBuilder\\BBbuilder-core";
+            Utils.EXECUTINGFOLDER = "G:\\Programming\\Csharp\\BBBuilder\\BBbuilder.Core";
             Assert.True(Directory.Exists(Utils.EXECUTINGFOLDER));
             Utils.EXEPATH = Path.Combine(Utils.EXECUTINGFOLDER, "BBBuilder.exe");
             Utils.SQPATH = Path.Combine(Utils.EXECUTINGFOLDER, "tools", "sq_taro.exe");
@@ -47,6 +47,7 @@ namespace BBBuilder.Tests
         {
             // Clean up after tests
             TestUtils.SafeDeleteDirectory(testRootPath);
+            TestUtils.SafeDeleteDirectory(Path.Combine(Utils.EXECUTINGFOLDER, "Templates", "testrunner"));
         }
 
         [Fact]
@@ -92,11 +93,11 @@ namespace BBBuilder.Tests
         [Fact]
         public void HandleCommand_CustomTemplate_UsesSpecifiedTemplate()
         {
-            string templatePath = Path.Combine(testRootPath, "Templates", "custom");
+            string templatePath = Path.Combine(Utils.EXECUTINGFOLDER, "Templates", "testrunner");
             Directory.CreateDirectory(templatePath);
             File.WriteAllText(Path.Combine(templatePath, "custom_file.txt"), "Custom content");
 
-            string[] args = new[] { "init", "custom_mod", "-template", "custom" };
+            string[] args = new[] { "init", "custom_mod", "-template", "testrunner" };
             Assert.True(initCommand.HandleCommand(args));
 
             string expectedModPath = Path.Combine(Utils.Data.ModPath, "custom_mod");
