@@ -48,6 +48,18 @@ namespace BBBuilder_gui
             SetupBuildTab();
         }
 
+        private void RunCommandInTryBlock(Command command, string[] _args)
+        {
+            try
+            {
+                command.HandleCommand(_args);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("AN ERROR OCCURED IN the '" + command.Name + "' command. Post it on the modding discord.");
+                Console.WriteLine(ex.ToString());
+            }
+        }
         private void SetupConfigTab()
         {
             ConfigCommand = new ConfigCommand();
@@ -97,7 +109,7 @@ namespace BBBuilder_gui
             {
                 commands.AddRange(new List<string> { c.Folders.Flag, "clear" });
             }
-            ConfigCommand.HandleCommand(commands.ToArray());
+            RunCommandInTryBlock(ConfigCommand, commands.ToArray());
         }
 
         private void On(object sender, RoutedEventArgs e)
@@ -149,7 +161,7 @@ namespace BBBuilder_gui
             ConfigCommand = new ConfigCommand();
             var c = ConfigCommand;
             List<string> commands = new() { c.Name, ConfigCommand.Clear.Flag };
-            ConfigCommand.HandleCommand(commands.ToArray());
+            RunCommandInTryBlock(ConfigCommand, commands.ToArray());
             this.SetupConfigTab();
         }
 
@@ -197,7 +209,7 @@ namespace BBBuilder_gui
             
             commands.AddRange(new List<string> { InitCommand.Template.Flag, SelectTemplateCombo.SelectedItem.ToString()});
             commands.AddRange(new List<string> { InitCommand.AltPath.Flag, InitFolder.Text});
-            InitCommand.HandleCommand(commands.ToArray());
+            RunCommandInTryBlock(InitCommand, commands.ToArray());
         }
 
         private void SetupExtractTab()
@@ -244,7 +256,7 @@ namespace BBBuilder_gui
                 commands.Add(ExtractCommand.Replace.Flag);
             }
             commands.AddRange(new List<string> { ExtractCommand.AltPath.Flag, ExtractFolder.Text });
-            ExtractCommand.HandleCommand(commands.ToArray());
+            RunCommandInTryBlock(ExtractCommand, commands.ToArray());
         }
 
         private void SetupBuildTab()
@@ -286,7 +298,7 @@ namespace BBBuilder_gui
             {
                 commands.Add(BuildCommand.Rebuild.Flag);
             }
-            BuildCommand.HandleCommand(commands.ToArray());
+            RunCommandInTryBlock(BuildCommand, commands.ToArray());
         }
 
         private void ConsoleOutput_TextChanged(object sender, TextChangedEventArgs e)
