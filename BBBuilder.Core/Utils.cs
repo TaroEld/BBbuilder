@@ -77,7 +77,7 @@ namespace BBBuilder
             }
         }
 
-        public static Process[] getBBProcesses()
+        public static Process[] GetBBProcesses()
         {
             return Process.GetProcessesByName("BattleBrothers");
         }
@@ -86,7 +86,7 @@ namespace BBBuilder
         {
             do
             {
-                Process[] activeBBInstances = getBBProcesses();
+                Process[] activeBBInstances = GetBBProcesses();
                 foreach (Process instance in activeBBInstances)
                 {
                     Console.WriteLine("Stopping BattleBrothers.exe...");
@@ -107,7 +107,7 @@ namespace BBBuilder
                     }
                 }
                 Thread.Sleep(25);
-            } while (getBBProcesses().Length > 0);
+            } while (GetBBProcesses().Length > 0);
 
             return true;
         }
@@ -212,23 +212,23 @@ namespace BBBuilder
             return hasChanged;
         }
 
-        public static void CreateJSON()
+        public static void CreateEmptyConfigJsonFile()
         {
             Data = new ConfigData();
-            WriteJSON(Data);
+            WriteConfigDataToJSON(Data);
         }
 
-        public static void WriteJSON(ConfigData _configData)
+        public static void WriteConfigDataToJSON(ConfigData _configData)
         {
             string jsonString = JsonSerializer.Serialize(_configData);
             File.WriteAllText(CONFIGPATH, jsonString);
         }
 
-        public static void GetJsonData()
+        public static void ReadConfigDataFromJSON()
         {
             if (!File.Exists(CONFIGPATH))
             {
-                CreateJSON();
+                CreateEmptyConfigJsonFile();
             }
             Data = JsonSerializer.Deserialize<ConfigData>(File.ReadAllText(CONFIGPATH))!;
         }

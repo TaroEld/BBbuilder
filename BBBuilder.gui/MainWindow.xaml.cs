@@ -51,7 +51,7 @@ namespace BBBuilder_gui
         private void SetupConfigTab()
         {
             ConfigCommand = new ConfigCommand();
-            Utils.GetJsonData();
+            Utils.ReadConfigDataFromJSON();
             DataPath.Text = Utils.Data.GamePath;
             DataPath.ToolTip = ConfigCommand.DataPath.Description;
             ModsPath.Text = Utils.Data.ModPath;

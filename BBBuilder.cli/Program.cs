@@ -11,7 +11,7 @@ namespace BBBuilder
             Console.WriteLine($"BBBuilder version: {version}");
             Utils.Stopwatch.Start();
 
-            Utils.GetJsonData();
+            Utils.ReadConfigDataFromJSON();
             Utils.LogTime($"Main: Getting JSON config data");
 
             Dictionary<string, Command> Commands = new()

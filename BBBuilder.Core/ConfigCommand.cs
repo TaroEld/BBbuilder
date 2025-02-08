@@ -54,7 +54,7 @@ namespace BBBuilder
                 if (changed)
                     Utils.Data.ModPath = passedPath;
             }
-            if (changed) Utils.WriteJSON(Utils.Data);
+            if (changed) Utils.WriteConfigDataToJSON(Utils.Data);
             UpdateBuildFiles();
         }
 
@@ -147,7 +147,7 @@ namespace BBBuilder
                 HandleBooleanCommand(this.LogTime, value => Utils.Data.LogTime = value);
             }
             PrintConfig();
-            Utils.WriteJSON(Utils.Data);
+            Utils.WriteConfigDataToJSON(Utils.Data);
             UpdateBuildFiles();
             return true;
         }
@@ -212,7 +212,7 @@ namespace BBBuilder
 
         private void HandleClearCommand()
         {
-            Utils.CreateJSON();
+            Utils.CreateEmptyConfigJsonFile();
             Console.WriteLine("Cleared all config values.");
         }
     }
