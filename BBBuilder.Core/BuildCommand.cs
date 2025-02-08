@@ -86,6 +86,11 @@ namespace BBBuilder
             {
                 return false;
             }
+            if (Utils.Data.GamePath  == "")
+            {
+                Utils.WriteRed("Game path is not set - set it via the config command!");
+                return false;
+            }
             string[] sameZipNameInData = Directory.GetFiles(Utils.Data.GamePath, "*.zip")
                 .Where(f => Path.GetFileName(f) != this.ZipName && Path.GetFileName(f).StartsWith(this.ModName)).ToArray();
             if (sameZipNameInData.Length > 0)
