@@ -58,26 +58,31 @@ namespace BBBuilder
         {
             if (this.Arguments != null && this.Arguments.Length > 0)
             {
-                Console.WriteLine("Arguments:");
+                Console.WriteLine("\nArgument:");
                 foreach (string entry in this.Arguments)
                 {
-                    Console.WriteLine("** " + entry);
+                    Console.WriteLine(entry);
                 }
             }
             if (this.Flags.Length > 0)
             {
-                Console.WriteLine("Flags:");
+                Console.WriteLine("\nFlags:");
                 foreach (OptionFlag flag in this.Flags)
                 {
-                    Console.WriteLine($"** {flag}");
+                    Console.WriteLine(flag.ToString());
                 }
             }
         }
         public void PrintHelp()
         {
-            Console.WriteLine($"**** Command '{this.Name}'");
+            Console.WriteLine($"Command '{this.Name}'");
             Console.WriteLine($"{this.Description}");
             PrintCommands();
+        }
+        public void PrintShortHelp()
+        {
+            Console.WriteLine($"Command '{this.Name}'");
+            Console.WriteLine($"{this.Description}");
         }
 
         virtual public void CleanUp(bool _ugly = false) { }

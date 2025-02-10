@@ -13,6 +13,7 @@ namespace BBBuilder
 
             Utils.ReadConfigDataFromJSON();
             Utils.LogTime($"Main: Getting JSON config data");
+            string[] helpVariants = { "help", "-help", "--help", "-h" };
 
             Dictionary<string, Command> Commands = new()
             {
@@ -35,12 +36,16 @@ namespace BBBuilder
             if (arguments == null || arguments.Length == 0)
             {
                 Console.WriteLine($"No command passed, printing possible commands.\n");
+                UtilsHelpers.PrintShortHelp(Commands);
+            }
+            else if (helpVariants.Contains(arguments[0]))
+            {
                 UtilsHelpers.PrintHelp(Commands);
             }
             else if (!(Commands.ContainsKey(arguments[0])))
             {
                 Console.WriteLine($"Command {arguments[0]} is not recognized! Printing possible commands.\n");
-                UtilsHelpers.PrintHelp(Commands);
+                UtilsHelpers.PrintShortHelp(Commands);
             }
             else
             {

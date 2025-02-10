@@ -14,4 +14,14 @@ public static class UtilsHelpers
         }
         return;
     }
+    public static void PrintShortHelp(Dictionary<string, Command> _commands)
+    {
+        Console.WriteLine("Use -help for full command list.");
+        foreach (KeyValuePair<string, Command> entry in _commands)
+        {
+            Console.WriteLine("\n------------------------------------------------------------\n");
+            entry.Value.PrintShortHelp();
+        }
+        return;
+    }
 }
