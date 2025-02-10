@@ -3,12 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34018.315
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PublishAll", "PublishAll\PublishAll.csproj", "{AE18F69F-2D22-4533-A46B-7B650D3B04C3}"
-	ProjectSection(ProjectDependencies) = postProject
-		{15C31588-545C-42D9-A471-12FB44062060} = {15C31588-545C-42D9-A471-12FB44062060}
-		{CCAB8266-5501-4323-A61F-8AA7819BE9FA} = {CCAB8266-5501-4323-A61F-8AA7819BE9FA}
-	EndProjectSection
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BBBuilder.Tests", "BBBuilder.Tests\BBBuilder.Tests.csproj", "{5DB18DFE-4FC1-43FC-9083-EBF013F30A9E}"
 	ProjectSection(ProjectDependencies) = postProject
 		{CC567CA1-4961-40E5-BEA1-E2997A6FE7B8} = {CC567CA1-4961-40E5-BEA1-E2997A6FE7B8}
@@ -26,10 +20,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{AE18F69F-2D22-4533-A46B-7B650D3B04C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AE18F69F-2D22-4533-A46B-7B650D3B04C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AE18F69F-2D22-4533-A46B-7B650D3B04C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AE18F69F-2D22-4533-A46B-7B650D3B04C3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5DB18DFE-4FC1-43FC-9083-EBF013F30A9E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5DB18DFE-4FC1-43FC-9083-EBF013F30A9E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5DB18DFE-4FC1-43FC-9083-EBF013F30A9E}.Release|Any CPU.ActiveCfg = Release|Any CPU
