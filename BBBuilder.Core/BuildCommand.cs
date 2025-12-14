@@ -373,7 +373,7 @@ namespace BBBuilder
             {
                 compiling.StartInfo.UseShellExecute = true;
                 compiling.StartInfo.FileName = babelLoc;
-                compiling.StartInfo.Arguments = String.Format("\"{0}\" --out-dir \"{1}\" --config-file \"{2}\"", this.BuildPath, this.BuildPath, Path.Combine(localWorkingDirectory, "babel.config.json"));
+                compiling.StartInfo.Arguments = String.Format("\"{0}\" --out-dir \"{1}\" --config-file \"{2}\"", this.BuildPath, this.BuildPath, Path.Combine(localWorkingDirectory, "assets", "babel.config.json"));
                 compiling.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
                 compiling.Start();
                 compiling.WaitForExit();

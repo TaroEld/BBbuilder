@@ -15,9 +15,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="build_template_sublime" />
-    <EmbeddedResource Include="build_template_vs" />
-    <EmbeddedResource Include="gitignore_template" />
+    <EmbeddedResource Include="assets\build_template_sublime" />
+    <EmbeddedResource Include="assets\build_template_vs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -49,7 +48,7 @@
   </ItemGroup>
     <ItemGroup>
 		<Content Include="tools\**" CopyToOutputDirectory="Always" />
-		<Content Include="babel.config.json" CopyToOutputDirectory="Always" />
+		<Content Include="assets\babel.config.json" CopyToOutputDirectory="Always" />
 		<Content Include="package.json" CopyToOutputDirectory="Always" />
 		<Content Include="Templates\**">
 			<Link>Templates\%(RecursiveDir)\%(Filename)%(Extension)</Link>
