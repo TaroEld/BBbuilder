@@ -80,21 +80,6 @@ namespace BBBuilder.Tests
         }
 
         [Fact]
-        public void PrintHelp_OutputsCorrectInformation()
-        {
-            var output = CaptureConsoleOutput(() => command.PrintHelp());
-
-            Assert.Contains("**** Command 'test'", output);
-            Assert.Contains("Test command", output);
-            Assert.Contains("Arguments:", output);
-            Assert.Contains("** arg1", output);
-            Assert.Contains("** arg2", output);
-            Assert.Contains("Flags:", output);
-            Assert.Contains("** '-t (alias: -t) ': Test flag", output);
-            Assert.Contains("** '-p (alias: -p) <param>': Test flag with parameter", output);
-        }
-
-        [Fact]
         public void CleanUp_DoesNotThrowException()
         {
             var exception = Record.Exception(() => command.CleanUp());

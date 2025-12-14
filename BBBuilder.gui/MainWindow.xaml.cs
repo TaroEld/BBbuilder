@@ -48,7 +48,7 @@ namespace BBBuilder_gui
             SetupBuildTab();
         }
 
-        private void RunCommandInTryBlock(Command command, string[] _args)
+        static void RunCommandInTryBlock(Command command, string[] _args)
         {
             try
             {

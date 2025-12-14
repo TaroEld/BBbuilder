@@ -192,8 +192,8 @@ namespace BBBuilder
             {
                 if (!afterBrush.ContainsKey(kvp.Key))
                 {
-                    if (this.FileHashesInDB.ContainsKey(kvp.Key)) this.FileHashesInDB.Remove(kvp.Key);
-                    if (this.FilesHashesInFolder.ContainsKey(kvp.Key)) this.FilesHashesInFolder.Remove(kvp.Key);
+                    this.FileHashesInDB.Remove(kvp.Key);
+                    this.FilesHashesInFolder.Remove(kvp.Key);
                 }
             }
             Utils.LogTime($"BuildCommand: Checking for new changes");
