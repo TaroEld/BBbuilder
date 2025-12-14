@@ -15,12 +15,15 @@ namespace BBBuilder
     public class BuildCommand : Command
     {
         readonly string[] NotIndexedFolders = new string[] { ".bbbuilder", ".git", ".github", ".vscode", ".utils", "assets", "modtools", "node_modules" };
-        readonly string[] ExcludedZipFolders = new string[] {"unpacked_brushes"};
+
+        string[] ExcludedZipFolders = new string[] {"unpacked_brushes"};
         readonly string[] ExcludedScriptFolders = new string[] { "ui", ".git", ".github", "gfx", "preload", "brushes", "music", "sounds", "unpacked_brushes", "tempfolder", ".vscode", "nexus", ".utils", "assets" };
         public readonly OptionFlag StartGame = new("-restart", "Exit and then start BattleBrothers.exe after building the mod.") { FlagAlias = "-rs"};
         public readonly OptionFlag Transpile = new("-transpile", "Translate js file to es3. It allow you to use modern js syntax and features to create your mod.");
         public readonly OptionFlag Rebuild = new("-rebuild", "Delete the database and the .zip to start from a clean slate.") { FlagAlias = "-rb" };
         public readonly OptionFlag Diff = new("-diff <referencebranch>,<wipbranch>", "Create the zip based on the diff between <referencebranch> and <wipbranch> Pass them comma-separated WITHOUT SPACE INBETWEEN.");
+        public readonly OptionFlag CustomZipName = new("-zipname <name>", "Name of the resulting zip file. .zip extension is added. If not specified, mod name is used.") { FlagAlias = "-z" };
+        public readonly OptionFlag ExcludeFolders = new("-excludedfolders <folderName1,[folderName2],...>", "Folders to remove from finished zip. The folder 'unpacked_brushes' will always be removed.") { FlagAlias = "-ex" };
 
         string ModPath;
         string ModName;
@@ -67,12 +70,22 @@ namespace BBBuilder
                 Directory.CreateDirectory(this.BuildPath);
                 Utils.Copy(this.ModPath, this.BuildPath);
             }
-            this.ZipName = this.ModName + ".zip";
-            if (this.Diff)
+            if (this.CustomZipName) {
+                this.ZipName = this.CustomZipName.PositionalValue + ".zip";
+            }         
+            else if (this.Diff) {
                 this.ZipName = this.ModName + "_patch.zip";
+            }
+            else {
+                this.ZipName = this.ModName + ".zip";
+            }
             this.ZipPath = Path.Combine(this.BuildPath, this.ZipName);
             this.GfxPath = Path.Combine(this.BuildPath, "gfx");
             this.BrushesPath = Path.Combine(this.BuildPath, "brushes");
+            if (this.ExcludeFolders)
+            {
+                ExcludedZipFolders = ExcludedZipFolders.Concat(ExcludeFolders.PositionalValue.Split(',')).ToArray();
+            }
             return true;
         }
 
@@ -92,7 +105,7 @@ namespace BBBuilder
                 return false;
             }
             string[] sameZipNameInData = Directory.GetFiles(Utils.Data.GamePath, "*.zip")
-                .Where(f => Path.GetFileName(f) != this.ZipName && Path.GetFileName(f).StartsWith(this.ModName)).ToArray();
+                .Where(f => Path.GetFileName(f) != this.ZipName && Path.GetFileName(f).StartsWith(this.ZipName)).ToArray();
             if (sameZipNameInData.Length > 0)
             {
                 Utils.WriteRed("Found other .zip files in data that seem to be the same mod!");
@@ -563,14 +576,15 @@ namespace BBBuilder
 
         private List<string> RemoveExcludedFolderFiles(List<string> _filesToZip)
         {
-            foreach (string folderName in this.ExcludedZipFolders)
+            List<string> foldersToExclude = ExcludedZipFolders.ToList();
+            foreach (string folderName in foldersToExclude)
             {
                 string safetyPath = Path.Combine(this.BuildPath, folderName);
                 _filesToZip = _filesToZip.Where(f => !f.Contains(safetyPath)).ToList();
             }
             return _filesToZip;
         }
-        private List<string> GetFilesToZip()
+        private List<string> GetChangedFiles()
         {
             List<string> files;
             if (this.Diff)
@@ -594,54 +608,132 @@ namespace BBBuilder
             return files;
         }
 
+        static string GetRootFolder(string path)
+        {
+            while (true)
+            {
+                string temp = Path.GetDirectoryName(path);
+                if (String.IsNullOrEmpty(temp))
+                    break;
+                path = temp;
+            }
+            return path;
+        }
+
         private bool ZipFiles()
         {
-            List<string> toZip = GetFilesToZip();
-            //Dictionary<string, string> debugToZip = ReplaceDebugStatements(toZip);
-            int changedFiles = 0;
-            int removedFiles = 0;
-            ZipArchiveMode zipMode = ZipArchiveMode.Create;
-            if (File.Exists(this.ZipPath))
-            {
-                zipMode = ZipArchiveMode.Update;
-                using (ZipArchive zip = ZipFile.Open(this.ZipPath, zipMode))
-                {
-                    
-                    for (int i = zip.Entries.Count-1; i > -1; i--)
-                    {
-                        ZipArchiveEntry entry = zip.Entries[i];
-                        if (entry.Name == "") continue;
-                        string relativePath = entry.FullName;
-                        if (!this.FilesHashesInFolder.ContainsKey(relativePath.Replace(@"/", @"\")))
-                        {
-                            Utils.VerbosePrint("Removing file in zip: " + relativePath);
-                            entry.Delete();
-                            removedFiles++;
-                        }
-                    };
-                }
-            }
+            List<string> changedFiles = GetChangedFiles();
+            int addedOrChangedCount = 0;
+            int removedCount = 0;
+
+            ZipArchiveMode zipMode = File.Exists(this.ZipPath) ? ZipArchiveMode.Update : ZipArchiveMode.Create;
 
             using (ZipArchive zip = ZipFile.Open(this.ZipPath, zipMode))
             {
-                foreach (string file in toZip)
-                { 
-                    var relativePath = Path.GetRelativePath(this.BuildPath, file).Replace(@"\\", @"/").Replace(@"\", @"/");
-                    if (this.Diff && !File.Exists(file))
-                    {
-                        Console.WriteLine("Skipping file in zip due to -diff: " + file);
-                    }
-                    else
-                    {
-                        Utils.VerbosePrint("Updating file in zip: " + file + "(" + relativePath + ")");
-                        if (zipMode == ZipArchiveMode.Update) zip.GetEntry(relativePath)?.Delete();
-                        zip.CreateEntryFromFile(file, relativePath);
-                        changedFiles++;
-                    } 
+                // Step 1: Clean up the zip - remove files that no longer exist or are in excluded folders
+                if (zipMode == ZipArchiveMode.Update)
+                {
+                    removedCount = RemoveObsoleteEntries(zip);
+                }
+
+                // Step 2: Add/update changed files
+                addedOrChangedCount += AddOrUpdateFiles(zip, changedFiles, zipMode);
+
+                // Step 3: Re-add files that are missing, for example due to previously being excluded
+                addedOrChangedCount += AddMissingFiles(zip, zipMode);
+            }
+
+            Console.WriteLine($"Successfully zipped {this.ModPath} ({this.ZipPath} | Added or changed files: {addedOrChangedCount}, removed files: {removedCount})!");
+            return true;
+        }
+
+        private int RemoveObsoleteEntries(ZipArchive zip)
+        {
+            int removedCount = 0;
+
+            for (int i = zip.Entries.Count - 1; i >= 0; i--)
+            {
+                ZipArchiveEntry entry = zip.Entries[i];
+                if (string.IsNullOrEmpty(entry.Name)) continue;
+
+                string relativePath = entry.FullName.Replace("/", @"\");
+                string rootFolder = GetRootFolder(entry.FullName);
+
+                // Remove if file no longer exists in our tracked files, or if it's in an excluded folder
+                if (!this.FilesHashesInFolder.ContainsKey(relativePath) ||
+                    ExcludedZipFolders.Contains(rootFolder))
+                {
+                    Utils.VerbosePrint("Removing file in zip: " + entry.FullName);
+                    entry.Delete();
+                    removedCount++;
                 }
             }
-            Console.WriteLine($"Successfully zipped {this.ModPath} ({this.ZipPath} | Added or changed files: {changedFiles}, removed files: {removedFiles})!");
-            return true;
+
+            return removedCount;
+        }
+
+        private int AddOrUpdateFiles(ZipArchive zip, List<string> filesToAdd, ZipArchiveMode zipMode)
+        {
+            int count = 0;
+
+            foreach (string file in filesToAdd)
+            {
+                if (this.Diff && !File.Exists(file))
+                {
+                    Console.WriteLine("Skipping file in zip due to -diff: " + file);
+                    continue;
+                }
+
+                string relativePath = Path.GetRelativePath(this.BuildPath, file)
+                    .Replace(@"\\", @"/")
+                    .Replace(@"\", @"/");
+
+                Utils.VerbosePrint("Updating file in zip: " + file + "(" + relativePath + ")");
+                // Remove existing entry if it exists and we're updating an existing mod
+                if (zipMode == ZipArchiveMode.Update)
+                {
+                    zip.GetEntry(relativePath)?.Delete();
+                }
+
+                // Add the file
+                zip.CreateEntryFromFile(file, relativePath);
+                count++;
+            }
+
+            return count;
+        }
+
+        private int AddMissingFiles(ZipArchive zip, ZipArchiveMode zipMode)
+        {
+            int count = 0;
+
+            foreach (var fileHash in this.FilesHashesInFolder)
+            {
+                string relativePath = fileHash.Key;
+                string zipPath = relativePath.Replace(@"\", @"/");
+                string rootFolder = GetRootFolder(zipPath);
+
+                // Skip if this file is in an excluded folder
+                if (ExcludedZipFolders.Contains(rootFolder))
+                    continue;
+
+                // Skip if file is already in the zip
+                if (zipMode == ZipArchiveMode.Update && zip.GetEntry(zipPath) != null)
+                {
+                    continue;
+                }                   
+
+                // This file should be in the zip but isn't - add it
+                string fullPath = Path.Combine(this.BuildPath, relativePath);
+                if (File.Exists(fullPath))
+                {
+                    Utils.VerbosePrint("Adding missing file file: " + fullPath + "(" + zipPath + ")");
+                    zip.CreateEntryFromFile(fullPath, zipPath);
+                    count++;
+                }
+            }
+
+            return count;
         }
 
         private bool CopyZipToData()
