@@ -106,14 +106,11 @@ namespace BBBuilder
                 Utils.WriteRed("Game path is not set - set it via the config command!");
                 return false;
             }
-            string[] sameZipNameInData = Directory.GetFiles(Utils.Data.GamePath, "*.zip")
-                .Where(f => Path.GetFileName(f) != this.ZipName && Path.GetFileName(f).StartsWith(this.ZipName)).ToArray();
-            if (sameZipNameInData.Length > 0)
+            if (!CheckAllowedZipNames())
             {
-                Utils.WriteRed("Found other .zip files in data that seem to be the same mod!");
-                foreach (string s in sameZipNameInData) { Utils.WriteRed(s); }
                 return false;
             }
+            
             Utils.LogTime($"BuildCommand: Initital checks");
             if (this.Diff)
             {
@@ -221,6 +218,73 @@ namespace BBBuilder
             WriteFileDataToDB();
             Utils.LogTime($"BuildCommand: Writing hash DB");
 
+            return true;
+        }
+
+        private bool CheckAllowedZipNames()
+        {
+            string allowedZipNamesPath = Path.Combine(this.ModPath, ".bbbuilder", "allowed_zip_names.txt");
+            string[] allowedZipNames;
+            if (File.Exists(allowedZipNamesPath))
+            {
+                allowedZipNames = File.ReadAllLines(allowedZipNamesPath);
+            }
+            else
+            {
+                allowedZipNames = Array.Empty<string>();
+            }
+            string[] sameZipNameInData = Directory.GetFiles(Utils.Data.GamePath, "*.zip")
+                .Select(
+                    f => {
+                        string fileName = Path.GetFileName(f);
+                        return Path.GetFileNameWithoutExtension(fileName);
+                    })
+                .Where(f => {
+                    var zipNameWithoutExtension = Path.GetFileNameWithoutExtension(this.ZipName);
+                    return f != zipNameWithoutExtension && f.StartsWith(zipNameWithoutExtension);
+                })
+                .ToArray();
+
+            string[] sameZipNameInDataNotAllowed = sameZipNameInData.Where(f => !allowedZipNames.Contains(f)).ToArray();
+            string[] sameZipNameInDataAllowed = sameZipNameInData.Where(f => allowedZipNames.Contains(f)).ToArray();
+            if (sameZipNameInDataAllowed.Length > 0)
+            {
+                Utils.WriteGreen("Found other .zip files in data that seem to be the same mod, but have previously been allowed (in .bbbuilder/allowed_zip_names.txt):");
+                foreach (string s in sameZipNameInData)
+                {
+                    Utils.WriteGreen(Path.GetFileName(s));
+                }
+            }
+
+            if (sameZipNameInDataNotAllowed.Length > 0)
+            {
+                Utils.WriteRed("Found other .zip files in data that seem to be the same mod!");
+                Utils.WriteGreen("Currently building: " + this.ZipName);
+                Utils.WriteRed("Similar zipe file(s):");
+                foreach (string s in sameZipNameInData)
+                {
+                    Utils.WriteRed(Path.GetFileName(s));
+                }
+
+                Console.WriteLine("Do you want to continue anyway? (y/n)");
+                string response = Console.ReadLine()?.Trim().ToLower();
+
+                if (response != "y")
+                {
+                    return false;
+                }
+                else
+                {
+                    Console.WriteLine("Do you want to allow this name in the future? If yes, your choice will be saved in .bbbuilder/allowed_zip_names.txt. (y/n)");
+                    response = Console.ReadLine()?.Trim().ToLower();
+                    if (response == "y")
+                    {
+                        var path = Path.Combine(this.ModPath, ".bbbuilder", "allowed_zip_names.txt");
+                        allowedZipNames = allowedZipNames.Union(sameZipNameInData).ToArray();
+                        File.WriteAllLines(path, allowedZipNames);
+                    }
+                }
+            }
             return true;
         }
 
