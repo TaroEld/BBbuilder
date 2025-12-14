@@ -17,6 +17,7 @@ namespace BBBuilder
         readonly string[] NotIndexedFolders = new string[] { ".bbbuilder", ".git", ".github", ".vscode", ".utils", "assets", "modtools", "node_modules" };
 
         string[] ExcludedZipFolders = new string[] {"unpacked_brushes"};
+        string[] NormalizedExcludedZipFolders;
         readonly string[] ExcludedScriptFolders = new string[] { "ui", ".git", ".github", "gfx", "preload", "brushes", "music", "sounds", "unpacked_brushes", "tempfolder", ".vscode", "nexus", ".utils", "assets" };
         public readonly OptionFlag StartGame = new("-restart", "Exit and then start BattleBrothers.exe after building the mod.") { FlagAlias = "-rs"};
         public readonly OptionFlag Transpile = new("-transpile", "Translate js file to es3. It allow you to use modern js syntax and features to create your mod.");
@@ -86,6 +87,7 @@ namespace BBBuilder
             {
                 ExcludedZipFolders = ExcludedZipFolders.Concat(ExcludeFolders.PositionalValue.Split(',')).ToArray();
             }
+            this.NormalizedExcludedZipFolders = ExcludedZipFolders.Select(f => Utils.Norm(f)).ToArray();
             return true;
         }
 
@@ -573,17 +575,23 @@ namespace BBBuilder
             }
             return output.Split("\n")[0];
         }
+        private bool IsExcluded(string filePath)
+        {
+            string normalizedPath = Utils.Norm(filePath).Replace(this.ModPath, "");
+
+            // Get relative path properly (handles separators automatically)
+            string relativePath = normalizedPath.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+            return NormalizedExcludedZipFolders.Any(excludedFolder =>
+                relativePath.StartsWith(excludedFolder) ||
+                relativePath == excludedFolder);
+        }
 
         private List<string> RemoveExcludedFolderFiles(List<string> _filesToZip)
         {
-            List<string> foldersToExclude = ExcludedZipFolders.ToList();
-            foreach (string folderName in foldersToExclude)
-            {
-                string safetyPath = Path.Combine(this.BuildPath, folderName);
-                _filesToZip = _filesToZip.Where(f => !f.Contains(safetyPath)).ToList();
-            }
-            return _filesToZip;
+            return _filesToZip.Where(f => !IsExcluded(f)).ToList();
         }
+
         private List<string> GetChangedFiles()
         {
             List<string> files;
@@ -657,11 +665,10 @@ namespace BBBuilder
                 if (string.IsNullOrEmpty(entry.Name)) continue;
 
                 string relativePath = entry.FullName.Replace("/", @"\");
-                string rootFolder = GetRootFolder(entry.FullName);
+                bool isExcluded = IsExcluded(entry.FullName);
 
                 // Remove if file no longer exists in our tracked files, or if it's in an excluded folder
-                if (!this.FilesHashesInFolder.ContainsKey(relativePath) ||
-                    ExcludedZipFolders.Contains(rootFolder))
+                if (!this.FilesHashesInFolder.ContainsKey(relativePath) || isExcluded)
                 {
                     Utils.VerbosePrint("Removing file in zip: " + entry.FullName);
                     entry.Delete();
@@ -711,11 +718,10 @@ namespace BBBuilder
             {
                 string relativePath = fileHash.Key;
                 string zipPath = relativePath.Replace(@"\", @"/");
-                string rootFolder = GetRootFolder(zipPath);
 
                 // Skip if this file is in an excluded folder
-                if (ExcludedZipFolders.Contains(rootFolder))
-                    continue;
+                if (IsExcluded(relativePath))
+                        continue;
 
                 // Skip if file is already in the zip
                 if (zipMode == ZipArchiveMode.Update && zip.GetEntry(zipPath) != null)
