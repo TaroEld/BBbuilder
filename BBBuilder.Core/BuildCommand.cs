@@ -700,7 +700,10 @@ namespace BBBuilder
                 addedOrChangedCount += AddOrUpdateFiles(zip, changedFiles, zipMode);
 
                 // Step 3: Re-add files that are missing, for example due to previously being excluded
-                addedOrChangedCount += AddMissingFiles(zip, zipMode);
+                if (zipMode == ZipArchiveMode.Update)
+                {
+                    addedOrChangedCount += AddMissingFiles(zip);
+                }
             }
 
             Console.WriteLine($"Successfully zipped {this.ModPath} ({this.ZipPath} | Added or changed files: {addedOrChangedCount}, removed files: {removedCount})!");
@@ -762,7 +765,7 @@ namespace BBBuilder
             return count;
         }
 
-        private int AddMissingFiles(ZipArchive zip, ZipArchiveMode zipMode)
+        private int AddMissingFiles(ZipArchive zip)
         {
             int count = 0;
 
@@ -776,7 +779,7 @@ namespace BBBuilder
                         continue;
 
                 // Skip if file is already in the zip
-                if (zipMode == ZipArchiveMode.Update && zip.GetEntry(zipPath) != null)
+                if (zip.GetEntry(zipPath) != null)
                 {
                     continue;
                 }                   
