@@ -5,7 +5,7 @@
     <Authors>TaroEld</Authors>
     <Company>BBBuilder</Company>
     <Description>Build tools for Battle Brothers</Description>
-    <BaseOutputPath>$(SolutionDir)\BBBuilder\out</BaseOutputPath>
+    <BaseOutputPath>$(SolutionDir)\out</BaseOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,9 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="README.md">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="Templates\default\.gitignore">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -55,5 +52,10 @@
 			<TargetPath>Templates\%(RecursiveDir)\%(Filename)%(Extension)</TargetPath>
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
+    </ItemGroup>
+    <ItemGroup>
+      <None Include="..\README.md" Link="README.md">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 </Project>
