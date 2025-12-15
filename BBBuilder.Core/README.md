@@ -1,6 +1,5 @@
 # BBBuilder
 
-
 ## Overview
 This is a command-line application for Windows systems that helps in the development of mods for the game Battle Brothers.  
 It has shortcuts to conduct most common tasks for developing mods: 
@@ -11,22 +10,22 @@ It also comes with other useful features, such as convenient extracting of mods 
 
 As a command line tool, it can be run with the windows cmd terminal, powershell or other means. 
 To make things more convenient, the tool will create editor config files for VSCode and Sublime Text which setup projects and provide the basic build commands. VScode is entirely free, Sublime Text is free but will occasionally nag you to buy it.  
-Shipped with this application is the Battle Brothers mod kit by Adam Milazzo: http://www.adammil.net/blog/v133_Battle_Brothers_mod_kit.html . This kit is needed for many basic operations.  
+Shipped with this application is the Battle Brothers mod kit by Adam Milazzo: http://www.adammil.net/blog/v133_Battle_Brothers_mod_kit.html . This kit is needed for many basic operations.  There is also a modified version of the squirrel binary `sq_taro.exe` that is used for mass compiling.  
 
 ## How to install
 To use this program, simply extract the .zip in a convenient folder. No further installing is needed.  
-It can be useful to add the program folder to the environment variables, to be able to call them from any cmd window. See here for example: https://linuxhint.com/add-directory-to-path-environment-variables-windows/  
+When on Windows, calling the .exe will cause it to add itself to PATH. If you move the folder, it will update to the new location.  
 If you wish to use ES3 transpiling, you will need to install node.js and have it available in your %PATH% environment. Download link: https://nodejs.org/en/download  
 Some optional features can only be used if you have git installed (so, available in your PATH / accessible from the command line). You can get it here: https://git-scm.com/downloads  . You should be using it when developing mods, anyways.  
 
 ## How to use
 This is a command line tool / CLI. This means that the program will be called over a cool looking black hacker terminal, while passing it [commands](#commands) and other values.   
-As that is often not very convenient, the tool will generate editor files for you, specifically for VSCode and Sublime Text. See here: [Editor config files](#editor-config-files) This will allow you to "build" your mod, as in create a new zip, copy it to data and relaunch the game, in one keybind press.
+As that is often not very convenient, the tool will generate editor files for you, specifically for VSCode and Sublime Text. See here: [Editor config files](#editor-config-files) This will allow you to "build" your mod, as in create a new zip, copy it to data and relaunch the game, in one keybind press.  
 Also, jump to [here](#example-usage) to get an idea of how that looks like.  
 
 ## Commands
-Calling `bbbuilder.exe` without any other arguments will give you an overview of all the commands and arguments/flags. Calling `bbbuilder.exe <commandname>` will give you an overview of that command.  
-The flags/parameters can be used with aliases. For most it's just the first character, but some have abbreviations due to conflicting first characters. The overview will show you the alias.  
+Calling `bbbuilder.exe` without any other arguments will give you an overview of all the commands. Add -help for a full overview including the arguments and flags. Call `bbbuilder.exe <commandname>` for an overview of that command.  
+The flags/parameters can be used with aliases. For most it's just the first character, but some have abbreviations due to conflicting first characters. The aliases are noted in the overview.    
  
 ### config
 A number of config options are available to be added and changed with `config`. If you first start the program, it will prompt you to provide values for the `-datapath` and `-modpath` commands. Afterwards, it can be used to change values, or check the current configuration.
@@ -36,6 +35,7 @@ A number of config options are available to be added and changed with `config`. 
 - `-folders <folder1,[folder2],[...]>`: Comma-separated list **without spaces inbetween** of folders to be included in the editor config files (for example, adding the vanilla game files folder).
 - `-movezip <true|false>`: Whether you'd like to delete the zip after building the mod and copying it to `datapath`. You will need to pass either `true` or `false`. Default is `false`.  
 - `-usesteam <true|false>`: Whether BB should start via Steam. If this is set to true, the program will find the steam install location using the registry, and start the game using the steam API. Requires Windows. Primarly intended to be used with the BB launcher program.  
+- `-verbose <true|false>`
 
 ### init \<modname\>
 Create a new mod with the name `<modname>`. A folder structure is created, providing a light scaffold of folders and files. This speeds up the generation of new mods and provides consistency between your creations.  
@@ -51,7 +51,7 @@ If `git` is available (in PATH), a git repository will be initialised.
 #### Templates
 The template defines what files and folders will be created in the new mod directory. 
 The default templates are found in the [Templates](Templates) folder within the .zip. 
-You can customize these templates by either editing the existing ones, or adding new folders.  	
+You can customize these templates by either editing the existing ones, or adding new folders. You refer to them by their name.  	
 Within the files and filenames, certain template strings are replaced: 
 
 	- "$modname" -> <modname>
@@ -71,28 +71,19 @@ Example usage: `bbbuilder extract "C:\Users\Taro\Downloads\mod_cool_things.zip" 
 
 ### build \<modname\>
 The files of your mod are packed together to create a new zip. .nut files are compiled to test for syntax errors, and sprites are packed into brush files.  
-To speed things up, the game will compare the last modified date of the file(s) and only treat those that have been modified since the last time you packed a zip.  
-To keep track of these last modified times, a little SQLITE database file is kept in the .bbbuilder folder of your mod. It will also go through an existing .zip (either in the mod folder, or that in /data if the `movezip` config is set to `true`) and check if files were removed.
+To speed things up, the game will compare the hashes of the file(s) and only treat those that have been modified since the last time you packed a zip. To keep track of these hashes, a little json file is kept in the .bbbuilder folder of your mod.  
+It will also go through an existing .zip (either in the mod folder, or that in /data if the `movezip` config is set to `true`) and check if files were removed.  
+To avoid creating multiple copies of the same mod in the .data folder, the program will compare the names of existing zip files in data with the one we're currently building. If one is found that starts the same way (for example, mod_mymod and mod_mymod_1), you will be prompted to confirm to continue building or not. This choice can be remembered and saved in a text file within the mod folder.  l
 You can force a complete rebuild of the mod with the `-rebuild` flag.  
 
 #### Flags
 - `-restart`: Exit and then start BattleBrothers.exe after building the mod.  
 - `-rebuild`: Delete the database and the .zip to start from a clean slate.  
 - `-diff <referencebranch>,<wipbranch>`: Create the zip based on the diff between <referencebranch> and <wipbranch> Pass them comma-separated WITHOUT SPACE INBETWEEN. This requires the `git` command to be available via cmd. The purpose of this is creating patches.
-- `-debug`: Create a debug build with the _debug suffix. By default, lines between the annotations `// BBBUILDER_DEBUG_START` and `// BBBUILDER_DEBUG_STOP` are commented out. With -debug, they are not commented out.  
-	- The purpose of this is to be able to provide debug builds with things like ::logInfo statements.
+- `-zipname <name>`: Specify an alternative name for the created zip file.
+- `-excludedfolders <folder1,folder2,...>`: comma-separated list of folders to be excluded from the zip file. All the other processes (compile .nut, pack brushes) will still be executed. The folder unpacked_brushes is always excluded. Useful for things like debug folders or separating assets and code.
 - `-transpile`: Translate js file to es3. It allows you to use modern js syntax and features to create your mod. Advanced feature, you probably don't need to worry about it.  
-Example for the debug flag:  
-```
-// BBBUILDER_DEBUG_START
-::logInfo("Hello, world!")
-// BBBUILDER_DEBUG_STOP
-Without the -debug flag, this becomes:
-// BBBUILDER_DEBUG_START
-// ::logInfo("Hello, world!")
-// BBBUILDER_DEBUG_STOP
-```
- 
+
 ## Editor config files
 This program is best used with VSCode or Sublime Text, as it will generate editor config files for them.
 Upon first and every subsequent use, config files for the editors Sublime Text 3 and Visual Studio Code are created. 
