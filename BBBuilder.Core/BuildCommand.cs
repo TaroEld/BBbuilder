@@ -250,7 +250,7 @@ namespace BBBuilder
             if (sameZipNameInDataAllowed.Length > 0)
             {
                 Utils.WriteGreen("Found other .zip files in data that seem to be the same mod, but have previously been allowed (in .bbbuilder/allowed_zip_names.txt):");
-                foreach (string s in sameZipNameInData)
+                foreach (string s in sameZipNameInDataAllowed)
                 {
                     Utils.WriteGreen(Path.GetFileName(s));
                 }
@@ -259,9 +259,9 @@ namespace BBBuilder
             if (sameZipNameInDataNotAllowed.Length > 0)
             {
                 Utils.WriteRed("Found other .zip files in data that seem to be the same mod!");
-                Utils.WriteGreen("Currently building: " + this.ZipName);
+                Utils.WriteGreen("Current name: " + this.ZipName);
                 Utils.WriteRed("Similar zipe file(s):");
-                foreach (string s in sameZipNameInData)
+                foreach (string s in sameZipNameInDataNotAllowed)
                 {
                     Utils.WriteRed(Path.GetFileName(s));
                 }
