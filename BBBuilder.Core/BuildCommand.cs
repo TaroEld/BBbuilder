@@ -9,6 +9,7 @@ using System.Reflection;
 //using Ionic.Zip;
 using Force.Crc32;
 using System.Text.Json;
+using System.Collections;
 
 namespace BBBuilder
 {
@@ -17,7 +18,9 @@ namespace BBBuilder
         readonly string[] NotIndexedFolders = new string[] { ".bbbuilder", ".git", ".github", ".vscode", ".utils", "assets", "modtools", "node_modules" };
 
         string[] ExcludedZipFolders = new string[] {"unpacked_brushes"};
+        string[] IncludedZipFolders = new string[] {};
         string[] NormalizedExcludedZipFolders;
+        string[] NormalizedIncludedZipFolders;
         readonly string[] ExcludedScriptFolders = new string[] { "ui", ".git", ".github", "gfx", "preload", "brushes", "music", "sounds", "unpacked_brushes", "tempfolder", ".vscode", "nexus", ".utils", "assets" };
         public readonly OptionFlag StartGame = new("-restart", "Exit and then start BattleBrothers.exe after building the mod.") { FlagAlias = "-rs"};
         public readonly OptionFlag Transpile = new("-transpile", "Translate js file to es3. It allow you to use modern js syntax and features to create your mod.");
@@ -25,6 +28,7 @@ namespace BBBuilder
         public readonly OptionFlag Diff = new("-diff <referencebranch>,<wipbranch>", "Create the zip based on the diff between <referencebranch> and <wipbranch> Pass them comma-separated WITHOUT SPACE INBETWEEN.");
         public readonly OptionFlag CustomZipName = new("-zipname <name>", "Name of the resulting zip file. .zip extension is added. If not specified, mod name is used.") { FlagAlias = "-z" };
         public readonly OptionFlag ExcludeFolders = new("-excludedfolders <folderName1,[folderName2],...>", "Folders to remove from finished zip. The folder 'unpacked_brushes' will always be removed.") { FlagAlias = "-ex" };
+        public readonly OptionFlag IncludeFolders = new("-includedfolders <folderName1,[folderName2],...>", "Folders to include into finished zip. To be used in combination with -excluded folders when you want to add just a specific sub-folder, for example excluding all of scripts/ except for scripts/to_include.") { FlagAlias = "-in" };
 
         string ModPath;
         string ModName;
@@ -88,6 +92,11 @@ namespace BBBuilder
                 ExcludedZipFolders = ExcludedZipFolders.Concat(ExcludeFolders.PositionalValue.Split(',')).ToArray();
             }
             this.NormalizedExcludedZipFolders = ExcludedZipFolders.Select(f => Utils.Norm(f)).ToArray();
+            if (this.IncludeFolders)
+            {
+                IncludedZipFolders = IncludedZipFolders.Concat(IncludeFolders.PositionalValue.Split(',')).ToArray();
+            }
+            this.NormalizedIncludedZipFolders = IncludedZipFolders.Select(f => Utils.Norm(f)).ToArray();
             return true;
         }
 
@@ -639,21 +648,26 @@ namespace BBBuilder
             }
             return output.Split("\n")[0];
         }
-        private bool IsExcluded(string filePath)
+        private bool IsFileInFolderList(string filePath, string[] folderList)
         {
             string normalizedPath = Utils.Norm(filePath).Replace(this.ModPath, "");
 
             // Get relative path properly (handles separators automatically)
             string relativePath = normalizedPath.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
-            return NormalizedExcludedZipFolders.Any(excludedFolder =>
+            return folderList.Any(excludedFolder =>
                 relativePath.StartsWith(excludedFolder) ||
                 relativePath == excludedFolder);
         }
 
         private List<string> RemoveExcludedFolderFiles(List<string> _filesToZip)
         {
-            return _filesToZip.Where(f => !IsExcluded(f)).ToList();
+            return _filesToZip.Where(f => !IsFileInFolderList(f, NormalizedExcludedZipFolders)).ToList();
+        }
+
+        private List<string> AddIncludeddFolderFiles(List<string> _filesToZip)
+        {
+            return _filesToZip.Where(f => IsFileInFolderList(f, NormalizedIncludedZipFolders)).ToList();
         }
 
         private List<string> GetChangedFiles()
@@ -676,8 +690,10 @@ namespace BBBuilder
             }
             else files = this.FilesHashesInFolder.Keys.Select(f => Path.Combine(this.BuildPath, f)).ToList();
             files = files.Where(f => this.FilesWhichChanged.ContainsKey(Path.GetRelativePath(this.BuildPath, f))).ToList();
-            files = RemoveExcludedFolderFiles(files);
-            return files;
+            List<string> filesAfterExclude = RemoveExcludedFolderFiles(files);
+            List<string> filesToInclude = AddIncludeddFolderFiles(files);
+            List<string> mergedFileList = filesAfterExclude.Union(filesToInclude).ToList();
+            return mergedFileList;
         }
 
         private bool ZipFiles()
@@ -720,7 +736,7 @@ namespace BBBuilder
                 if (string.IsNullOrEmpty(entry.Name)) continue;
 
                 string relativePath = entry.FullName.Replace("/", @"\");
-                bool isExcluded = IsExcluded(entry.FullName);
+                bool isExcluded = IsFileInFolderList(entry.FullName, NormalizedExcludedZipFolders) && !IsFileInFolderList(entry.FullName, NormalizedIncludedZipFolders);
 
                 // Remove if file no longer exists in our tracked files, or if it's in an excluded folder
                 if (!this.FilesHashesInFolder.ContainsKey(relativePath) || isExcluded)
@@ -775,7 +791,7 @@ namespace BBBuilder
                 string zipPath = relativePath.Replace(@"\", @"/");
 
                 // Skip if this file is in an excluded folder
-                if (IsExcluded(relativePath))
+                if (IsFileInFolderList(relativePath, NormalizedExcludedZipFolders) & !IsFileInFolderList(relativePath, NormalizedIncludedZipFolders))
                         continue;
 
                 // Skip if file is already in the zip

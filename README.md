@@ -82,6 +82,7 @@ You can force a complete rebuild of the mod with the `-rebuild` flag.
 - `-diff <referencebranch>,<wipbranch>`: Create the zip based on the diff between <referencebranch> and <wipbranch> Pass them comma-separated WITHOUT SPACE INBETWEEN. This requires the `git` command to be available via cmd. The purpose of this is creating patches.
 - `-zipname <name>`: Specify an alternative name for the created zip file.
 - `-excludedfolders <folder1,folder2,...>`: comma-separated list of folders to be excluded from the zip file. All the other processes (compile .nut, pack brushes) will still be executed. The folder unpacked_brushes is always excluded. Useful for things like debug folders or separating assets and code.
+- `-includedfolders <folder1,folder2,...>`: comma-separated list of folders to be included into the zip file. The purpose of this command is to force the inclusion of files that would otherwise be excluded via excludedfolders.
 - `-transpile`: Translate js file to es3. It allows you to use modern js syntax and features to create your mod. Advanced feature, you probably don't need to worry about it.  
 
 ## Editor config files
