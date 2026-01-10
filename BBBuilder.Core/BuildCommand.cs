@@ -26,10 +26,10 @@ namespace BBBuilder
         public readonly OptionFlag StartGame = new("-restart", "Exit and then start BattleBrothers.exe after building the mod.") { FlagAlias = "-rs"};
         public readonly OptionFlag Transpile = new("-transpile", "Translate js file to es3. It allow you to use modern js syntax and features to create your mod.");
         public readonly OptionFlag Rebuild = new("-rebuild", "Delete the database and the .zip to start from a clean slate.") { FlagAlias = "-rb" };
-        public readonly OptionFlag Diff = new("-diff <referencebranch>,<wipbranch>", "Create the zip based on the diff between <referencebranch> and <wipbranch> Pass them comma-separated WITHOUT SPACE INBETWEEN.");
+        public readonly OptionFlag Diff = new("-diff <referencebranch>,<wipbranch>", "Create the zip based on the diff between <referencebranch> and <wipbranch> Pass them comma-separated WITHOUT SPACE INBETWEEN. This requires the `git` command to be available via cmd. The purpose of this is creating patches.");
         public readonly OptionFlag CustomZipName = new("-zipname <name>", "Name of the resulting zip file. .zip extension is added. If not specified, mod name is used.") { FlagAlias = "-z" };
         public readonly OptionFlag ExcludeFolders = new("-excludedfolders <folderName1,[folderName2],...>", "Folders to remove from finished zip. The folder 'unpacked_brushes' will always be removed.") { FlagAlias = "-ex" };
-        public readonly OptionFlag IncludeFolders = new("-includedfolders <folderName1,[folderName2],...>", "Folders to include into finished zip. To be used in combination with -excluded folders when you want to add just a specific sub-folder, for example excluding all of scripts/ except for scripts/to_include.") { FlagAlias = "-in" };
+        public readonly OptionFlag IncludeFolders = new("-includedfolders <folderName1,[folderName2],...>", "Folders to include into finished zip. To be used in combination with -excludedfolders when you want to add just a specific sub-folder, for example excluding all of scripts/ except for scripts/to_include/.") { FlagAlias = "-in" };
 
         string ModPath;
         string ModName;

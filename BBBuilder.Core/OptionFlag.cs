@@ -66,7 +66,7 @@ namespace BBBuilder
 
         public override string ToString()
         {
-            return $"'{Flag} (alias: {FlagAlias}) {Parameter}': {Description}";
+            return $"{Flag} (alias: {FlagAlias}) {Parameter}: {Description}";
         }
 
         // Allows instances to be used as simple bools.

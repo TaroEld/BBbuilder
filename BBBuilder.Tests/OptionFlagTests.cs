@@ -119,7 +119,7 @@ namespace BBBuilder.Tests
         {
             var flag = new OptionFlag("-f <param>", "Test flag");
 
-            Assert.Equal("'-f (alias: -f) <param>': Test flag", flag.ToString());
+            Assert.Equal("-f (alias: -f) <param>: Test flag", flag.ToString());
         }
 
         [Fact]

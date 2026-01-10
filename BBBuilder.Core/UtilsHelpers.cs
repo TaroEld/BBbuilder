@@ -16,7 +16,7 @@ public static class UtilsHelpers
     }
     public static void PrintShortHelp(Dictionary<string, Command> _commands)
     {
-        Console.WriteLine("Use -help for full command list.");
+        Console.WriteLine("Use -help for full command list, or bbbuilder <command> (for example 'bbbuilder config') to get more info about a specific option.");
         foreach (KeyValuePair<string, Command> entry in _commands)
         {
             Console.WriteLine("\n------------------------------------------------------------\n");
