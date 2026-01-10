@@ -10,6 +10,7 @@ using System.Reflection;
 using Force.Crc32;
 using System.Text.Json;
 using System.Collections;
+using System.Collections.Concurrent;
 
 namespace BBBuilder
 {
@@ -310,15 +311,19 @@ namespace BBBuilder
 
         private Dictionary<string, Int64> ReadFileDataFromFolder(string[] folders)
         {
-            Dictionary<string, Int64> ret = new();
-            foreach (var folder in folders)
+            var files = folders.SelectMany(folder =>
+                Directory.EnumerateFiles(folder, "*.*", SearchOption.AllDirectories));
+
+            var result = new ConcurrentDictionary<string, Int64>();
+
+            Parallel.ForEach(files, file =>
             {
-                foreach(var file in Directory.EnumerateFiles(folder, "*.*", SearchOption.AllDirectories))
-                {
-                    ret.Add(Path.GetRelativePath(this.BuildPath, file), CalculateChecksum(file));
-                }
-            }
-            return ret;
+                var relativePath = Path.GetRelativePath(this.BuildPath, file);
+                var checksum = CalculateChecksum(file);
+                result.TryAdd(relativePath, checksum);
+            });
+
+            return new Dictionary<string, Int64>(result);
         }
 
         static Int64 CalculateChecksum(string filePath)
