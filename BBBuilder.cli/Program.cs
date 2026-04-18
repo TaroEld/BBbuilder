@@ -21,6 +21,7 @@ namespace BBBuilder
                 { "build", new BuildCommand() },
                 { "init", new InitCommand() },
                 { "extract", new ExtractCommand() },
+                { "extract-basegame", new ExtractBasegameCommand() },
                 { "config", new ConfigCommand() }
             };
             var config = (ConfigCommand)Commands["config"];
