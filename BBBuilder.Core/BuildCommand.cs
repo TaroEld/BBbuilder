@@ -227,7 +227,7 @@ namespace BBBuilder
             }
             WriteFileDataToDB();
             Utils.LogTime($"BuildCommand: Writing hash DB");
-
+            Console.WriteLine($"Mod '{this.ModName}' built successfully.");
             return true;
         }
 

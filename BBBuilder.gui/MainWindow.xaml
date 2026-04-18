@@ -5,28 +5,30 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BBBuilder_gui"
         mc:Ignorable="d"
-        Title="BBBuilder" Height="450" Width="1080">
+        Title="BBBuilder" Height="600" Width="1080">
     <Window.Resources>
         <Style TargetType="TextBox">
             <Setter Property ="Background" Value="#aa8a59"/>
-            <Setter Property="FontWeight" Value="Bold"/>
         </Style>
         <Style TargetType="ComboBox">
             <Setter Property ="Background" Value="#aa8a59"/>
-            <Setter Property="FontWeight" Value="Bold"/>
         </Style>
         <Style TargetType="ListBox">
             <Setter Property ="Background" Value="#aa8a59"/>
-            <Setter Property="FontWeight" Value="Bold"/>
         </Style>
         <Style TargetType="Label">
             <Setter Property="Foreground" Value="#dda21f"/>
-            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="ContentTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding}" TextWrapping="Wrap"/>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
         <Style TargetType="CheckBox">
             <Setter Property="Margin" Value="0,10,0,0"/>
             <Setter Property="Foreground" Value="#dda21f"/>
-            <Setter Property="FontWeight" Value="Bold"/>
         </Style>
         <Style TargetType="Button">
             <Setter Property="Background">
@@ -35,7 +37,6 @@
                 </Setter.Value>
             </Setter>
             <Setter Property="Foreground" Value="#dda21f"/>
-            <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="MinWidth" Value="100"/>
         </Style>
         <Style TargetType="TabItem">
@@ -45,7 +46,6 @@
                 </Setter.Value>
             </Setter>
             <Setter Property="Foreground" Value="#dda21f"/>
-            <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="MinWidth" Value="100"/>
         </Style>
 
@@ -61,48 +61,67 @@
         <Grid.Background>
             <ImageBrush ImageSource="/assets/generic_background_large_border.png"/>
         </Grid.Background>
-        <TabControl Background="Transparent" Padding="25,0,0,0">
-            <TabItem Header="Config" Width="100">
-                <StackPanel>
-                    <StackPanel Orientation="Vertical" Height="340">
-                        <Label Content="Set global config options for initialising, extracting or building mods" HorizontalAlignment="Center"/>
-                        <Label Content="Path to data" HorizontalAlignment="Left" VerticalAlignment="Top" Height="Auto" Width="345" />
+        <TabControl Background="Transparent" Padding="25,5,25,0">
+            <TabItem Header="Config" Width="Auto">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal">
+                        <Button Content="Save Config" Click="Run_Config_Command" HorizontalAlignment="Left" Height="40" Width="40" VerticalAlignment="Bottom"  />
+                        <Button Content="Clear Config" Click="On_Clear_Config_Clicked" HorizontalAlignment="Left" Height="40" Width="40" VerticalAlignment="Bottom"  />
+                    </StackPanel>
+                    <StackPanel Orientation="Vertical">
+                        <Label Content="Set global config options for initialising, extracting or building mods." HorizontalAlignment="Center" FontWeight="Bold"/>
+                        <Label Content="Game data folder - path to the 'data' directory inside your Battle Brothers installation." HorizontalAlignment="Left" VerticalAlignment="Top" Height="Auto" Width="Auto" />
                         <StackPanel Orientation="Horizontal">
                             <TextBox Name="DataPath" HorizontalAlignment="Left" Height="Auto" TextWrapping="Wrap" VerticalAlignment="Top" Width="342" />
                             <Button  Content="Select Folder" Click="On_Data_Folder_Click" HorizontalAlignment="Left" Height="Auto" Width="92" VerticalAlignment="Top"  />
                         </StackPanel>
-                        <Label Content="Path to mods folder" HorizontalAlignment="Left" VerticalAlignment="Top" Height="26" Width="345" />
+                        <Label Content="Mods folder - new mods created via 'New Mod' or 'Extract Mod' will be placed here by default." HorizontalAlignment="Left" VerticalAlignment="Top" Height="Auto" Width="Auto" />
                         <StackPanel Orientation="Horizontal">
                             <TextBox  Name="ModsPath" HorizontalAlignment="Left" Height="20" TextWrapping="Wrap" VerticalAlignment="Top" Width="342" />
                             <Button Content="Select Folder" HorizontalAlignment="Left" Height="20" VerticalAlignment="Top" Width="92" Click="On_Mods_Folder_Click" />
                         </StackPanel>
 
-                        <Label  Content="Additional build folders" HorizontalAlignment="Left" VerticalAlignment="Top" Height="26" Width="345"/>
+                        <Label Content="Additional folders - included in generated editor workspace files (e.g. the basegame folder)." HorizontalAlignment="Left" VerticalAlignment="Top" Height="Auto" Width="Auto"/>
                         <StackPanel Orientation="Horizontal">
                             <ListBox Name="Folders" Height="50" Width="345" HorizontalAlignment="Left"/>
                             <StackPanel>
                                 <Button Content="Add Folder" HorizontalAlignment="Left" VerticalAlignment="Top" Width="92" Click="On_Add_Folder_Click"/>
                                 <Button Content="Clear Folders" HorizontalAlignment="Left" VerticalAlignment="Top" Width="92" Click="On_Clear_Folders_Click"/>
                             </StackPanel>
-
                         </StackPanel>
 
-                        <CheckBox Name="LogTime" Content="Time logging" HorizontalAlignment="Left" VerticalAlignment="Top" RenderTransformOrigin="0.584,-2.653" Width="342" Grid.Column="0"/>
-                        <CheckBox Name="Verbose" Content="Verbose" HorizontalAlignment="Left" VerticalAlignment="Top" Height="15" Width="342" Grid.Column="0"/>
-                        <CheckBox Name="MoveZip" Content="Delete zip from mod folder after building" HorizontalAlignment="Left" VerticalAlignment="Top" Height="15" Width="341" Grid.Column="0"/>
-                        <CheckBox Name="UseSteam" Content="Launch the game via Steam (Windows only)" HorizontalAlignment="Left" VerticalAlignment="Top" Height="15" Width="341" Grid.Column="0"/>
-
+                        <CheckBox Name="LogTime" Content="Log execution time for each build step" HorizontalAlignment="Left" VerticalAlignment="Top" Width="342" Grid.Column="0"/>
+                        <CheckBox Name="Verbose" Content="Verbose output — print extra diagnostic information" HorizontalAlignment="Left" VerticalAlignment="Top" Height="15" Width="342" Grid.Column="0"/>
+                        <CheckBox Name="MoveZip" Content="Delete the mod zip from the mod folder after copying it to the game data folder" HorizontalAlignment="Left" VerticalAlignment="Top" Height="15" Width="Auto" Grid.Column="0"/>
+                        <CheckBox Name="UseSteam" Content="Launch the game via Steam instead of the .exe directly (required for MSU launcher)" HorizontalAlignment="Left" VerticalAlignment="Top" Height="15" Width="Auto" Grid.Column="0"/>
                     </StackPanel>
-                    <StackPanel Orientation ="Horizontal">
-                        <Button Content="Save Config" Click="Run_Config_Command" HorizontalAlignment="Left" Height="40" Width="40" VerticalAlignment="Bottom"  />
-                        <Button Content="Clear Config" Click="On_Clear_Config_Clicked" HorizontalAlignment="Left" Height="40" Width="40" VerticalAlignment="Bottom"  />
-                    </StackPanel>
-                </StackPanel>
+                </DockPanel>
             </TabItem>
-            <TabItem Header="Init" Width="100">
-                <StackPanel>
-                    <StackPanel Orientation="Vertical" Height="340">
-                        <Label Content="Initialize a new mod." HorizontalAlignment="Center"/>
+            <TabItem Header="Extract Basegame" Width="Auto">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal">
+                        <Button Content="Extract Basegame" Click="On_Basegame_Run_Click" HorizontalAlignment="Left" Height="40" Width="40" VerticalAlignment="Bottom"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Vertical">
+                        <Label Content="Merge and extract the base game data files." HorizontalAlignment="Center" FontWeight="Bold"/>
+                        <Label Content="Destination Folder" HorizontalAlignment="Left" Height="27" Width="338"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBox x:Name="BasegameFolder" HorizontalAlignment="Left" Height="22" TextWrapping="Wrap" VerticalAlignment="Top" Width="338" Text="{Binding Text, ElementName=ModsPath, UpdateSourceTrigger=PropertyChanged}"/>
+                            <Button x:Name="BasegameFolderButton" Content="Select Folder" Click="On_Basegame_Select_Folder_Click" HorizontalAlignment="Left" Height="20" Width="92"/>
+                        </StackPanel>
+                        <Label Content="Folder Name" HorizontalAlignment="Left" Height="27" Width="338"/>
+                        <TextBox x:Name="BasegameName" HorizontalAlignment="Left" Height="22" TextWrapping="Wrap" Width="338" Text="basegame"/>
+                        <CheckBox x:Name="BasegameReplace" Content="Replace Existing Files" HorizontalAlignment="Left" Height="17" VerticalAlignment="Top" Width="338"/>
+                    </StackPanel>
+                </DockPanel>
+            </TabItem>
+            <TabItem Header="New Mod" Width="Auto">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal">
+                        <Button Content="Create Mod" Click="On_Init_Run_Click" HorizontalAlignment="Left" Height="40" Width="40" VerticalAlignment="Bottom"  />
+                    </StackPanel>
+                    <StackPanel Orientation="Vertical">
+                        <Label Content="Initialize a new mod." HorizontalAlignment="Center" FontWeight="Bold"/>
                         <Label Content="Mod Name" Height="27" VerticalAlignment="Top"/>
                         <TextBox Name="InitModName" HorizontalAlignment="Left" Height="22" TextWrapping="Wrap" Width="338"/>
                         <Label Content="Destination Folder" HorizontalAlignment="Left" Height="30"  Width="338"/>
@@ -114,39 +133,38 @@
                         <ComboBox Name ="SelectTemplateCombo" HorizontalAlignment="Left" Height="30" Width="338"/>
                         <CheckBox Name ="InitReplace" Content="Replace Existing Files" HorizontalAlignment="Left" Height="18" Width="338"/>
                     </StackPanel>
-                    <StackPanel Orientation ="Horizontal">
-                        <Button Content="Create Mod" Click="On_Init_Run_Click" HorizontalAlignment="Left" Height="40" Width="40" VerticalAlignment="Bottom"  />
-                    </StackPanel>
-                </StackPanel>
+                </DockPanel>
             </TabItem>
-            <TabItem Header="Extract" Width="100">
-                <StackPanel>
-                    <StackPanel Orientation="Vertical" Height="340">
-                        <Label Content="Extract an existing mod from an archive (.zip, .dat...)." HorizontalAlignment="Center"/>
-                        <Label Content="Zip Folder" HorizontalAlignment="Left" Height="27"  Width="338"/>
+            <TabItem Header="Extract Mod" Width="Auto">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal">
+                        <Button Content="Extract Mod" Click="On_Extract_Run_Click" HorizontalAlignment="Left" Height="40" Width="40" VerticalAlignment="Bottom"  />
+                    </StackPanel>
+                    <StackPanel Orientation="Vertical">
+                        <Label Content="Extract an existing mod from an archive (.zip, .dat...)." HorizontalAlignment="Center" FontWeight="Bold"/>
+                        <Label Content="Zip File" HorizontalAlignment="Left" Height="27"  Width="338"/>
                         <StackPanel Orientation="Horizontal">
                             <TextBox x:Name="ExtractZip" HorizontalAlignment="Left" Height="22"  TextWrapping="Wrap" Width="338"/>
-                            <Button x:Name ="SelectExtractZip" Content ="Select Folder" Click="On_Extract_Select_Zip_Click" HorizontalAlignment="Left" Height="20" Width="92"/>
+                            <Button x:Name ="SelectExtractZip" Content ="Select File" Click="On_Extract_Select_Zip_Click" HorizontalAlignment="Left" Height="20" Width="92"/>
                         </StackPanel>
                         <Label Content="Destination Folder" HorizontalAlignment="Left" Height="30"   Width="338"/>
                         <StackPanel Orientation="Horizontal">
                             <TextBox x:Name="ExtractFolder" HorizontalAlignment="Left"  Width="338" Text="{Binding Text, ElementName=ModsPath, UpdateSourceTrigger=PropertyChanged}" Height="22"  TextWrapping="Wrap"/>
                             <Button x:Name ="ExtractFolderButton" Content ="Select Folder" Click="On_Extract_Select_Folder_Click" HorizontalAlignment="Left" Height="20" Width="92"/>
                         </StackPanel>
-                        <Label Content="New Mod Name (optional)" HorizontalAlignment="Left" Height="27"  Width="338" />
+                        <Label Content="New Mod Name" HorizontalAlignment="Left" Height="27"  Width="338" />
                         <TextBox x:Name="ExtractName" HorizontalAlignment="Left" Height="22"  TextWrapping="Wrap" Width="338" />
-
                         <CheckBox x:Name ="ExtractReplace" Content="Replace Existing Files" HorizontalAlignment="Left" Height="25"  Width="338" />
                     </StackPanel>
-                    <StackPanel Orientation ="Horizontal">
-                        <Button Content="Extract Mod" Click="On_Extract_Run_Click" HorizontalAlignment="Left" Height="40" Width="40" VerticalAlignment="Bottom"  />
-                    </StackPanel>
-                </StackPanel>
+                </DockPanel>
             </TabItem>
-            <TabItem Header="Build" Width="100">
-                <StackPanel>
-                    <StackPanel Orientation="Vertical" Height="340">
-                        <Label Content="Build an existing mod." HorizontalAlignment="Center"/>
+            <TabItem Header="Build Mod" Width="Auto">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Bottom">
+                        <Button Content="Build Mod" Click="On_Build_Run_Click" Height="40" Width="40" HorizontalAlignment="Left" VerticalAlignment="Bottom"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Vertical">
+                        <Label Content="Build an existing mod." HorizontalAlignment="Center" FontWeight="Bold"/>
                         <Label Content="Mod Folder" HorizontalAlignment="Left" Height="27" VerticalAlignment="Top" Width="338"/>
                         <StackPanel Orientation="Horizontal">
                             <TextBox x:Name="BuildFolder" HorizontalAlignment="Left" Height="22" TextWrapping="Wrap" VerticalAlignment="Top" Width="338"/>
@@ -154,17 +172,15 @@
                         </StackPanel>
                         <CheckBox x:Name="BuildRestart"  Content="(Re)start Game" HorizontalAlignment="Left" Height="17" VerticalAlignment="Top" Width="338"/>
                         <CheckBox x:Name="BuildRebuild" Content="Rebuild mod" HorizontalAlignment="Left" Height="17" VerticalAlignment="Top" Width="338"/>
-                        <Button Content="Build Mod" Click="On_Build_Run_Click" Height="20" Margin="0,351,294,0" VerticalAlignment="Top"/>
                     </StackPanel>
-                    <StackPanel>
-                        <Button  Content="Build Mod" Click="On_Build_Run_Click" Height="40" Width="40" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                    </StackPanel>
-                </StackPanel>
+                </DockPanel>
             </TabItem>
         </TabControl>
-        <Label Content="Output" HorizontalAlignment="Center" Height="29" Margin="0,40,0,0" VerticalAlignment="Top" Width="418" Grid.Column="1"/>
-        <TextBox Name="ConsoleOutput" HorizontalAlignment="Center" Height="287" TextWrapping="Wrap" Text="" VerticalAlignment="Center" Width="418" Grid.Column="1" BorderBrush="#FF2E54C7" FontFamily="Segoe UI Black" TextChanged="ConsoleOutput_TextChanged"/>
-
+        <StackPanel Grid.Column="2">
+            <Label Content="Output" HorizontalAlignment="Center" Height="29" Margin="0,40,0,0" VerticalAlignment="Top" Width="418" Grid.Column="1"/>
+            <TextBox Name="ConsoleOutput" HorizontalAlignment="Center" Height="403" TextWrapping="Wrap" Text="" VerticalAlignment="Center" Width="418" Grid.Column="1" BorderBrush="#FF2E54C7" FontFamily="Segoe UI Black" TextChanged="ConsoleOutput_TextChanged"/>
+            <Button Content="Clear Output" HorizontalAlignment="Center" Width="418" Height="40" Click="On_Clear_Output_Click"/>
+        </StackPanel>
     </Grid>
 
 </Window>

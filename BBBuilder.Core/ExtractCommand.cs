@@ -64,7 +64,7 @@ namespace BBBuilder
 
             DecompileFiles();
             ExtractBrushes();
-
+            Console.WriteLine($"Mod '{this.ModName}' extracted to {this.ModPath}.");
             return true;
         }
 

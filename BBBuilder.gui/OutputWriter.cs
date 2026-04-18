@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Controls;
 
 namespace BBBuilder_gui
@@ -18,18 +14,15 @@ namespace BBBuilder_gui
 
         public override void Write(char value)
         {
-            textbox.Text += value;
+            textbox.Dispatcher.BeginInvoke(() => textbox.AppendText(value.ToString()));
         }
 
         public override void Write(string value)
         {
-            textbox.Text += value;
+            textbox.Dispatcher.BeginInvoke(() => textbox.AppendText(value));
         }
 
-        public override Encoding Encoding
-        {
-            get { return Encoding.ASCII; }
-        }
+        public override Encoding Encoding => Encoding.UTF8;
 
         public void Clear()
         {

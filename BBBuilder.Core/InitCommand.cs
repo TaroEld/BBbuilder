@@ -82,6 +82,7 @@ namespace BBBuilder
             if (this.Template && this.Template.PositionalValue == "blank")
                 File.Delete(Path.Combine(this.ModPath, "dummydel")); // VS doesn't copy the folder if it doesn't have a file in it...
             Process.Start("explorer.exe", this.ModPath);
+            Console.WriteLine($"Mod '{this.ModName}' created at {this.ModPath}.");
             return true;
         }
 

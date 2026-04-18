@@ -30,6 +30,7 @@ namespace BBBuilder_gui
         InitCommand InitCommand;
         ExtractCommand ExtractCommand;
         BuildCommand BuildCommand;
+        ExtractBasegameCommand ExtractBasegameCommand;
         readonly OutputWriter OutputWriter;
         public MainWindow()
         {
@@ -46,13 +47,14 @@ namespace BBBuilder_gui
             SetupInitTab();
             SetupExtractTab();
             SetupBuildTab();
+            SetupExtractBasegameTab();
         }
 
-        static void RunCommandInTryBlock(Command command, string[] _args)
+        static async Task RunCommandInTryBlock(Command command, string[] _args)
         {
             try
             {
-                command.HandleCommand(_args);
+                await Task.Run(() => command.HandleCommand(_args));
             }
             catch (Exception ex)
             {
@@ -84,7 +86,7 @@ namespace BBBuilder_gui
             Folders.ToolTip = ConfigCommand.Folders.Description;
         }
 
-        private void Run_Config_Command(object sender, RoutedEventArgs e)
+        private async void Run_Config_Command(object sender, RoutedEventArgs e)
         {
             OutputWriter.Clear();
             if (DataPath.Text == "" || ModsPath.Text == "")
@@ -156,6 +158,11 @@ namespace BBBuilder_gui
             }
         }
 
+        private void On_Clear_Output_Click(object sender, RoutedEventArgs e)
+        {
+            OutputWriter.Clear();
+        }
+
         private void On_Clear_Config_Clicked(object sender, RoutedEventArgs e)
         {
             ConfigCommand = new ConfigCommand();
@@ -192,7 +199,7 @@ namespace BBBuilder_gui
             }
         }
 
-        private void On_Init_Run_Click(object sender, RoutedEventArgs e)
+        private async void On_Init_Run_Click(object sender, RoutedEventArgs e)
         {
             InitCommand = new InitCommand();
             OutputWriter.Clear();
@@ -241,7 +248,7 @@ namespace BBBuilder_gui
             }
         }
 
-        private void On_Extract_Run_Click(object sender, RoutedEventArgs e)
+        private async void On_Extract_Run_Click(object sender, RoutedEventArgs e)
         {
             ExtractCommand = new ExtractCommand();
             OutputWriter.Clear();
@@ -256,6 +263,7 @@ namespace BBBuilder_gui
                 commands.Add(ExtractCommand.Replace.Flag);
             }
             commands.AddRange(new List<string> { ExtractCommand.AltPath.Flag, ExtractFolder.Text });
+            commands.AddRange(new List<string> { ExtractCommand.Rename.Flag, ExtractName.Text });
             RunCommandInTryBlock(ExtractCommand, commands.ToArray());
         }
 
@@ -277,7 +285,7 @@ namespace BBBuilder_gui
             }
         }
 
-        private void On_Build_Run_Click(object sender, RoutedEventArgs e)
+        private async void On_Build_Run_Click(object sender, RoutedEventArgs e)
         {
             Utils.Stopwatch.Reset();
             Utils.Stopwatch.Start();
@@ -299,6 +307,38 @@ namespace BBBuilder_gui
                 commands.Add(BuildCommand.Rebuild.Flag);
             }
             RunCommandInTryBlock(BuildCommand, commands.ToArray());
+        }
+
+        private void SetupExtractBasegameTab()
+        {
+            ExtractBasegameCommand = new ExtractBasegameCommand();
+            BasegameFolder.ToolTip = ExtractBasegameCommand.AltPath.Description;
+            BasegameName.ToolTip = ExtractBasegameCommand.Rename.Description;
+            BasegameReplace.ToolTip = ExtractBasegameCommand.Replace.Description;
+        }
+
+        private void On_Basegame_Select_Folder_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new Forms.FolderBrowserDialog();
+            Forms.DialogResult result = dialog.ShowDialog();
+            if (result == System.Windows.Forms.DialogResult.OK)
+            {
+                BasegameFolder.Text = dialog.SelectedPath;
+            }
+        }
+
+        private async void On_Basegame_Run_Click(object sender, RoutedEventArgs e)
+        {
+            ExtractBasegameCommand = new ExtractBasegameCommand();
+            OutputWriter.Clear();
+            var commands = new List<string> { ExtractBasegameCommand.Name };
+            if (BasegameReplace.IsChecked == true)
+                commands.Add(ExtractBasegameCommand.Replace.Flag);
+            if (BasegameName.Text.Length > 0)
+                commands.AddRange(new List<string> { ExtractBasegameCommand.Rename.Flag, BasegameName.Text });
+            if (BasegameFolder.Text.Length > 0)
+                commands.AddRange(new List<string> { ExtractBasegameCommand.AltPath.Flag, BasegameFolder.Text });
+            RunCommandInTryBlock(ExtractBasegameCommand, commands.ToArray());
         }
 
         private void ConsoleOutput_TextChanged(object sender, TextChangedEventArgs e)

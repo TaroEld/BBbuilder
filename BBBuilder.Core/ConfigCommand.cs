@@ -149,6 +149,7 @@ namespace BBBuilder
             PrintConfig();
             Utils.WriteConfigDataToJSON(Utils.Data);
             UpdateBuildFiles();
+            Console.WriteLine("Config saved successfully.");
             return true;
         }
 
