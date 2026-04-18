@@ -1,15 +1,17 @@
 # BBBuilder
 
 ## Overview
-This is a command-line application for Windows systems that helps in the development of mods for the game Battle Brothers.  
+This is a tool for Windows systems that helps in the development of mods for the game Battle Brothers. It is available both as a command-line application (CLI) and as a GUI.  
 It has shortcuts to conduct most common tasks for developing mods: 
 - Initialising a new mod by creating a folder structure and scaffolding to quickly start writing code
 - Building the mod, which does some checks (compiling files for syntax errors), can optionally transpile JavaScript files to ES3, packs brush files, and copies it to the data folder  
-- Relaunching the game.
-It also comes with other useful features, such as convenient extracting of mods by other people.  
+- Relaunching the game
+- Extracting mods by other people
+- Extracting and decompiling the base game files
 
-As a command line tool, it can be run with the windows cmd terminal, powershell or other means. 
-To make things more convenient, the tool will create editor config files for VSCode and Sublime Text which setup projects and provide the basic build commands. VScode is entirely free, Sublime Text is free but will occasionally nag you to buy it.  
+As a command line tool, it can be run with the windows cmd terminal, powershell or other means.  
+Alternatively, the **GUI companion** (`BBBuilder.gui.exe`) provides the same core functionality through a graphical interface with tabs for Config, Extract Basegame, New Mod, Extract Mod, and Build Mod.  
+To make things more convenient, the CLI will also create editor config files for VSCode and Sublime Text which setup projects and provide the basic build commands. VScode is entirely free, Sublime Text is free but will occasionally nag you to buy it.  
 Shipped with this application is the Battle Brothers mod kit by Adam Milazzo: http://www.adammil.net/blog/v133_Battle_Brothers_mod_kit.html . This kit is needed for many basic operations.  There is also a modified version of the squirrel binary `sq_taro.exe` that is used for mass compiling.  
 
 ## How to install
@@ -69,6 +71,15 @@ Equal to the init command, but extracts existing mods instead, decompiling files
 - `-directory <path>`: Specify alternative path to extract the mod to.
 Example usage: `bbbuilder extract "C:\Users\Taro\Downloads\mod_cool_things.zip" -directory "C:\BB Modding\Other_peoples_mods\"`
 
+### extract-basegame
+Merge and extract the base game data files, decompiling them so you can browse the vanilla scripts and assets. The extracted files are placed in your mods folder by default.
+#### Flags
+- `-directory <path>`: Specify an alternative destination folder.
+- `-name <foldername>`: Name for the extracted folder (default: `basegame`).
+- `-overwrite`: Replace existing files in the destination.
+
+Example usage: `bbbuilder extract-basegame -name basegame -directory "C:\BB Modding\"`
+
 ### build \<modname\>
 The files of your mod are packed together to create a new zip. .nut files are compiled to test for syntax errors, and sprites are packed into brush files.  
 To speed things up, the game will compare the hashes of the file(s) and only treat those that have been modified since the last time you packed a zip. To keep track of these hashes, a little json file is kept in the .bbbuilder folder of your mod.  
@@ -84,6 +95,16 @@ You can force a complete rebuild of the mod with the `-rebuild` flag.
 - `-excludedfolders <folder1,folder2,...>`: comma-separated list of folders to be excluded from the zip file. All the other processes (compile .nut, pack brushes) will still be executed. The folder unpacked_brushes is always excluded. Useful for things like debug folders or separating assets and code.
 - `-includedfolders <folder1,folder2,...>`: comma-separated list of folders to be included into the zip file. The purpose of this command is to force the inclusion of files that would otherwise be excluded via excludedfolders.
 - `-transpile`: Translate js file to es3. It allows you to use modern js syntax and features to create your mod. Advanced feature, you probably don't need to worry about it.  
+
+## GUI
+A graphical interface is available as `BBBuilder.gui.exe`. It provides the same core functionality as the CLI through a tabbed interface:
+- **Config**: Set your game data path, mods folder, and other options
+- **Extract Basegame**: Extract and decompile the vanilla game files
+- **New Mod**: Initialize a new mod with a template
+- **Extract Mod**: Extract and decompile an existing mod from a zip
+- **Build Mod**: Build a mod with options to restart the game or do a full rebuild
+
+An output panel on the right shows command output. The GUI uses the same config as the CLI, so they can be used interchangeably.
 
 ## Editor config files
 This program is best used with VSCode or Sublime Text, as it will generate editor config files for them.
