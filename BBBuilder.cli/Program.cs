@@ -7,7 +7,7 @@ namespace BBBuilder
     {
         public static int Main(string[] args)
         {
-            var version = "1.5";
+            var version = "1.6.1";
             Console.WriteLine($"BBBuilder version: {version}");
             Utils.Stopwatch.Start();
 
