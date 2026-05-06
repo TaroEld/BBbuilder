@@ -16,7 +16,7 @@ namespace BBBuilder.Tests
         public BuildCommandTests()
         {
             // Setup
-            testRootPath = Path.Combine("G:\\Programming\\Csharp\\BBBuilder\\BBBuilder.Tests", "BBBuilderTests");
+            testRootPath = Path.Combine("G:\\Programming\\Csharp\\BBBuilder\\BBBuilder.Tests");
             testModPath = Path.Combine(testRootPath, "test_mod");
             Directory.CreateDirectory(testModPath);
             CreateTestModStructure();
