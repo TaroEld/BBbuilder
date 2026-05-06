@@ -23,6 +23,8 @@ namespace BBBuilder
             "\n    Example: 'bbbuilder config -verbose true'");
         public readonly OptionFlag LogTime = new("-logtime <true|false>", "Whether you'd like to print the time it takes the program to execute its different parts." +
             "\n    Example: 'bbbuilder config -logtime true'");
+        public readonly OptionFlag SetPath = new("-setpath <true|false>", "Whether you'd like to add the BBBuilder directory to the system PATH environment variable so it can be run from anywhere." +
+            "\n    Example: 'bbbuilder config -setpath true'");
 
         public readonly OptionFlag Clear = new("-clear", "Clears all settings.");
         public ConfigCommand()
@@ -94,6 +96,7 @@ namespace BBBuilder
             Console.WriteLine($"Move Zip: {Utils.Data.MoveZip}");
             Console.WriteLine($"Verbose: {Utils.Data.Verbose}");
             Console.WriteLine($"Log Time: {Utils.Data.LogTime}");
+            Console.WriteLine($"Set Path: {Utils.Data.SetPath}");
         }
 
         public override bool HandleCommand(string[] _args)
@@ -145,6 +148,10 @@ namespace BBBuilder
             if (this.LogTime)
             {
                 HandleBooleanCommand(this.LogTime, value => Utils.Data.LogTime = value);
+            }
+            if (this.SetPath)
+            {
+                HandleBooleanCommand(this.SetPath, value => Utils.Data.SetPath = value);
             }
             PrintConfig();
             Utils.WriteConfigDataToJSON(Utils.Data);

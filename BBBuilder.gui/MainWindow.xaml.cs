@@ -66,6 +66,8 @@ namespace BBBuilder_gui
         {
             ConfigCommand = new ConfigCommand();
             Utils.ReadConfigDataFromJSON();
+            if (Utils.Data.SetPath)
+                Utils.UpdatePathVariable();
             DataPath.Text = Utils.Data.GamePath;
             DataPath.ToolTip = ConfigCommand.DataPath.Description;
             ModsPath.Text = Utils.Data.ModPath;
@@ -78,6 +80,8 @@ namespace BBBuilder_gui
             Verbose.ToolTip = ConfigCommand.Verbose.Description;
             LogTime.IsChecked = Utils.Data.LogTime;
             LogTime.ToolTip = ConfigCommand.LogTime.Description;
+            SetPath.IsChecked = Utils.Data.SetPath;
+            SetPath.ToolTip = ConfigCommand.SetPath.Description;
 
             foreach (string folder in Utils.Data.FoldersArray)
             {
@@ -103,6 +107,7 @@ namespace BBBuilder_gui
             commands.AddRange(new List<string> { c.UseSteam.Flag, UseSteam.IsChecked.ToString() });
             commands.AddRange(new List<string> { c.Verbose.Flag, Verbose.IsChecked.ToString() });
             commands.AddRange(new List<string> { c.LogTime.Flag, LogTime.IsChecked.ToString() });
+            commands.AddRange(new List<string> { c.SetPath.Flag, SetPath.IsChecked.ToString() });
             if (Folders.Items.Count > 0)
             {
                 commands.AddRange(new List<string> { c.Folders.Flag, string.Join(",", Folders.Items.Cast<string>()) });

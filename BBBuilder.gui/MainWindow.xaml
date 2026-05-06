@@ -94,6 +94,7 @@
                         <CheckBox Name="Verbose" Content="Verbose output — print extra diagnostic information" HorizontalAlignment="Left" VerticalAlignment="Top" Height="15" Width="342" Grid.Column="0"/>
                         <CheckBox Name="MoveZip" Content="Delete the mod zip from the mod folder after copying it to the game data folder" HorizontalAlignment="Left" VerticalAlignment="Top" Height="15" Width="Auto" Grid.Column="0"/>
                         <CheckBox Name="UseSteam" Content="Launch the game via Steam instead of the .exe directly (required for MSU launcher)" HorizontalAlignment="Left" VerticalAlignment="Top" Height="15" Width="Auto" Grid.Column="0"/>
+                        <CheckBox Name="SetPath" Content="Add BBBuilder directory to the system PATH environment variable" HorizontalAlignment="Left" VerticalAlignment="Top" Height="15" Width="Auto" Grid.Column="0"/>
                     </StackPanel>
                 </DockPanel>
             </TabItem>

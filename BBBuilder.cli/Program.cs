@@ -13,6 +13,8 @@ namespace BBBuilder
 
             Utils.ReadConfigDataFromJSON();
             Utils.LogTime($"Main: Getting JSON config data");
+            if (!Debugger.IsAttached && Utils.Data.SetPath)
+                Utils.UpdatePathVariable();
             string[] helpVariants = { "help", "-help", "--help", "-h" };
 
             Dictionary<string, Command> Commands = new()
@@ -26,12 +28,6 @@ namespace BBBuilder
             };
             var config = (ConfigCommand)Commands["config"];
             config.SetupConfig();
-            // exit early instead of printing the whole config
-            if (!Debugger.IsAttached)
-            {
-                if (Utils.UpdatePathVariable())
-                    return 1;
-            }
             bool success = false;
             string[] arguments = args;
             if (arguments == null || arguments.Length == 0)
