@@ -1,6 +1,6 @@
 var $namespace = function(_parent) {
     MSUBackendConnection.call(this);
-    this.mModID = "$name";
+    this.mModID = "$modname";
     this.mNameSpace = "$namespace";
 }
 

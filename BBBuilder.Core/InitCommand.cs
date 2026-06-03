@@ -193,28 +193,21 @@ namespace BBBuilder
                 .Replace("$modname", ModName)
                 .Replace("$uppercase", upperCaseName);
 
-            List<string> toRemove = new();
-
-            foreach (string directory in Directory.GetDirectories(_path, "*.*", SearchOption.AllDirectories).OrderBy(d => d))
+            // Rename folders bottom-up so child paths remain valid while parents are renamed.
+            foreach (string directory in Directory.GetDirectories(_path, "*", SearchOption.AllDirectories)
+                .OrderByDescending(d => d.Count(c => c == Path.DirectorySeparatorChar || c == Path.AltDirectorySeparatorChar)))
             {
-                if (!Directory.Exists(directory)) continue;  // already renamed it previously
-                string newDirectory = replaceNames(directory);
-                if (directory != newDirectory && !Directory.Exists(newDirectory))
-                {
-                    Directory.CreateDirectory(newDirectory);
-                    toRemove.Add(directory);    
-                }
+                string name = Path.GetFileName(directory);
+                string newName = replaceNames(name);
+                if (name == newName) continue;
+                Directory.Move(directory, Path.Combine(Path.GetDirectoryName(directory), newName));
             }
 
-            foreach (string fileName in Directory.GetFiles(_path, "*", SearchOption.AllDirectories).OrderByDescending(f => f))
+            foreach (string fileName in Directory.GetFiles(_path, "*", SearchOption.AllDirectories))
             {
                 File.WriteAllText(fileName, replaceNames(File.ReadAllText(fileName)));
-                File.Move(fileName, replaceNames(fileName), true);
-            }
-
-            foreach (string dir in toRemove) {
-                if (!Directory.Exists(dir)) continue;
-                Directory.Delete(dir, true);
+                string newName = replaceNames(fileName);
+                if (fileName != newName) File.Move(fileName, newName, true);
             }
         }
 

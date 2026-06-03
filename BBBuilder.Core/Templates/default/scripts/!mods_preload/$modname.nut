@@ -1,13 +1,23 @@
 ::$namespace <- {
 	ID = "$modname",
 	Name = "$namespace",
-	Version = "1.0.0"
+	Version = "1.0.0",
+	// Modern Hooks Object
+	MH = null,
+	// MSU Object
+	Mod = null,
 }
-::mods_registerMod(::$namespace.ID, ::$namespace.Version, ::$namespace.Name);
+// Instantiate the Modern Hooks object, add MSU as a requirement, and queue after MSU
+// https://bbmodding.enduriel.com/docs/modern-hooks/mod-object/
+::$namespace.MH = ::Hooks.register(::$namespace.ID, ::$namespace.Version, ::$namespace.Name);
+::$namespace.MH.require("mod_msu");
+::$namespace.MH.queue(">mod_msu", function(){
+	// Instantiate the MSU Object
+	// https://github.com/MSUTeam/MSU/wiki/Mod
+	::$namespace.Mod = ::MSU.Class.Mod(::$namespace.ID, ::$namespace.Version, ::$namespace.Name);
 
-::mods_queue(::$namespace.ID, null, function()
-{
-	::$namespace.Mod <- ::MSU.Class.Mod(::$namespace.ID, ::$namespace.Version, ::$namespace.Name);
-	::mods_registerJS("./mods/$namespace/index.js");
-	::mods_registerCSS("./mods/$namespace/index.css");
-})
+	// Includes the 'load' file of your private folder
+	// Within this file, you can execute things or load more files (such as hooks)
+	// as to better organise your mod, not clutter this file, and load things in order
+	::include("$modname/load.nut")
+});

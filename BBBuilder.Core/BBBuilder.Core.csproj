@@ -30,16 +30,19 @@
     <None Update="Templates\default\scripts\!mods_preload\%24modname.nut">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Templates\ui\%24modname\load.nut">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Templates\ui\.gitignore">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Templates\ui\scripts\!mods_preload\%24modname.nut">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Templates\ui\ui\mods\%24modname.css">
+    <None Update="Templates\ui\ui\mods\$modname\$modname.css">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Templates\ui\ui\mods\%24modname.js">
+    <None Update="Templates\ui\ui\mods\$modname\$modname.js">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
@@ -54,8 +57,18 @@
 		</Content>
     </ItemGroup>
     <ItemGroup>
+      <Content Remove="Templates\ui\%24modname\load.nut" />
+    </ItemGroup>
+    <ItemGroup>
       <None Include="..\README.md" Link="README.md">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
+    </ItemGroup>
+    <ItemGroup>
+      <Content Update="Templates\ui\ui\mods\%24modname.css" Link="Templates\ui\ui\mods\%24modname\%24modname.css" />
+      <Content Update="Templates\ui\ui\mods\%24modname.js" Link="Templates\ui\ui\mods\%24modname\%24modname.js" />
+    </ItemGroup>
+    <ItemGroup>
+      <Folder Include="Templates\default\%24modname\" />
     </ItemGroup>
 </Project>
