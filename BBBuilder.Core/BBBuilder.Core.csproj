@@ -65,10 +65,6 @@
       </None>
     </ItemGroup>
     <ItemGroup>
-      <Content Update="Templates\ui\ui\mods\%24modname.css" Link="Templates\ui\ui\mods\%24modname\%24modname.css" />
-      <Content Update="Templates\ui\ui\mods\%24modname.js" Link="Templates\ui\ui\mods\%24modname\%24modname.js" />
-    </ItemGroup>
-    <ItemGroup>
       <Folder Include="Templates\default\%24modname\" />
     </ItemGroup>
 
