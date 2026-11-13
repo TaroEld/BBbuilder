@@ -684,13 +684,13 @@ namespace BBBuilder
                 files = GetDiffFiles();
                 List<string> brushesFiles = files.Where(f => f.Contains("unpacked_brushes")).ToList();
                 List<string> brushesFolders = new();
-                // add brushes folders as they are not tracked by git
+                // add packed brushes and their gfx as they are not tracked by git
                 foreach (string file in brushesFiles)
                 {
                     string[] directories = file.Split(Path.DirectorySeparatorChar);
-                    string brushesFileName = directories[Array.IndexOf(directories, "unpacked_brushes") + 1] + ".brush";
-                    string brushPath = Path.Combine(this.BrushesPath, brushesFileName);
-                    brushesFolders.Add(brushPath);
+                    string brushName = directories[Array.IndexOf(directories, "unpacked_brushes") + 1];
+                    brushesFolders.Add(Path.Combine(this.BrushesPath, brushName + ".brush"));
+                    brushesFolders.Add(Path.Combine(this.GfxPath, brushName + ".png"));
                 }
                 files.AddRange(brushesFolders.Distinct().ToList());    
             }
