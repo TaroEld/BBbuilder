@@ -534,8 +534,9 @@ namespace BBBuilder
 
             bool noCompileErrors = true;
             bool packedBrushes = false;
-            List<string> outputBuffer = new();
-            
+            // written from the parallel loop below
+            ConcurrentQueue<string> outputBuffer = new();
+
             if (!Directory.Exists(this.BrushesPath))
             {
                 Directory.CreateDirectory(this.BrushesPath);
@@ -575,13 +576,13 @@ namespace BBBuilder
                     packBrush.WaitForExit();
                     if (packBrush.ExitCode == 2)
                     {
-                        outputBuffer.Add($"Error building brush {brushName}!");
-                        outputBuffer.Add(output);
+                        outputBuffer.Enqueue($"Error building brush {brushName}!");
+                        outputBuffer.Enqueue(output);
                         noCompileErrors = false;
                     }
                     else
                     {
-                        outputBuffer.Add($"Packed Brush {brushName}");
+                        outputBuffer.Enqueue($"Packed Brush {brushName}");
                     }
                 }
             });
