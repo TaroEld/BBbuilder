@@ -560,7 +560,7 @@ namespace BBBuilder
                 packedBrushes = true;
 
                 string brushName = $"{nameOnly}.brush";
-                string command = $"pack --gfxPath {this.BuildPath} \"brushes/{brushName}\" \"{subFolder}\"";
+                string command = $"pack --gfxPath \"{this.BuildPath}\" \"brushes/{brushName}\" \"{subFolder}\"";
 
                 using (Process packBrush = new())
                 {
