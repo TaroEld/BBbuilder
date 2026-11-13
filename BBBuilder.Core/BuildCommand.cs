@@ -38,6 +38,8 @@ namespace BBBuilder
         string BuildPath;
         string GfxPath;
         string BrushesPath;
+        // Rules from the mod's .bbbuilderignore file, null if there is none
+        Ignore.Ignore IgnoreRules;
         public Dictionary<string, Int64> FilesHashesInFolder;
         public Dictionary<string, Int64> FileHashesInDB;
         public Dictionary<string, Int64> FilesWhichChanged;
@@ -88,6 +90,13 @@ namespace BBBuilder
             this.ZipPath = Path.Combine(this.BuildPath, this.ZipName);
             this.GfxPath = Path.Combine(this.BuildPath, "gfx");
             this.BrushesPath = Path.Combine(this.BuildPath, "brushes");
+            string ignoreFilePath = Path.Combine(this.ModPath, ".bbbuilderignore");
+            if (File.Exists(ignoreFilePath))
+            {
+                string[] rules = File.ReadAllLines(ignoreFilePath);
+                this.IgnoreRules = new Ignore.Ignore().Add(rules);
+                Utils.VerbosePrint($"Loaded {this.IgnoreRules.OriginalRules.Count} rules from .bbbuilderignore");
+            }
             if (this.ExcludeFolders)
             {
                 ExcludedZipFolders = ExcludedZipFolders.Concat(ExcludeFolders.PositionalValue.Split(',')).ToArray();
@@ -665,14 +674,20 @@ namespace BBBuilder
                 relativePath == excludedFolder);
         }
 
-        private List<string> RemoveExcludedFolderFiles(List<string> _filesToZip)
+        // _path is either a full path or relative to the mod root (BuildPath), with either separator.
+        private bool IsIgnoredByFile(string _path)
         {
-            return _filesToZip.Where(f => !IsFileInFolderList(f, NormalizedExcludedZipFolders)).ToList();
+            if (this.IgnoreRules == null)
+                return false;
+            string relativePath = Path.IsPathRooted(_path) ? Path.GetRelativePath(this.BuildPath, _path) : _path;
+            return this.IgnoreRules.IsIgnored(relativePath.Replace('\\', '/'));
         }
 
-        private List<string> AddIncludeddFolderFiles(List<string> _filesToZip)
+        // Whether a file is kept out of the zip: -excludedfolders and .bbbuilderignore exclude, -includedfolders overrides both.
+        private bool IsExcludedFromZip(string _path)
         {
-            return _filesToZip.Where(f => IsFileInFolderList(f, NormalizedIncludedZipFolders)).ToList();
+            return (IsFileInFolderList(_path, NormalizedExcludedZipFolders) || IsIgnoredByFile(_path))
+                && !IsFileInFolderList(_path, NormalizedIncludedZipFolders);
         }
 
         private List<string> GetChangedFiles()
@@ -694,11 +709,7 @@ namespace BBBuilder
                 files.AddRange(brushesFolders.Distinct().ToList());    
             }
             else files = this.FilesHashesInFolder.Keys.Select(f => Path.Combine(this.BuildPath, f)).ToList();
-            files = files.Where(f => this.FilesWhichChanged.ContainsKey(Path.GetRelativePath(this.BuildPath, f))).ToList();
-            List<string> filesAfterExclude = RemoveExcludedFolderFiles(files);
-            List<string> filesToInclude = AddIncludeddFolderFiles(files);
-            List<string> mergedFileList = filesAfterExclude.Union(filesToInclude).ToList();
-            return mergedFileList;
+            return files.Where(f => this.FilesWhichChanged.ContainsKey(Path.GetRelativePath(this.BuildPath, f)) && !IsExcludedFromZip(f)).ToList();
         }
 
         private bool ZipFiles()
@@ -741,7 +752,7 @@ namespace BBBuilder
                 if (string.IsNullOrEmpty(entry.Name)) continue;
 
                 string relativePath = entry.FullName.Replace("/", @"\");
-                bool isExcluded = IsFileInFolderList(entry.FullName, NormalizedExcludedZipFolders) && !IsFileInFolderList(entry.FullName, NormalizedIncludedZipFolders);
+                bool isExcluded = IsExcludedFromZip(entry.FullName);
 
                 // Remove if file no longer exists in our tracked files, or if it's in an excluded folder
                 if (!this.FilesHashesInFolder.ContainsKey(relativePath) || isExcluded)
@@ -796,7 +807,7 @@ namespace BBBuilder
                 string zipPath = relativePath.Replace(@"\", @"/");
 
                 // Skip if this file is in an excluded folder
-                if (IsFileInFolderList(relativePath, NormalizedExcludedZipFolders) & !IsFileInFolderList(relativePath, NormalizedIncludedZipFolders))
+                if (IsExcludedFromZip(relativePath))
                         continue;
 
                 // Skip if file is already in the zip

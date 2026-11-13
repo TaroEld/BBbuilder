@@ -87,6 +87,17 @@ It will also go through an existing .zip (either in the mod folder, or that in /
 To avoid creating multiple copies of the same mod in the .data folder, the program will compare the names of existing zip files in data with the one we're currently building. If one is found that starts the same way (for example, mod_mymod and mod_mymod_1), you will be prompted to confirm to continue building or not. This choice can be remembered and saved in a text file within the mod folder.  l
 You can force a complete rebuild of the mod with the `-rebuild` flag.  
 
+#### .bbbuilderignore
+Put a `.bbbuilderignore` file in the root folder of your mod to keep files out of the zip. It uses the same syntax as `.gitignore`: `#` comments, `*`, `**` and `?` wildcards, a leading `/` to match from the mod root only, a trailing `/` to match folders, and `!` to include a file again. Paths are relative to the mod root. Example:
+```
+# documentation
+docs/
+*.md
+!gfx/credits.md
+/scripts/tests/
+```
+Like `-excludedfolders`, it only affects the zip: ignored .nut files are still compiled. Folders passed with `-includedfolders` are always added, even if they match the ignore file. When you change the file, the next build adds or removes the affected files in the zip.  
+
 #### Flags
 - `-restart`: Exit and then start BattleBrothers.exe after building the mod.  
 - `-rebuild`: Delete the database and the .zip to start from a clean slate.  
