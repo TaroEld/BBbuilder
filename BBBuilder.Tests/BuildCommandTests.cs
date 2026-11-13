@@ -50,8 +50,11 @@ namespace BBBuilder.Tests
 
             // Assert
             Assert.True(result);
-            Assert.True(File.Exists(Path.Combine(testModPath, "brushes", "test_brush.brush")));
-            Assert.True(File.Exists(Path.Combine(testModPath, "gfx", "test_brush.png")));
+            // brushes are packed into the staging folder, not into the mod's own brushes/ and gfx/
+            Assert.True(File.Exists(Path.Combine(testModPath, ".bbbuilder", "brush_output", "brushes", "test_brush.brush")));
+            Assert.True(File.Exists(Path.Combine(testModPath, ".bbbuilder", "brush_output", "gfx", "test_brush.png")));
+            Assert.False(File.Exists(Path.Combine(testModPath, "brushes", "test_brush.brush")));
+            Assert.False(File.Exists(Path.Combine(testModPath, "gfx", "test_brush.png")));
             Assert.True(File.Exists(Path.Combine(testModPath, "test_mod.zip")));
             Assert.True(File.Exists(Path.Combine(Utils.Data.GamePath, "test_mod.zip")));
         }
@@ -77,9 +80,8 @@ namespace BBBuilder.Tests
             Directory.Delete(Path.Combine(testModPath, "unpacked_brushes"), true);
             buildCommand.HandleCommand(args);
             Assert.Equal(2, buildCommand.FilesWhichChanged.Count);
-            Assert.False(File.Exists(Path.Combine(testModPath, "brushes", "test_brush.brush")));
-            Assert.False(File.Exists(Path.Combine(testModPath, "gfx", "test_brush.png")));
-            Assert.False(Directory.Exists(Path.Combine(testModPath, "brushes")));
+            Assert.False(File.Exists(Path.Combine(testModPath, ".bbbuilder", "brush_output", "brushes", "test_brush.brush")));
+            Assert.False(File.Exists(Path.Combine(testModPath, ".bbbuilder", "brush_output", "gfx", "test_brush.png")));
 
             using (ZipArchive zip = ZipFile.Open(buildCommand.ZipPath, ZipArchiveMode.Read))
             {
