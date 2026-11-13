@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+### New Features
+- **.bbbuilderignore**: Files and folders matching the `.gitignore`-style patterns in a `.bbbuilderignore` file in the mod root are left out of the zip
+
 ## 1.5
 
 ### New Features
