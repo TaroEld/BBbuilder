@@ -87,6 +87,10 @@ It will also go through an existing .zip (either in the mod folder, or that in /
 To avoid creating multiple copies of the same mod in the .data folder, the program will compare the names of existing zip files in data with the one we're currently building. If one is found that starts the same way (for example, mod_mymod and mod_mymod_1), you will be prompted to confirm to continue building or not. This choice can be remembered and saved in a text file within the mod folder.  l
 You can force a complete rebuild of the mod with the `-rebuild` flag.  
 
+#### Brushes
+Each subfolder of `unpacked_brushes` is packed into a brush file and its sprite sheet. These are written to `.bbbuilder/brush_output` (`brushes/<name>.brush` and `gfx/<name>.png`) and added to the zip from there, so they end up in `brushes/` and `gfx/` inside the zip. BBBuilder never deletes or changes anything in your mod's own `gfx/` and `brushes/` folders, so you can keep hand-made files there. Only brushes whose `unpacked_brushes` folder changed are repacked; `-rebuild` repacks all of them.  
+Older versions of BBBuilder wrote the packed files directly into the mod's `brushes/` and `gfx/` folders. If such leftover files have the same name as a brush that is packed now, BBBuilder prints a warning and uses the newly packed file; delete the leftovers from your mod.  
+
 #### Flags
 - `-restart`: Exit and then start BattleBrothers.exe after building the mod.  
 - `-rebuild`: Delete the database and the .zip to start from a clean slate.  

@@ -4,6 +4,7 @@ using System.IO.Compression;
 using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Reflection;
 //using Ionic.Zip;
@@ -36,8 +37,12 @@ namespace BBBuilder
         string ZipName;
         public string ZipPath;
         string BuildPath;
-        string GfxPath;
-        string BrushesPath;
+        // Brushes and their gfx are packed into this staging folder (not into the mod's own gfx/ and brushes/ folders) and zipped from there.
+        string BrushOutputPath;
+        string StagedBrushesPath;
+        string StagedGfxPath;
+        // Zip-relative path (e.g. "gfx\name.png") -> full path of the generated file in the staging folder
+        Dictionary<string, string> GeneratedFiles = new();
         public Dictionary<string, Int64> FilesHashesInFolder;
         public Dictionary<string, Int64> FileHashesInDB;
         public Dictionary<string, Int64> FilesWhichChanged;
@@ -86,8 +91,9 @@ namespace BBBuilder
                 this.ZipName = this.ModName + ".zip";
             }
             this.ZipPath = Path.Combine(this.BuildPath, this.ZipName);
-            this.GfxPath = Path.Combine(this.BuildPath, "gfx");
-            this.BrushesPath = Path.Combine(this.BuildPath, "brushes");
+            this.BrushOutputPath = Path.Combine(this.ModPath, ".bbbuilder", "brush_output");
+            this.StagedBrushesPath = Path.Combine(this.BrushOutputPath, "brushes");
+            this.StagedGfxPath = Path.Combine(this.BrushOutputPath, "gfx");
             if (this.ExcludeFolders)
             {
                 ExcludedZipFolders = ExcludedZipFolders.Concat(ExcludeFolders.PositionalValue.Split(',')).ToArray();
@@ -147,8 +153,9 @@ namespace BBBuilder
             if (this.Rebuild || !File.Exists(this.ZipPath))
             {
                 DeleteZipAndDB();
-                DeleteBrushAndGfxFiles();
-                Utils.LogTime($"BuildCommand: Deleting zip and GFX folders");
+                if (Directory.Exists(this.BrushOutputPath))
+                    Directory.Delete(this.BrushOutputPath, true);
+                Utils.LogTime($"BuildCommand: Deleting zip, database and packed brushes");
             }
             if (this.Diff)
                 File.Delete(this.ZipPath);
@@ -176,35 +183,14 @@ namespace BBBuilder
                 Utils.WriteRed("Failed while transpiling to ES3!");
                 return false;
             }
-            var extendedNotIndexedFolders = this.NotIndexedFolders.Concat(new[] { "scripts", this.ModName, "unpacked_brushes" }).ToArray();
-            var folders = GetAllFoldersExcept(extendedNotIndexedFolders);
-            var beforeBrush = ReadFileDataFromFolder(folders);
             if (!PackBrushFiles())
             {
                 Utils.WriteRed("Failed while packing brush files");
                 return false;
             }
             Utils.LogTime($"BuildCommand: Packing brush files");
-            
-            folders = GetAllFoldersExcept(extendedNotIndexedFolders);
-            var afterBrush = ReadFileDataFromFolder(folders);
-            foreach (var kvp in afterBrush)
-            {
-                this.FilesHashesInFolder[kvp.Key] = kvp.Value;
-                this.FileHashesInDB[kvp.Key] = kvp.Value;
-                if (!beforeBrush.ContainsKey(kvp.Key) || !beforeBrush[kvp.Key].Equals(kvp.Value))
-                {
-                    this.FilesWhichChanged[kvp.Key] = kvp.Value;
-                }
-            }
-            foreach (var kvp in beforeBrush)
-            {
-                if (!afterBrush.ContainsKey(kvp.Key))
-                {
-                    this.FileHashesInDB.Remove(kvp.Key);
-                    this.FilesHashesInFolder.Remove(kvp.Key);
-                }
-            }
+
+            AddGeneratedFilesToHashes();
             Utils.LogTime($"BuildCommand: Checking for new changes");
 
 
@@ -481,86 +467,55 @@ namespace BBBuilder
             return true;
         }
 
-        private void DeleteBrushAndGfxFiles()
-        {
-            if (Directory.Exists(this.BrushesPath)) { 
-                Directory.Delete(this.BrushesPath, true); 
-            }
-            if (Directory.Exists(this.GfxPath))
-            {
-                foreach (var item in Directory.GetFiles(this.GfxPath))
-                {
-                    File.Delete(item);
-                }
-            }
-        }
+        // Packs every unpacked_brushes/<name> folder into the staging folder (brushes/<name>.brush and gfx/<name>.png).
+        // The mod's own gfx/ and brushes/ folders are never touched.
         private bool PackBrushFiles()
         {
             string unpackedBrushesPath = Path.Combine(this.BuildPath, "unpacked_brushes");
             string[] unpackedBrushesSubFolders = Directory.Exists(unpackedBrushesPath) ? Directory.GetDirectories(unpackedBrushesPath) : Array.Empty<string>();
             string[] unpackedBrushesSubFoldersNameOnly = unpackedBrushesSubFolders.Select(Path.GetFileName).ToArray();
 
-            if (!Directory.Exists(this.BrushesPath)) Directory.CreateDirectory(this.BrushesPath);
-            if (!Directory.Exists(this.GfxPath)) Directory.CreateDirectory(this.GfxPath);
-            string[] existingBrushes = Directory.GetFiles(this.BrushesPath).Select(Path.GetFileName).ToArray();
-            string[] existingGfx = Directory.GetFiles(this.GfxPath).Select(Path.GetFileName).ToArray();
+            Directory.CreateDirectory(this.StagedBrushesPath);
+            Directory.CreateDirectory(this.StagedGfxPath);
 
-
-            // delete brushes and gfx that dont exist anymore
-            foreach (string brushFile in existingBrushes.Select(Path.GetFileNameWithoutExtension))
+            // delete packed brushes and gfx whose unpacked_brushes folder doesn't exist anymore
+            foreach (string file in Directory.GetFiles(this.StagedBrushesPath).Concat(Directory.GetFiles(this.StagedGfxPath)))
             {
-                if (!unpackedBrushesSubFoldersNameOnly.Contains(brushFile))
+                if (!unpackedBrushesSubFoldersNameOnly.Contains(Path.GetFileNameWithoutExtension(file)))
                 {
-                    Console.WriteLine("Deleting file " + brushFile + ".brush as no corresponding unpacked_brushes folder was found.");
-                    File.Delete(Path.Combine(this.BrushesPath, brushFile + ".brush"));
-
-                }
-            }
-            foreach (string gfxFile in existingGfx.Select(Path.GetFileNameWithoutExtension))
-            {
-                if (!unpackedBrushesSubFoldersNameOnly.Contains(gfxFile))
-                {
-                    Console.WriteLine("Deleting file " + gfxFile + ".png as no corresponding unpacked_brushes folder was found.");
-                    File.Delete(Path.Combine(this.GfxPath, gfxFile + ".png"));
+                    Utils.VerbosePrint($"Deleting packed file {Path.GetFileName(file)} as no corresponding unpacked_brushes folder was found.");
+                    File.Delete(file);
                 }
             }
             if (unpackedBrushesSubFolders.Length == 0)
             {
                 Console.WriteLine("No brush files to pack!");
-                DeleteBrushAndGfxFiles();
                 return true;
             }
 
-
-            bool noCompileErrors = true;
-            bool packedBrushes = false;
-            // written from the parallel loop below
+            string[] existingBrushes = Directory.GetFiles(this.StagedBrushesPath).Select(Path.GetFileName).ToArray();
+            string[] existingGfx = Directory.GetFiles(this.StagedGfxPath).Select(Path.GetFileName).ToArray();
+            int failedCount = 0;
+            int packedCount = 0;
             ConcurrentQueue<string> outputBuffer = new();
 
-            if (!Directory.Exists(this.BrushesPath))
-            {
-                Directory.CreateDirectory(this.BrushesPath);
-            }
-
-            //(int i = 0; i < subFolders.Length; i++)
             Parallel.For(0, unpackedBrushesSubFolders.Length, (i) =>
             {
                 string subFolder = unpackedBrushesSubFolders[i];
                 string nameOnly = Path.GetFileName(subFolder);
                 bool hasBrush = existingBrushes.Contains(nameOnly + ".brush");
                 bool hasGfx = existingGfx.Contains(nameOnly + ".png");
-                string[] changedFiles = Directory.GetFiles(subFolder, "*", SearchOption.AllDirectories).Where(f => HasFileChanged(f)).ToArray();
-                if (changedFiles.Length == 0 && hasBrush && hasGfx)
+                bool hasChanges = Directory.EnumerateFiles(subFolder, "*", SearchOption.AllDirectories).Any(f => HasFileChanged(f));
+                if (!hasChanges && hasBrush && hasGfx)
                 {
                     return;
                 }
-                File.Delete(Path.Combine(this.BrushesPath, nameOnly + ".brush"));
-                File.Delete(Path.Combine(this.GfxPath, nameOnly + ".png"));
-
-                packedBrushes = true;
+                File.Delete(Path.Combine(this.StagedBrushesPath, nameOnly + ".brush"));
+                File.Delete(Path.Combine(this.StagedGfxPath, nameOnly + ".png"));
+                Interlocked.Increment(ref packedCount);
 
                 string brushName = $"{nameOnly}.brush";
-                string command = $"pack --gfxPath \"{this.BuildPath}\" \"brushes/{brushName}\" \"{subFolder}\"";
+                string command = $"pack --gfxPath \"{this.BrushOutputPath}\" \"brushes/{brushName}\" \"{subFolder}\"";
 
                 using (Process packBrush = new())
                 {
@@ -568,7 +523,7 @@ namespace BBBuilder
                     packBrush.StartInfo.RedirectStandardOutput = true;
                     packBrush.StartInfo.FileName = Utils.BBRUSHERPATH;
                     packBrush.StartInfo.Arguments = command;
-                    packBrush.StartInfo.WorkingDirectory = this.BuildPath;
+                    packBrush.StartInfo.WorkingDirectory = this.BrushOutputPath;
                     packBrush.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
                     packBrush.StartInfo.CreateNoWindow = true;
                     packBrush.Start();
@@ -578,7 +533,7 @@ namespace BBBuilder
                     {
                         outputBuffer.Enqueue($"Error building brush {brushName}!");
                         outputBuffer.Enqueue(output);
-                        noCompileErrors = false;
+                        Interlocked.Increment(ref failedCount);
                     }
                     else
                     {
@@ -587,18 +542,52 @@ namespace BBBuilder
                 }
             });
 
-            if (!noCompileErrors)
+            if (failedCount > 0)
             {
                 Utils.WriteRed("Errors while packing brushes!\n-------------------------------------");
                 foreach (string line in outputBuffer)
                     Utils.WriteRed(line);
                 Utils.WriteRed("-------------------------------------");
+                return false;
             }
-            if (noCompileErrors && packedBrushes)
+            if (packedCount > 0)
                 Console.WriteLine("Successfully packed brush files!");
-            if (!packedBrushes)
+            else
                 Console.WriteLine("Brush files didn't change!");
-            return noCompileErrors;
+            return true;
+        }
+
+        // Adds the packed brushes and gfx from the staging folder to the hash dictionaries under their zip-relative path.
+        private void AddGeneratedFilesToHashes()
+        {
+            this.GeneratedFiles.Clear();
+            var stagedFolders = new[] { ("brushes", this.StagedBrushesPath), ("gfx", this.StagedGfxPath) };
+            foreach (var (zipFolder, stagedFolder) in stagedFolders)
+            {
+                if (!Directory.Exists(stagedFolder))
+                    continue;
+                foreach (string file in Directory.GetFiles(stagedFolder))
+                {
+                    string relativePath = Path.Combine(zipFolder, Path.GetFileName(file));
+                    Int64 checksum = CalculateChecksum(file);
+                    if (File.Exists(Path.Combine(this.BuildPath, relativePath)))
+                    {
+                        Utils.WriteRed($"Warning: {relativePath} exists in the mod and is also generated from unpacked_brushes/{Path.GetFileNameWithoutExtension(file)}. The generated file is used in the zip. If it was generated by an older BBBuilder version, delete it from the mod.");
+                    }
+                    this.GeneratedFiles[relativePath] = file;
+                    this.FilesHashesInFolder[relativePath] = checksum;
+                    if (this.FileHashesInDB.TryGetValue(relativePath, out Int64 dbChecksum) && dbChecksum == checksum)
+                        this.FilesWhichChanged.Remove(relativePath);
+                    else
+                        this.FilesWhichChanged[relativePath] = checksum;
+                }
+            }
+        }
+
+        // Full path of the file that is zipped as relativePath: generated brushes/gfx come from the staging folder.
+        private string GetSourcePath(string relativePath)
+        {
+            return this.GeneratedFiles.TryGetValue(relativePath, out string stagedPath) ? stagedPath : Path.Combine(this.BuildPath, relativePath);
         }
 
         private List<string> GetDiffFiles()
@@ -654,52 +643,44 @@ namespace BBBuilder
             }
             return output.Split("\n")[0];
         }
-        private bool IsFileInFolderList(string filePath, string[] folderList)
+        // _relativePath is relative to the mod root (BuildPath), with either separator.
+        private static bool IsFileInFolderList(string _relativePath, string[] _folderList)
         {
-            string normalizedPath = Utils.Norm(filePath).Replace(this.ModPath, "");
-
-            // Get relative path properly (handles separators automatically)
-            string relativePath = normalizedPath.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-
-            return folderList.Any(excludedFolder =>
-                relativePath.StartsWith(excludedFolder) ||
-                relativePath == excludedFolder);
+            string relativePath = Utils.Norm(_relativePath).TrimStart(Path.DirectorySeparatorChar);
+            return _folderList.Any(folder => relativePath.StartsWith(folder));
         }
 
-        private List<string> RemoveExcludedFolderFiles(List<string> _filesToZip)
+        // Whether a file is kept out of the zip: -excludedfolders excludes, -includedfolders overrides it.
+        private bool IsExcludedFromZip(string _relativePath)
         {
-            return _filesToZip.Where(f => !IsFileInFolderList(f, NormalizedExcludedZipFolders)).ToList();
+            return IsFileInFolderList(_relativePath, NormalizedExcludedZipFolders)
+                && !IsFileInFolderList(_relativePath, NormalizedIncludedZipFolders);
         }
 
-        private List<string> AddIncludeddFolderFiles(List<string> _filesToZip)
-        {
-            return _filesToZip.Where(f => IsFileInFolderList(f, NormalizedIncludedZipFolders)).ToList();
-        }
-
+        // Returns the relative paths (as used in the hash dictionaries) of the changed files that go into the zip.
         private List<string> GetChangedFiles()
         {
             List<string> files;
             if (this.Diff)
             {
-                files = GetDiffFiles();
-                List<string> brushesFiles = files.Where(f => f.Contains("unpacked_brushes")).ToList();
-                List<string> brushesFolders = new();
-                // add packed brushes and their gfx as they are not tracked by git
-                foreach (string file in brushesFiles)
+                files = GetDiffFiles().Select(f => Path.GetRelativePath(this.BuildPath, f)).ToList();
+                // add packed brushes and their gfx, as they are not tracked by git
+                List<string> generatedFiles = new();
+                foreach (string file in files)
                 {
                     string[] directories = file.Split(Path.DirectorySeparatorChar);
-                    string brushName = directories[Array.IndexOf(directories, "unpacked_brushes") + 1];
-                    brushesFolders.Add(Path.Combine(this.BrushesPath, brushName + ".brush"));
-                    brushesFolders.Add(Path.Combine(this.GfxPath, brushName + ".png"));
+                    int index = Array.IndexOf(directories, "unpacked_brushes");
+                    if (index < 0 || index + 2 >= directories.Length)
+                        continue;
+                    string brushName = directories[index + 1];
+                    generatedFiles.Add(Path.Combine("brushes", brushName + ".brush"));
+                    generatedFiles.Add(Path.Combine("gfx", brushName + ".png"));
                 }
-                files.AddRange(brushesFolders.Distinct().ToList());    
+                files.AddRange(generatedFiles);
+                files = files.Distinct().ToList();
             }
-            else files = this.FilesHashesInFolder.Keys.Select(f => Path.Combine(this.BuildPath, f)).ToList();
-            files = files.Where(f => this.FilesWhichChanged.ContainsKey(Path.GetRelativePath(this.BuildPath, f))).ToList();
-            List<string> filesAfterExclude = RemoveExcludedFolderFiles(files);
-            List<string> filesToInclude = AddIncludeddFolderFiles(files);
-            List<string> mergedFileList = filesAfterExclude.Union(filesToInclude).ToList();
-            return mergedFileList;
+            else files = this.FilesHashesInFolder.Keys.ToList();
+            return files.Where(f => this.FilesWhichChanged.ContainsKey(f) && !IsExcludedFromZip(f)).ToList();
         }
 
         private bool ZipFiles()
@@ -712,7 +693,7 @@ namespace BBBuilder
 
             using (ZipArchive zip = ZipFile.Open(this.ZipPath, zipMode))
             {
-                // Step 1: Clean up the zip - remove files that no longer exist or are in excluded folders
+                // Step 1: Clean up the zip - remove files that no longer exist or are excluded
                 if (zipMode == ZipArchiveMode.Update)
                 {
                     removedCount = RemoveObsoleteEntries(zip);
@@ -742,10 +723,9 @@ namespace BBBuilder
                 if (string.IsNullOrEmpty(entry.Name)) continue;
 
                 string relativePath = entry.FullName.Replace("/", @"\");
-                bool isExcluded = IsFileInFolderList(entry.FullName, NormalizedExcludedZipFolders) && !IsFileInFolderList(entry.FullName, NormalizedIncludedZipFolders);
 
-                // Remove if file no longer exists in our tracked files, or if it's in an excluded folder
-                if (!this.FilesHashesInFolder.ContainsKey(relativePath) || isExcluded)
+                // Remove if file no longer exists in our tracked files, or if it's excluded
+                if (!this.FilesHashesInFolder.ContainsKey(relativePath) || IsExcludedFromZip(relativePath))
                 {
                     Utils.VerbosePrint("Removing file in zip: " + entry.FullName);
                     entry.Delete();
@@ -756,31 +736,29 @@ namespace BBBuilder
             return removedCount;
         }
 
-        private int AddOrUpdateFiles(ZipArchive zip, List<string> filesToAdd, ZipArchiveMode zipMode)
+        private int AddOrUpdateFiles(ZipArchive zip, List<string> relativePaths, ZipArchiveMode zipMode)
         {
             int count = 0;
 
-            foreach (string file in filesToAdd)
+            foreach (string relativePath in relativePaths)
             {
-                if (this.Diff && !File.Exists(file))
+                string sourcePath = GetSourcePath(relativePath);
+                if (this.Diff && !File.Exists(sourcePath))
                 {
-                    Console.WriteLine("Skipping file in zip due to -diff: " + file);
+                    Console.WriteLine("Skipping file in zip due to -diff: " + sourcePath);
                     continue;
                 }
 
-                string relativePath = Path.GetRelativePath(this.BuildPath, file)
-                    .Replace(@"\\", @"/")
-                    .Replace(@"\", @"/");
+                string zipPath = relativePath.Replace(@"\", @"/");
 
-                Utils.VerbosePrint("Updating file in zip: " + file + "(" + relativePath + ")");
+                Utils.VerbosePrint("Updating file in zip: " + sourcePath + "(" + zipPath + ")");
                 // Remove existing entry if it exists and we're updating an existing mod
                 if (zipMode == ZipArchiveMode.Update)
                 {
-                    zip.GetEntry(relativePath)?.Delete();
+                    zip.GetEntry(zipPath)?.Delete();
                 }
 
-                // Add the file
-                zip.CreateEntryFromFile(file, relativePath);
+                zip.CreateEntryFromFile(sourcePath, zipPath);
                 count++;
             }
 
@@ -791,27 +769,23 @@ namespace BBBuilder
         {
             int count = 0;
 
-            foreach (var fileHash in this.FilesHashesInFolder)
+            foreach (string relativePath in this.FilesHashesInFolder.Keys)
             {
-                string relativePath = fileHash.Key;
                 string zipPath = relativePath.Replace(@"\", @"/");
 
-                // Skip if this file is in an excluded folder
-                if (IsFileInFolderList(relativePath, NormalizedExcludedZipFolders) & !IsFileInFolderList(relativePath, NormalizedIncludedZipFolders))
-                        continue;
+                if (IsExcludedFromZip(relativePath))
+                    continue;
 
                 // Skip if file is already in the zip
                 if (zip.GetEntry(zipPath) != null)
-                {
                     continue;
-                }                   
 
                 // This file should be in the zip but isn't - add it
-                string fullPath = Path.Combine(this.BuildPath, relativePath);
-                if (File.Exists(fullPath))
+                string sourcePath = GetSourcePath(relativePath);
+                if (File.Exists(sourcePath))
                 {
-                    Utils.VerbosePrint("Adding missing file file: " + fullPath + "(" + zipPath + ")");
-                    zip.CreateEntryFromFile(fullPath, zipPath);
+                    Utils.VerbosePrint("Adding missing file: " + sourcePath + "(" + zipPath + ")");
+                    zip.CreateEntryFromFile(sourcePath, zipPath);
                     count++;
                 }
             }

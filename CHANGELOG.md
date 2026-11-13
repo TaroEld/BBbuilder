@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Changes
+- Packed brushes and their sprite sheets are now written to `.bbbuilder/brush_output` and zipped from there. The mod's own `gfx/` and `brushes/` folders are no longer cleared or changed, so hand-made files in them are kept
+
+### Bug Fixes
+- Fixed brush packing status being written from several threads without synchronization
+- Fixed `-diff` builds not including the sprite sheet of changed brushes
+
 ## 1.5
 
 ### New Features
